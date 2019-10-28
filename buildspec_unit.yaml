@@ -1,0 +1,9 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - python setup.py develop
+  build:
+    commands:
+      - tox tests/unit/
