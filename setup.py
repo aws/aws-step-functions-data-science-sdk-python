@@ -61,13 +61,13 @@ setup(
     install_requires=required_packages,
     extras_require={
         "test": [
-            "tox==3.13.1",
-            "pytest==4.4.1",
+            "tox>=3.13.1",
+            "pytest>=4.4.1",
             "stopit==1.1.2",
             "tensorflow>=1.3.0",
             "mock>=2.0.0",
             "contextlib2==0.5.5",
-            "IPython==7.8.0"
+            "IPython>=7.8.0"
         ]
     }
 )
