@@ -52,7 +52,7 @@ def pca_estimator(sagemaker_role_arn):
         role=sagemaker_role_arn,
         num_components=1,
         train_instance_count=1,
-        train_instance_type='ml.m5.large',
+        train_instance_type='ml.m5.xlarge',
         )
 
     pca_estimator.feature_dim=500
@@ -125,7 +125,7 @@ def test_pca_estimator(sfn_client, sagemaker_session, sagemaker_role_arn, sfn_ro
            'OutputDataConfig': {'S3OutputPath': s3_output_path},
            'StoppingCondition': {'MaxRuntimeInSeconds': 86400},
            'ResourceConfig': {'InstanceCount': 1,
-            'InstanceType': 'ml.m5.large',
+            'InstanceType': 'ml.m5.xlarge',
             'VolumeSizeInGB': 30},
            'RoleArn': sagemaker_role_arn,
            'InputDataConfig': [{'DataSource': {'S3DataSource': {'S3DataDistributionType': 'ShardedByS3Key',
@@ -141,7 +141,7 @@ def test_pca_estimator(sfn_client, sagemaker_session, sagemaker_role_arn, sfn_ro
            'ExecutionRoleArn': sagemaker_role_arn},
           'Configure Endpoint': {'EndpointConfigName': job_name,
            'ProductionVariants': [{'ModelName': job_name,
-             'InstanceType': 'ml.m5.large',
+             'InstanceType': 'ml.m5.xlarge',
              'InitialInstanceCount': 1,
              'VariantName': 'AllTraffic'}]},
           'Deploy': {'EndpointName': job_name,

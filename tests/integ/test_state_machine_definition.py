@@ -36,7 +36,7 @@ def training_job_parameters(sagemaker_session, sagemaker_role_arn, record_set_fi
         },
         "ResourceConfig": { 
             "InstanceCount": 1,
-            "InstanceType": "ml.m5.large",
+            "InstanceType": "ml.m5.xlarge",
             "VolumeSizeInGB": 30
         },
         "RoleArn": sagemaker_role_arn,

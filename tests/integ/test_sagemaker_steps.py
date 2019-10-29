@@ -43,7 +43,7 @@ from tests.integ.utils import (
 )
 
 INSTANCE_COUNT = 1
-INSTANCE_TYPE = "ml.m5.large"
+INSTANCE_TYPE = "ml.m5.xlarge"
 
 CREATE_ENDPOINT_TIMEOUT_MINUTES = 20
 
@@ -255,7 +255,7 @@ def test_tuning_step(sfn_client, record_set_for_hyperparameter_tuning, sagemaker
     kmeans = KMeans(
         role=sagemaker_role_arn,
         train_instance_count=1,
-        train_instance_type='ml.m5.large',
+        train_instance_type=INSTANCE_TYPE,
         k=10
     )
 
