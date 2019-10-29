@@ -17,6 +17,7 @@ from unittest.mock import MagicMock, patch
 import sagemaker
 
 from sagemaker.sklearn.estimator import SKLearn
+from sagemaker.amazon.amazon_estimator import get_image_uri
 
 from stepfunctions.template import TrainingPipeline, InferencePipeline
 from tests.unit.utils import mock_boto_api_call
@@ -77,7 +78,7 @@ def linear_learner_estimator():
 
     sagemaker_session = MagicMock()
     sagemaker_session.boto_region_name = 'us-east-1'
-
+    
     ll_estimator = sagemaker.estimator.Estimator(
         LINEAR_LEARNER_IMAGE,
         SAGEMAKER_EXECUTION_ROLE, 
