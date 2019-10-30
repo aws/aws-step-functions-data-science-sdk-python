@@ -13,29 +13,33 @@
 from __future__ import absolute_import
 
 import pytest
-import sagemaker
-
-from sagemaker.sklearn.estimator import SKLearn
 from unittest.mock import MagicMock, patch
+
+import sagemaker
+from sagemaker.sklearn.estimator import SKLearn
+from sagemaker.amazon.amazon_estimator import get_image_uri
 from stepfunctions.template import TrainingPipeline, InferencePipeline
 
 from tests.unit.utils import mock_boto_api_call
 
 SAGEMAKER_EXECUTION_ROLE = 'SageMakerExecutionRole'
 STEPFUNCTIONS_EXECUTION_ROLE = 'StepFunctionsExecutionRole'
-PCA_IMAGE = '382416733822.dkr.ecr.us-east-1.amazonaws.com/pca:1'
-LINEAR_LEARNER_IMAGE = '382416733822.dkr.ecr.us-east-1.amazonaws.com/linear-learner:1'
+PCA_IMAGE = get_image_uri('us-east-1', 'pca')
+LINEAR_LEARNER_IMAGE = get_image_uri('us-east-1', 'linear-learner')
 
 @pytest.fixture
 def pca_estimator():
     s3_output_location = 's3://sagemaker/models'
+    sagemaker_session = MagicMock()
+    sagemaker_session.boto_region_name = 'us-east-1'
 
     pca = sagemaker.estimator.Estimator(
         PCA_IMAGE,
         role=SAGEMAKER_EXECUTION_ROLE,
         train_instance_count=1,
         train_instance_type='ml.c4.xlarge',
-        output_path=s3_output_location
+        output_path=s3_output_location,
+        sagemaker_session=sagemaker_session
     )
 
     pca.set_hyperparameters(
@@ -50,23 +54,26 @@ def pca_estimator():
 
 @pytest.fixture
 def sklearn_preprocessor():
-    sagemaker_session = MagicMock()
     script_path = 'sklearn_abalone_featurizer.py'
     source_dir = 's3://sagemaker/source'
+    sagemaker_session = MagicMock()
+    sagemaker_session.boto_region_name = 'us-east-1'
 
     sklearn_preprocessor = SKLearn(
         entry_point=script_path,
         role=SAGEMAKER_EXECUTION_ROLE,
         train_instance_type="ml.c4.xlarge",
-        source_dir=source_dir
+        source_dir=source_dir,
+        sagemaker_session=sagemaker_session
     )
     
     return sklearn_preprocessor
 
 @pytest.fixture
 def linear_learner_estimator():
-    sagemaker_session = MagicMock()
     s3_output_location = 's3://sagemaker/models'
+    sagemaker_session = MagicMock()
+    sagemaker_session.boto_region_name = 'us-east-1'
 
     ll_estimator = sagemaker.estimator.Estimator(
         LINEAR_LEARNER_IMAGE,
@@ -76,7 +83,8 @@ def linear_learner_estimator():
         train_volume_size=20,
         train_max_run=3600,
         input_mode='File',
-        output_path=s3_output_location
+        output_path=s3_output_location,
+        sagemaker_session=sagemaker_session
     )
 
     ll_estimator.set_hyperparameters(feature_dim=10, predictor_type='regressor', mini_batch_size=32)
@@ -218,7 +226,7 @@ def test_inference_pipeline(sklearn_preprocessor, linear_learner_estimator):
     s3_bucket = 'sagemaker-us-east-1'
 
     pipeline = InferencePipeline(
-        preprocessor=sklearn_preprocessor, 
+        preprocessor=sklearn_preprocessor,
         estimator=linear_learner_estimator,
         data=s3_inputs,
         s3_bucket=s3_bucket,

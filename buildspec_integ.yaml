@@ -4,6 +4,7 @@ phases:
   pre_build:
     commands:
       - python setup.py develop
+      - pip install -e .[test]
   build:
     commands:
       - tox tests/integ/
