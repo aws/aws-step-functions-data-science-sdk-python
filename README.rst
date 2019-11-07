@@ -25,8 +25,8 @@ The AWS Step Functions Data Science SDK enables you to do the following.
 Table of Contents
 -----------------
 - `Getting Started With Sample Jupyter Notebooks <#getting-started-with-sample-jupyter-notebooks>`__
-- `Installing the AWS Step Functions Data Science SDK <#installing-the-aws-data-science-workflows-sdk>`__
-- `Overview <#overview>`__
+- `Installing the AWS Step Functions Data Science SDK <#installing-the-aws-step-functions-data-science-sdk>`__
+- `Overview of SDK <#overview-of-sdk>`__
 - `AWS Permissions <#aws-permissions>`__
 - `Licensing <#licensing>`__
 - `Verifying the Signature <#verifying-the-signature>`__
