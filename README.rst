@@ -125,7 +125,7 @@ Using this SDK you can:
 
 For a detailed API reference of the AWS Step Functions Data Science SDK,
 be sure to view this documentation on
-`Read the Docs <https://aws-step-functions-data-science.readthedocs.io>`_.
+`Read the Docs <https://aws-step-functions-data-science-sdk.readthedocs.io>`_.
 
 
 AWS Step Functions
@@ -158,14 +158,14 @@ Using this SDK you can create steps, chain them together to create a workflow,
 create that workflow in AWS Step Functions, and execute the workflow in the
 AWS cloud.
 
-.. image:: doc/images/create.png
+.. image:: https://github.com/aws/aws-step-functions-data-science-sdk-python/raw/master/doc/images/create.png
   :scale: 50 %
   :alt: Create a workflow in AWS Step Functions
 
 Once you have created your workflow in AWS Step Functions, you can execute that
 workflow in Step Functions, in the AWS cloud.
 
-.. image:: doc/images/execute.png
+.. image:: https://github.com/aws/aws-step-functions-data-science-sdk-python/raw/master/doc/images/execute.png
   :scale: 50 %
   :alt: Start a workflow in AWS Step Functions
 
