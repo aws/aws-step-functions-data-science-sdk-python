@@ -2,11 +2,11 @@ version: 0.2
 
 phases:
   pre_build:
-    dontruncommands:
+    commands:
       - python setup.py sdist
       - python -m pip install --upgrade twine
   build:
-    dontruncommands:
+    commands:
       - PACKAGE_FILE="dist/stepfunctions-*.tar.gz"
       - SIGNATURE_FILE="dist/*.asc"
       - PYPI_USER=$(aws secretsmanager get-secret-value --secret-id /codebuild/pypi/user --query SecretString --output text)
