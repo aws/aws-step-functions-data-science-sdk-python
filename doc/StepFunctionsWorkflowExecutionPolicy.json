@@ -1,0 +1,71 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sagemaker:CreateTransformJob",
+                "sagemaker:DescribeTransformJob",
+                "sagemaker:StopTransformJob",
+                "sagemaker:CreateTrainingJob",
+                "sagemaker:DescribeTrainingJob",
+                "sagemaker:StopTrainingJob",
+                "sagemaker:CreateHyperParameterTuningJob",
+                "sagemaker:DescribeHyperParameterTuningJob",
+                "sagemaker:StopHyperParameterTuningJob",
+                "sagemaker:CreateModel",
+                "sagemaker:CreateEndpointConfig",
+                "sagemaker:CreateEndpoint",
+                "sagemaker:DeleteEndpointConfig",
+                "sagemaker:DeleteEndpoint",
+                "sagemaker:UpdateEndpoint",
+                "sagemaker:ListTags",
+                "lambda:InvokeFunction",
+                "sqs:SendMessage",
+                "sns:Publish",
+                "ecs:RunTask",
+                "ecs:StopTask",
+                "ecs:DescribeTasks",
+                "dynamodb:GetItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "batch:SubmitJob",
+                "batch:DescribeJobs",
+                "batch:TerminateJob",
+                "glue:StartJobRun",
+                "glue:GetJobRun",
+                "glue:GetJobRuns",
+                "glue:BatchStopJobRun"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "iam:PassRole"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "iam:PassedToService": "sagemaker.amazonaws.com"
+                }
+            }
+        },
+        {
+            "Effect": "Allow",
+            "Action": [
+                "events:PutTargets",
+                "events:PutRule",
+                "events:DescribeRule"
+            ],
+            "Resource": [
+                "arn:aws:events:*:*:rule/StepFunctionsGetEventsForSageMakerTrainingJobsRule",
+                "arn:aws:events:*:*:rule/StepFunctionsGetEventsForSageMakerTransformJobsRule",
+                "arn:aws:events:*:*:rule/StepFunctionsGetEventsForSageMakerTuningJobsRule",
+                "arn:aws:events:*:*:rule/StepFunctionsGetEventsForECSTaskRule",
+                "arn:aws:events:*:*:rule/StepFunctionsGetEventsForBatchJobsRule"
+            ]
+        }
+    ]
+}
