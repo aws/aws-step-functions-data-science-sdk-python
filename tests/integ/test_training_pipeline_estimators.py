@@ -151,6 +151,6 @@ def test_pca_estimator(sfn_client, sagemaker_session, sagemaker_role_arn, sfn_ro
     
         # Cleanup
         state_machine_delete_wait(sfn_client, state_machine_arn)
-        delete_sagemaker_model(job_name, sagemaker_session)
-        delete_sagemaker_endpoint_config(job_name, sagemaker_session)
         delete_sagemaker_endpoint(job_name, sagemaker_session)
+        delete_sagemaker_endpoint_config(job_name, sagemaker_session)
+        delete_sagemaker_model(job_name, sagemaker_session)

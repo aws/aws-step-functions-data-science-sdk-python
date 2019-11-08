@@ -203,8 +203,8 @@ def test_endpoint_config_step(trained_estimator, sfn_client, sagemaker_session, 
 
         # Cleanup
         state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
-        delete_sagemaker_model(model.name, sagemaker_session)
         delete_sagemaker_endpoint_config(endpoint_config_name, sagemaker_session)
+        delete_sagemaker_model(model.name, sagemaker_session)
         # End of Cleanup
 
 def test_create_endpoint_step(trained_estimator, record_set_fixture, sfn_client, sagemaker_session, sfn_role_arn):
@@ -244,9 +244,9 @@ def test_create_endpoint_step(trained_estimator, record_set_fixture, sfn_client,
 
         # Cleanup
         state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
-        delete_sagemaker_model(model.name, sagemaker_session)
-        delete_sagemaker_endpoint_config(model.name, sagemaker_session)
         delete_sagemaker_endpoint(endpoint_name, sagemaker_session)
+        delete_sagemaker_endpoint_config(model.name, sagemaker_session)
+        delete_sagemaker_model(model.name, sagemaker_session)
         # End of Cleanup
 
 def test_tuning_step(sfn_client, record_set_for_hyperparameter_tuning, sagemaker_role_arn, sfn_role_arn):
