@@ -559,6 +559,9 @@ The following are details about the warnings you might see:
 
 For more information, see http://www.gnupg.org.
 
+.. |codebuild| image:: https://codebuild.us-east-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiZ2crZkxWN2lPTHhBdzAwOUIvZDlUQ2txQTRyYnZnQ3RaQ0dQYkhsb2EvT04xOVRIdDBqYWFOaS8weklGU216OUtuc29pZFQvQjgrRDhRbWJoeEJocFV3PSIsIml2UGFyYW1ldGVyU3BlYyI6IlRQUlZQd1ZLdGRqWkdVdWkiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master
+  :target: https://us-east-2.console.aws.amazon.com/codesuite/codebuild/projects/StepFunctionsPythonSDK-unittests-private/history?region=us-east-2
+  :alt: Unit Tests Build Status
 
 .. |codebuild| image:: https://codebuild.us-east-2.amazonaws.com/badges?uuid=eyJlbmNyeXB0ZWREYXRhIjoiZ2crZkxWN2lPTHhBdzAwOUIvZDlUQ2txQTRyYnZnQ3RaQ0dQYkhsb2EvT04xOVRIdDBqYWFOaS8weklGU216OUtuc29pZFQvQjgrRDhRbWJoeEJocFV3PSIsIml2UGFyYW1ldGVyU3BlYyI6IlRQUlZQd1ZLdGRqWkdVdWkiLCJtYXRlcmlhbFNldFNlcmlhbCI6MX0%3D&branch=master
   :target: https://us-east-2.console.aws.amazon.com/codesuite/codebuild/projects/StepFunctionsPythonSDK-unittests-private/history?region=us-east-2
