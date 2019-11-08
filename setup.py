@@ -67,7 +67,7 @@ setup(
             "tensorflow>=1.3.0",
             "mock>=2.0.0",
             "contextlib2==0.5.5",
-            "IPython>=7.8.0"
+            "IPython"
         ]
     }
 )

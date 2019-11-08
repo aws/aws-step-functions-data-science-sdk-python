@@ -123,6 +123,6 @@ def test_inference_pipeline_framework(
         assert client_info['input'] == json.loads(execution_info['input'])
 
         state_machine_delete_wait(sfn_client, state_machine_arn)
-        delete_sagemaker_model(job_name, sagemaker_session)
-        delete_sagemaker_endpoint_config(job_name, sagemaker_session)
         delete_sagemaker_endpoint(job_name, sagemaker_session)
+        delete_sagemaker_endpoint_config(job_name, sagemaker_session)
+        delete_sagemaker_model(job_name, sagemaker_session)
