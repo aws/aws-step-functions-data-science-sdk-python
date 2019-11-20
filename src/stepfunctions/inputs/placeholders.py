@@ -125,7 +125,7 @@ class Placeholder(object):
         Returns:
             bool: `True` if placeholder variable was found in the collection. `False`, otherwise.
         """
-        return v.contains(placeholder)
+        return self.contains(placeholder)
 
     def validate(self, input):
         """
