@@ -702,7 +702,7 @@ class ValidationVisitor(object):
     def _validate_next_step_params(self, params, step_output):
         for k, v in params.items():
             if isinstance(v, StepInput):
-                if v.name and not step_output.contains(v):
+                if v is not step_output and not step_output.contains(v):
                     return False, k
             elif isinstance(v, dict):
                 valid, invalid_param_name = self._validate_next_step_params(v, step_output)
