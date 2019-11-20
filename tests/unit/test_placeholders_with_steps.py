@@ -24,9 +24,10 @@ def test_workflow_input_placeholder():
         state_id='StateOne', 
         parameters={
             'ParamA': 'SampleValueA',
-            'ParamB': workflow_input['Key01'],
-            'ParamC': workflow_input['Key02']['Key03'],
-            'ParamD': workflow_input['Key01']['Key03'],
+            'ParamB': workflow_input,
+            'ParamC': workflow_input['Key01'],
+            'ParamD': workflow_input['Key02']['Key03'],
+            'ParamE': workflow_input['Key01']['Key03'],
         }
     )
 
@@ -34,9 +35,10 @@ def test_workflow_input_placeholder():
         "Type": "Pass",
         "Parameters": {
             "ParamA": "SampleValueA",
-            "ParamB.$": "$$.Execution.Input['Key01']",
-            "ParamC.$": "$$.Execution.Input['Key02']['Key03']",
-            "ParamD.$": "$$.Execution.Input['Key01']['Key03']"
+            "ParamB.$": "$$.Execution.Input",
+            "ParamC.$": "$$.Execution.Input['Key01']",
+            "ParamD.$": "$$.Execution.Input['Key02']['Key03']",
+            "ParamE.$": "$$.Execution.Input['Key01']['Key03']"
         },
         "End": True
     }
@@ -52,16 +54,18 @@ def test_step_input_placeholder():
     test_step_02 = Pass(
         state_id='StateTwo',
         parameters={
-            'ParamA': test_step_01.output()["Response"]["Key02"],
-            "ParamB": "SampleValueB"
+            'ParamA': test_step_01.output(),
+            'ParamB': test_step_01.output()["Response"]["Key02"],
+            "ParamC": "SampleValueC"
         }
     )
 
     expected_repr = {
         "Type": "Pass",
         "Parameters": {
-            "ParamA.$": "$['Response']['Key02']",
-            "ParamB": "SampleValueB"
+            "ParamA.$": "$",
+            "ParamB.$": "$['Response']['Key02']",
+            "ParamC": "SampleValueC"
         },
         "End": True
     }
