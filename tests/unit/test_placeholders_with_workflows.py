@@ -52,7 +52,8 @@ def workflow(client):
         parameters={
             'ParamG': "SampleValueG",
             "ParamF": execution_input["Key06"],
-            "ParamH": "SampleValueH"
+            "ParamH": "SampleValueH",
+            "ParamI": test_step_02.output()
         }
     )
 

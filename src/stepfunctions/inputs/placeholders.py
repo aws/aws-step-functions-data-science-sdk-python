@@ -132,6 +132,12 @@ class Placeholder(object):
                 return True
         return False
 
+    def __contains__(self, placeholder):
+        """
+            Containment check operator for placeholder variables.
+        """
+        return self.contains(placeholder)
+
     def validate(self, input):
         """
         Validate a specified input against the placeholder collection schema.
