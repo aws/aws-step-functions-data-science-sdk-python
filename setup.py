@@ -30,8 +30,9 @@ def read_version():
 
 # Declare minimal set for installation
 required_packages = [
+    "sagemaker>=1.42.8",
     "boto3>=1.9.213",
-    "sagemaker>=1.42.8"
+    "pyyaml"
 ]
 
 # enum is introduced in Python 3.4. Installing enum back port
@@ -67,7 +68,7 @@ setup(
             "tensorflow>=1.3.0",
             "mock>=2.0.0",
             "contextlib2==0.5.5",
-            "IPython"
+            "IPython",
         ]
     }
 )
