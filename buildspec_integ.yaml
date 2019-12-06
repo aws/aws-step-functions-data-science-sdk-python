@@ -3,8 +3,7 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - python setup.py develop
-      - pip install -e .[test]
+      - pip install tox
   build:
     commands:
       - tox tests/integ/

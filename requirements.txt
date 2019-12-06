@@ -1,2 +1,3 @@
+sagemaker>=1.42.8
 boto3>=1.9.213
-sagemaker==1.42.0
+pyyaml
