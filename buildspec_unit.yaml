@@ -3,7 +3,10 @@ version: 0.2
 phases:
   pre_build:
     commands:
+      - pip install steuptools wheel twine
+      - python setup.py bdist_wheel
       - pip install tox
   build:
     commands:
+      - twine check dist dist/*
       - tox tests/unit/
