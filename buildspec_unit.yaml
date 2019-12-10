@@ -4,9 +4,9 @@ phases:
   pre_build:
     commands:
       - pip install setuptools wheel twine
-      - python setup.py bdist_wheel
+      - python setup.py sdist
       - pip install tox
   build:
     commands:
-      - twine check dist dist/*
+      - twine check dist/*
       - tox tests/unit/
