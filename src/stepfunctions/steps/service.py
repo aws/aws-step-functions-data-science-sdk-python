@@ -122,7 +122,7 @@ class SnsPublishStep(Task):
         super(SnsPublishStep, self).__init__(state_id, **kwargs)
 
 
-class SqsSendMessage(Task):
+class SqsSendMessageStep(Task):
 
     """
     Creates a Task state to send a message to SQS queue. See `Call Amazon SQS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-sqs.html>`_ for more details.
@@ -146,4 +146,4 @@ class SqsSendMessage(Task):
         else:
             kwargs[Field.Resource.value] = 'arn:aws:states:::sqs:sendMessage'
         
-        super(SqsSendMessage, self).__init__(state_id, **kwargs)
+        super(SqsSendMessageStep, self).__init__(state_id, **kwargs)

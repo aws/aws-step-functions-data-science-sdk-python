@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import pytest
 
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
-from stepfunctions.steps.service import SnsPublishStep, SqsSendMessage
+from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 
 
 def test_sns_publish_step_creation():
@@ -57,7 +57,7 @@ def test_sns_publish_step_creation():
 
 
 def test_sqs_send_message_step_creation():
-    step = SqsSendMessage('Send to SQS', parameters={
+    step = SqsSendMessageStep('Send to SQS', parameters={
         'QueueUrl': 'https://sqs.us-east-1.amazonaws.com/123456789012/myQueue',
         'MessageBody': 'Hello'
     })
@@ -72,7 +72,7 @@ def test_sqs_send_message_step_creation():
         'End': True
     }
 
-    step = SqsSendMessage('Send to SQS', wait_for_callback=True, parameters={
+    step = SqsSendMessageStep('Send to SQS', wait_for_callback=True, parameters={
         'QueueUrl': 'https://sqs.us-east-1.amazonaws.com/123456789012/myQueue',
         'MessageBody': {
             'Input.$': '$',
