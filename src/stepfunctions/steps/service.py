@@ -147,3 +147,156 @@ class SqsSendMessageStep(Task):
             kwargs[Field.Resource.value] = 'arn:aws:states:::sqs:sendMessage'
         
         super(SqsSendMessageStep, self).__init__(state_id, **kwargs)
+
+
+class EmrCreateClusterStep(Task):
+    """
+    Creates a Task state to create and start running a cluster (job flow). See `Call Amazon EMR with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-emr.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+        """
+        if wait_for_completion:
+            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:createCluster.sync'
+        else:
+            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:createCluster'
+
+        super(EmrCreateClusterStep, self).__init__(state_id, **kwargs)
+
+
+class EmrTerminateClusterStep(Task):
+    """
+    Creates a Task state to shut down a cluster (job flow). See `Call Amazon EMR with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-emr.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+        """
+        if wait_for_completion:
+            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:terminateCluster.sync'
+        else:
+            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:terminateCluster'
+
+        super(EmrTerminateClusterStep, self).__init__(state_id, **kwargs)
+
+
+class EmrAddStepStep(Task):
+    """
+    Creates a Task state to add a new step to a running cluster. See `Call Amazon EMR with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-emr.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+        """
+        if wait_for_completion:
+            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:addStep.sync'
+        else:
+            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:addStep'
+
+        super(EmrAddStepStep, self).__init__(state_id, **kwargs)
+
+
+class EmrCancelStepStep(Task):
+    """
+    Creates a Task state to cancel a pending step in a running cluster. See `Call Amazon EMR with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-emr.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+        """
+        kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:cancelStep'
+
+        super(EmrCancelStepStep, self).__init__(state_id, **kwargs)
+
+
+class EmrSetClusterTerminationProtectionStep(Task):
+    """
+    Creates a Task state to lock a cluster (job flow) so the EC2 instances in the cluster cannot be terminated by user intervention, an API call, or a job-flow error. See `Call Amazon EMR with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-emr.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+        """
+        kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:setClusterTerminationProtection'
+
+        super(EmrSetClusterTerminationProtectionStep, self).__init__(state_id, **kwargs)
+
+
+class EmrModifyInstanceFleetByNameStep(Task):
+    """
+    Creates a Task state to modify the target On-Demand and target Spot capacities for an instance fleet.  See `Call Amazon EMR with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-emr.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+        """
+        kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:modifyInstanceFleetByName'
+
+        super(EmrModifyInstanceFleetByNameStep, self).__init__(state_id, **kwargs)
+
+
+class EmrModifyInstanceGroupByNameStep(Task):
+    """
+    Creates a Task state to modify the number of nodes and configuration settings of an instance group. See `Call Amazon EMR with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-emr.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+        """
+        kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:modifyInstanceGroupByName'
+
+        super(EmrModifyInstanceGroupByNameStep, self).__init__(state_id, **kwargs)
+
