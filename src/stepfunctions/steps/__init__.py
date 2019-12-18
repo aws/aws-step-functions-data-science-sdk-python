@@ -18,3 +18,5 @@ from stepfunctions.steps.states import Pass, Succeed, Fail, Wait, Choice, Parall
 from stepfunctions.steps.states import Graph, FrozenGraph
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointConfigStep, EndpointStep
 from stepfunctions.steps.compute import LambdaStep, BatchSubmitJobStep, GlueStartJobRunStep, EcsRunTaskStep
+from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
+from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
