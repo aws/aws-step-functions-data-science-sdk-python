@@ -16,6 +16,7 @@ import pytest
 
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
+from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateClusterStep, EmrAddStepStep, EmrCancelStepStep, EmrSetClusterTerminationProtectionStep, EmrModifyInstanceFleetByNameStep, EmrModifyInstanceGroupByNameStep
 
 
 def test_sns_publish_step_creation():
@@ -200,3 +201,378 @@ def test_dynamodb_update_item_step_creation():
         },
         'End': True
     }
+
+
+def test_emr_create_cluster_step_creation():
+    step = EmrCreateClusterStep('Create EMR cluster', parameters={
+        'Name': 'MyWorkflowCluster',
+        'VisibleToAllUsers': True,
+        'ReleaseLabel': 'emr-5.28.0',
+        'Applications': [
+            {
+                'Name': 'Hive'
+            }
+        ],
+        'ServiceRole': 'EMR_DefaultRole',
+        'JobFlowRole': 'EMR_EC2_DefaultRole',
+        'LogUri': 's3n://aws-logs-123456789012-us-east-1/elasticmapreduce/',
+        'Instances': {
+            'KeepJobFlowAliveWhenNoSteps': True,
+            'InstanceFleets': [
+                {
+                    'InstanceFleetType': 'MASTER',
+                    'Name': 'MASTER',   
+                    'TargetOnDemandCapacity': 1,
+                    'InstanceTypeConfigs': [
+                        {
+                            'InstanceType': 'm4.xlarge'
+                        }
+                    ]
+                },
+                {
+                    'InstanceFleetType': 'CORE',
+                    'Name': 'CORE',
+                    'TargetOnDemandCapacity': 1,
+                    'InstanceTypeConfigs': [
+                        {
+                            'InstanceType': 'm4.xlarge'
+                        }
+                    ]
+                }
+            ]
+        }
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::elasticmapreduce:createCluster.sync',
+        'Parameters': {
+            'Name': 'MyWorkflowCluster',
+            'VisibleToAllUsers': True,
+            'ReleaseLabel': 'emr-5.28.0',
+            'Applications': [
+                {
+                    'Name': 'Hive'
+                }
+            ],
+            'ServiceRole': 'EMR_DefaultRole',
+            'JobFlowRole': 'EMR_EC2_DefaultRole',
+            'LogUri': 's3n://aws-logs-123456789012-us-east-1/elasticmapreduce/',
+            'Instances': {
+                'KeepJobFlowAliveWhenNoSteps': True,
+                'InstanceFleets': [
+                    {
+                        'InstanceFleetType': 'MASTER',
+                        'Name': 'MASTER',   
+                        'TargetOnDemandCapacity': 1,
+                        'InstanceTypeConfigs': [
+                            {
+                                'InstanceType': 'm4.xlarge'
+                            }
+                        ]
+                    },
+                    {
+                        'InstanceFleetType': 'CORE',
+                        'Name': 'CORE',
+                        'TargetOnDemandCapacity': 1,
+                        'InstanceTypeConfigs': [
+                            {
+                                'InstanceType': 'm4.xlarge'
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        'End': True
+    }
+
+    step = EmrCreateClusterStep('Create EMR cluster', wait_for_completion=False, parameters={
+        'Name': 'MyWorkflowCluster',
+        'VisibleToAllUsers': True,
+        'ReleaseLabel': 'emr-5.28.0',
+        'Applications': [
+            {
+                'Name': 'Hive'
+            }
+        ],
+        'ServiceRole': 'EMR_DefaultRole',
+        'JobFlowRole': 'EMR_EC2_DefaultRole',
+        'LogUri': 's3n://aws-logs-123456789012-us-east-1/elasticmapreduce/',
+        'Instances': {
+            'KeepJobFlowAliveWhenNoSteps': True,
+            'InstanceFleets': [
+                {
+                    'InstanceFleetType': 'MASTER',
+                    'Name': 'MASTER',   
+                    'TargetOnDemandCapacity': 1,
+                    'InstanceTypeConfigs': [
+                        {
+                            'InstanceType': 'm4.xlarge'
+                        }
+                    ]
+                },
+                {
+                    'InstanceFleetType': 'CORE',
+                    'Name': 'CORE',
+                    'TargetOnDemandCapacity': 1,
+                    'InstanceTypeConfigs': [
+                        {
+                            'InstanceType': 'm4.xlarge'
+                        }
+                    ]
+                }
+            ]
+        }
+    })
+
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::elasticmapreduce:createCluster',
+        'Parameters': {
+            'Name': 'MyWorkflowCluster',
+            'VisibleToAllUsers': True,
+            'ReleaseLabel': 'emr-5.28.0',
+            'Applications': [
+                {
+                    'Name': 'Hive'
+                }
+            ],
+            'ServiceRole': 'EMR_DefaultRole',
+            'JobFlowRole': 'EMR_EC2_DefaultRole',
+            'LogUri': 's3n://aws-logs-123456789012-us-east-1/elasticmapreduce/',
+            'Instances': {
+                'KeepJobFlowAliveWhenNoSteps': True,
+                'InstanceFleets': [
+                    {
+                        'InstanceFleetType': 'MASTER',
+                        'Name': 'MASTER',   
+                        'TargetOnDemandCapacity': 1,
+                        'InstanceTypeConfigs': [
+                            {
+                                'InstanceType': 'm4.xlarge'
+                            }
+                        ]
+                    },
+                    {
+                        'InstanceFleetType': 'CORE',
+                        'Name': 'CORE',
+                        'TargetOnDemandCapacity': 1,
+                        'InstanceTypeConfigs': [
+                            {
+                                'InstanceType': 'm4.xlarge'
+                            }
+                        ]
+                    }
+                ]
+            }
+        },
+        'End': True
+    }
+
+
+def test_emr_terminate_cluster_step_creation():
+    step = EmrTerminateClusterStep('Terminate EMR cluster', parameters={
+        'ClusterId': 'MyWorkflowClusterId'
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::elasticmapreduce:terminateCluster.sync',
+        'Parameters': {
+            'ClusterId': 'MyWorkflowClusterId',
+        },
+        'End': True
+    }
+
+    step = EmrTerminateClusterStep('Terminate EMR cluster', wait_for_completion=False, parameters={
+        'ClusterId': 'MyWorkflowClusterId'
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::elasticmapreduce:terminateCluster',
+        'Parameters': {
+            'ClusterId': 'MyWorkflowClusterId',
+        },
+        'End': True
+    }
+
+def test_emr_add_step_step_creation():
+    step = EmrAddStepStep('Add step to EMR cluster', parameters={
+        'ClusterId': 'MyWorkflowClusterId',
+        'Step': {
+            'Name': 'The first step',
+            'ActionOnFailure': 'CONTINUE',
+            'HadoopJarStep': {
+                'Jar': 'command-runner.jar',
+                'Args': [
+                    'hive-script',
+                    '--run-hive-script',
+                    '--args',
+                    '-f',
+                    's3://<region>.elasticmapreduce.samples/cloudfront/code/Hive_CloudFront.q',
+                    '-d',
+                    'INPUT=s3://<region>.elasticmapreduce.samples',
+                    '-d',
+                    'OUTPUT=s3://<mybucket>/MyHiveQueryResults/'
+                ]
+            }
+        }
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::elasticmapreduce:addStep.sync',
+        'Parameters': {
+            'ClusterId': 'MyWorkflowClusterId',
+            'Step': {
+                'Name': 'The first step',
+                'ActionOnFailure': 'CONTINUE',
+                'HadoopJarStep': {
+                    'Jar': 'command-runner.jar',
+                    'Args': [
+                        'hive-script',
+                        '--run-hive-script',
+                        '--args',
+                        '-f',
+                        's3://<region>.elasticmapreduce.samples/cloudfront/code/Hive_CloudFront.q',
+                        '-d',
+                        'INPUT=s3://<region>.elasticmapreduce.samples',
+                        '-d',
+                        'OUTPUT=s3://<mybucket>/MyHiveQueryResults/'
+                    ]
+                }
+            }
+        },
+        'End': True
+    }
+
+    step = EmrAddStepStep('Add step to EMR cluster', wait_for_completion=False, parameters={
+        'ClusterId': 'MyWorkflowClusterId',
+        'Step': {
+            'Name': 'The first step',
+            'ActionOnFailure': 'CONTINUE',
+            'HadoopJarStep': {
+                'Jar': 'command-runner.jar',
+                'Args': [
+                    'hive-script',
+                    '--run-hive-script',
+                    '--args',
+                    '-f',
+                    's3://<region>.elasticmapreduce.samples/cloudfront/code/Hive_CloudFront.q',
+                    '-d',
+                    'INPUT=s3://<region>.elasticmapreduce.samples',
+                    '-d',
+                    'OUTPUT=s3://<mybucket>/MyHiveQueryResults/'
+                ]
+            }
+        }
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::elasticmapreduce:addStep',
+        'Parameters': {
+            'ClusterId': 'MyWorkflowClusterId',
+            'Step': {
+                'Name': 'The first step',
+                'ActionOnFailure': 'CONTINUE',
+                'HadoopJarStep': {
+                    'Jar': 'command-runner.jar',
+                    'Args': [
+                        'hive-script',
+                        '--run-hive-script',
+                        '--args',
+                        '-f',
+                        's3://<region>.elasticmapreduce.samples/cloudfront/code/Hive_CloudFront.q',
+                        '-d',
+                        'INPUT=s3://<region>.elasticmapreduce.samples',
+                        '-d',
+                        'OUTPUT=s3://<mybucket>/MyHiveQueryResults/'
+                    ]
+                }
+            }
+        },
+        'End': True
+    }
+
+def test_emr_cancel_step_step_creation():
+    step = EmrCancelStepStep('Cancel step from EMR cluster', parameters={
+        'ClusterId': 'MyWorkflowClusterId',
+        'StepId': 'MyWorkflowStepId'
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::elasticmapreduce:cancelStep',
+        'Parameters': {
+            'ClusterId': 'MyWorkflowClusterId',
+            'StepId': 'MyWorkflowStepId'
+        },
+        'End': True
+    }
+
+def test_emr_set_cluster_termination_protection_step_creation():
+    step = EmrSetClusterTerminationProtectionStep('Set termination protection for EMR cluster', parameters={
+        'ClusterId': 'MyWorkflowClusterId',
+        'TerminationProtected': True
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::elasticmapreduce:setClusterTerminationProtection',
+        'Parameters': {
+            'ClusterId': 'MyWorkflowClusterId',
+            'TerminationProtected': True
+        },
+        'End': True
+    }
+
+def test_emr_modify_instance_fleet_by_name_step_creation():
+    step = EmrModifyInstanceFleetByNameStep('Modify Instance Fleet by name for EMR cluster', parameters={
+        'ClusterId': 'MyWorkflowClusterId',
+        'InstanceFleetName': 'MyCoreFleet',
+        'InstanceFleet': {
+            'TargetOnDemandCapacity': 8,
+            'TargetSpotCapacity': 0
+        }
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::elasticmapreduce:modifyInstanceFleetByName',
+        'Parameters': {
+            'ClusterId': 'MyWorkflowClusterId',
+            'InstanceFleetName': 'MyCoreFleet',
+            'InstanceFleet': {
+                'TargetOnDemandCapacity': 8,
+                'TargetSpotCapacity': 0
+            }
+        },
+        'End': True
+    }
+
+def test_emr_modify_instance_group_by_name_step_creation():
+    step = EmrModifyInstanceGroupByNameStep('Modify Instance Group by name for EMR cluster', parameters={
+        'ClusterId': 'MyWorkflowClusterId',
+        'InstanceGroupName': 'MyCoreGroup',
+        'InstanceGroup': {
+            'InstanceCount': 8
+        }
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::elasticmapreduce:modifyInstanceGroupByName',
+        'Parameters': {
+            'ClusterId': 'MyWorkflowClusterId',
+            'InstanceGroupName': 'MyCoreGroup',
+            'InstanceGroup': {
+                'InstanceCount': 8
+            }
+        },
+        'End': True
+    }
+
