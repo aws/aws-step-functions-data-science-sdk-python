@@ -15,9 +15,10 @@ creates a State Machine representing your workflow and steps in AWS Step
 Functions.
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     states
     choicerules
     compute
     sagemaker
+    services
