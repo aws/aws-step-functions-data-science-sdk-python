@@ -4,8 +4,8 @@ Service Integrations
 This module provides classes to build steps that integrate with Amazon DynamoDB, Amazon SNS, Amazon SQS and Amazon EMR.
 
 
-Content
----------
+**Table of Contents**
+
 - `Amazon DynamoDB <#amazon-dynamodb>`__
 
 - `Amazon SNS <#amazon-sns>`__

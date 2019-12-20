@@ -15,7 +15,7 @@ creates a State Machine representing your workflow and steps in AWS Step
 Functions.
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     states
     choicerules
