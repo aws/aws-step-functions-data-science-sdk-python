@@ -21,3 +21,4 @@ Functions.
     choicerules
     compute
     sagemaker
+    services
