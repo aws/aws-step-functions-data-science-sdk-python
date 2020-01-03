@@ -92,6 +92,7 @@ def tensorflow_estimator():
 
     estimator.sagemaker_session = MagicMock()
     estimator.sagemaker_session.boto_region_name = 'us-east-1'
+    estimator.sagemaker_session._default_bucket = 'sagemaker'
     
     return estimator
 
@@ -281,6 +282,38 @@ def test_get_expected_model(pca_estimator):
             'ModelName': 'pca-model',
             'PrimaryContainer': {
                 'Environment': {},
+                'Image': expected_model.image,
+                'ModelDataUrl.$': "$['ModelArtifacts']['S3ModelArtifacts']"
+            }
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createModel',
+        'End': True
+    }
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+def test_get_expected_model_with_framework_estimator(tensorflow_estimator):
+    training_step = TrainingStep('Training',
+        estimator=tensorflow_estimator,
+        data={'train': 's3://sagemaker/train'},
+        job_name='tensorflow-job',
+        mini_batch_size=1024
+    )
+    expected_model = training_step.get_expected_model()
+    expected_model.entry_point = 'tf_train.py'
+    model_step = ModelStep('Create model', model=expected_model, model_name='tf-model')
+    assert model_step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'ExecutionRoleArn': EXECUTION_ROLE,
+            'ModelName': 'tf-model',
+            'PrimaryContainer': {
+                'Environment': {
+                    'SAGEMAKER_PROGRAM': 'tf_train.py',
+                    'SAGEMAKER_SUBMIT_DIRECTORY': 's3://sagemaker/tensorflow-job/source/sourcedir.tar.gz',
+                    'SAGEMAKER_ENABLE_CLOUDWATCH_METRICS': 'false',
+                    'SAGEMAKER_CONTAINER_LOG_LEVEL': '20',
+                    'SAGEMAKER_REGION': 'us-east-1',
+                },
                 'Image': expected_model.image,
                 'ModelDataUrl.$': "$['ModelArtifacts']['S3ModelArtifacts']"
             }

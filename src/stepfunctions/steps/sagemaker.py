@@ -186,6 +186,9 @@ class ModelStep(Task):
         else:
             raise ValueError("Expected 'model' parameter to be of type 'sagemaker.model.Model', but received type '{}'".format(type(model).__name__))
 
+        if 'S3Operations' in parameters:
+            del parameters['S3Operations']
+
         kwargs[Field.Parameters.value] = parameters
         kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createModel'
 
