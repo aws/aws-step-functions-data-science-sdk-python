@@ -35,7 +35,6 @@ from tests.integ.utils import (
 # Constants
 BASE_NAME = 'inference-pipeline-integtest'
 COMPRESSED_NPY_DATA = 'mnist.npy.gz'
-CREATE_ENDPOINT_TIMEOUT_MINUTES = 20
 
 # Fixtures
 @pytest.fixture(scope="module")
@@ -88,7 +87,7 @@ def test_inference_pipeline_framework(
         inputs):
     bucket_name = sagemaker_session.default_bucket()
     unique_name = '{}-{}'.format(BASE_NAME, datetime.now().strftime('%Y%m%d%H%M%S'))
-    with timeout(minutes=CREATE_ENDPOINT_TIMEOUT_MINUTES):
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
         pipeline = InferencePipeline(
             preprocessor=sklearn_preprocessor,
             estimator=sklearn_estimator,

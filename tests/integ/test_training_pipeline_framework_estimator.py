@@ -16,7 +16,7 @@ import pytest
 import sagemaker
 import os
 
-from tests.integ import DATA_DIR
+from tests.integ import DATA_DIR, DEFAULT_TIMEOUT_MINUTES
 from tests.integ.timeout import timeout
 from stepfunctions.template import TrainingPipeline
 from sagemaker.pytorch import PyTorch
@@ -28,8 +28,6 @@ from tests.integ.utils import (
     delete_sagemaker_endpoint,
     get_resource_name_from_arn
 )
-
-PIPELINE_TIMEOUT_LIMIT = 20
 
 @pytest.fixture(scope="module")
 def torch_estimator(sagemaker_role_arn):
@@ -88,7 +86,7 @@ def _pipeline_teardown(sfn_client, sagemaker_session, endpoint_name, pipeline):
 
 
 def test_torch_training_pipeline(sfn_client, sagemaker_client, torch_estimator, sagemaker_session, sfn_role_arn):
-    with timeout(minutes=PIPELINE_TIMEOUT_LIMIT):
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
         # upload input data
         data_path = os.path.join(DATA_DIR, "pytorch_mnist")
         inputs = sagemaker_session.upload_data(
@@ -123,7 +121,7 @@ def test_torch_training_pipeline(sfn_client, sagemaker_client, torch_estimator, 
 
 
 def test_sklearn_training_pipeline(sfn_client, sagemaker_client, sklearn_estimator, sagemaker_session, sfn_role_arn):
-    with timeout(minutes=PIPELINE_TIMEOUT_LIMIT):
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
         # upload input data
         data_path = os.path.join(DATA_DIR, "sklearn_mnist")
         inputs = sagemaker_session.upload_data(
