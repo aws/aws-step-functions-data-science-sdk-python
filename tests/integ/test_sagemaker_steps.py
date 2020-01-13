@@ -45,7 +45,6 @@ from tests.integ.utils import (
 INSTANCE_COUNT = 1
 INSTANCE_TYPE = "ml.m5.large"
 
-CREATE_ENDPOINT_TIMEOUT_MINUTES = 20
 
 @pytest.fixture(scope="module")
 def trained_estimator(pca_estimator_fixture, record_set_fixture):
@@ -224,7 +223,7 @@ def test_create_endpoint_step(trained_estimator, record_set_fixture, sfn_client,
     endpoint_step = EndpointStep('create_endpoint_step', endpoint_name=endpoint_name, endpoint_config_name=model.name)
     workflow_graph = Chain([endpoint_step])
 
-    with timeout(minutes=CREATE_ENDPOINT_TIMEOUT_MINUTES):
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
         # Create workflow and check definition
         workflow = create_workflow_and_check_definition(
             workflow_graph=workflow_graph,
@@ -279,7 +278,7 @@ def test_tuning_step(sfn_client, record_set_for_hyperparameter_tuning, sagemaker
     tuning_step = TuningStep('Tuning', tuner=tuner, job_name=job_name, data=record_set_for_hyperparameter_tuning)
     workflow_graph = Chain([tuning_step])
 
-    with timeout(minutes=CREATE_ENDPOINT_TIMEOUT_MINUTES):
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
         # Create workflow and check definition
         workflow = create_workflow_and_check_definition(
             workflow_graph=workflow_graph,

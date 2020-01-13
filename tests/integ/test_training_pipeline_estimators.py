@@ -42,7 +42,6 @@ from tests.integ.utils import (
 
 # Constants
 BASE_NAME = 'training-pipeline-integtest'
-CREATE_ENDPOINT_TIMEOUT_MINUTES = 20
 
 
 # Fixtures
@@ -80,7 +79,7 @@ def test_pca_estimator(sfn_client, sagemaker_session, sagemaker_role_arn, sfn_ro
     unique_name = '{}-{}'.format(BASE_NAME, datetime.now().strftime('%Y%m%d%H%M%S'))
     hyperparams = pca_estimator.hyperparameters()
 
-    with timeout(minutes=CREATE_ENDPOINT_TIMEOUT_MINUTES):
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
         tp = TrainingPipeline(
             estimator=pca_estimator,
             role=sfn_role_arn,
