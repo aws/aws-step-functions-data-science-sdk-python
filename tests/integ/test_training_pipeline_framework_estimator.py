@@ -35,7 +35,7 @@ def torch_estimator(sagemaker_role_arn):
     return PyTorch(
         entry_point=script_path,
         role=sagemaker_role_arn,
-        framework_version='1.1.0',
+        framework_version='1.2.0',
         train_instance_count=1,
         train_instance_type='ml.m5.large',
         hyperparameters={
