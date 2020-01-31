@@ -98,7 +98,14 @@ def tensorflow_estimator():
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_training_step_creation(pca_estimator):
-    step = TrainingStep('Training', estimator=pca_estimator, job_name='TrainingJob')
+    step = TrainingStep('Training', 
+        estimator=pca_estimator, 
+        job_name='TrainingJob', 
+        experiment_config={
+            'ExperimentName': 'pca_experiment',
+            'TrialName': 'pca_trial',
+            'TrialComponentDisplayName': 'Training'
+        })
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -124,6 +131,11 @@ def test_training_step_creation(pca_estimator):
                 'subtract_mean': 'True',
                 'algorithm_mode': 'randomized',
                 'mini_batch_size': '200'
+            },
+            'ExperimentConfig': {
+                'ExperimentName': 'pca_experiment',
+                'TrialName': 'pca_trial',
+                'TrialComponentDisplayName': 'Training'                
             },
             'TrainingJobName': 'TrainingJob'
         },
@@ -243,7 +255,12 @@ def test_transform_step_creation(pca_transformer):
         transformer=pca_transformer,
         data='s3://sagemaker/inference',
         job_name='transform-job',
-        model_name='pca-model'
+        model_name='pca-model',
+        experiment_config={
+            'ExperimentName': 'pca_experiment',
+            'TrialName': 'pca_trial',
+            'TrialComponentDisplayName': 'Transform'
+        }
     )
     assert step.to_dict() == {
         'Type': 'Task',
@@ -264,6 +281,11 @@ def test_transform_step_creation(pca_transformer):
             'TransformResources': {
                 'InstanceCount': 1,
                 'InstanceType': 'ml.c4.xlarge'
+            },
+            'ExperimentConfig': {
+                'ExperimentName': 'pca_experiment',
+                'TrialName': 'pca_trial',
+                'TrialComponentDisplayName': 'Transform'                
             }
         },
         'Resource': 'arn:aws:states:::sagemaker:createTransformJob.sync',

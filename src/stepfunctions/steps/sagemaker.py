@@ -27,7 +27,7 @@ class TrainingStep(Task):
     Creates a Task State to execute a `SageMaker Training Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTrainingJob.html>`_. The TrainingStep will also create a model by default, and the model shares the same name as the training job.
     """
 
-    def __init__(self, state_id, estimator, job_name, data=None, hyperparameters=None, mini_batch_size=None, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, estimator, job_name, data=None, hyperparameters=None, mini_batch_size=None, experiment_config=None, wait_for_completion=True, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -50,6 +50,7 @@ class TrainingStep(Task):
                     where each instance is a different channel of training data.
             hyperparameters (dict, optional): Specify the hyper parameters for the training. (Default: None)
             mini_batch_size (int): Specify this argument only when estimator is a built-in estimator of an Amazon algorithm. For other estimators, batch size should be specified in the estimator.
+            experiment_config (dict, optional): Specify the experiment config for the training. (Default: None)
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the training job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the training job and proceed to the next step. (default: True)
         """
         self.estimator = estimator
@@ -70,6 +71,9 @@ class TrainingStep(Task):
 
         if hyperparameters is not None:
             parameters['HyperParameters'] = hyperparameters
+
+        if experiment_config is not None:
+            parameters['ExperimentConfig'] = experiment_config
 
         if 'S3Operations' in parameters:
             del parameters['S3Operations']
@@ -101,7 +105,7 @@ class TransformStep(Task):
     Creates a Task State to execute a `SageMaker Transform Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTransformJob.html>`_.
     """
 
-    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None, compression_type=None, split_type=None, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None, compression_type=None, split_type=None, experiment_config=None, wait_for_completion=True, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -119,6 +123,7 @@ class TransformStep(Task):
             content_type (str): MIME type of the input data (default: None).
             compression_type (str): Compression type of the input data, if compressed (default: None). Valid values: 'Gzip', None.
             split_type (str): The record delimiter for the input object (default: 'None'). Valid values: 'None', 'Line', 'RecordIO', and 'TFRecord'.
+            experiment_config (dict, optional): Specify the experiment config for the transform. (Default: None)
             wait_for_completion(bool, optional): Boolean value set to `True` if the Task state should wait for the transform job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the transform job and proceed to the next step. (default: True)
         """
         if wait_for_completion:
@@ -150,6 +155,9 @@ class TransformStep(Task):
             parameters['TransformJobName'] = job_name
 
         parameters['ModelName'] = model_name
+
+        if experiment_config is not None:
+            parameters['ExperimentConfig'] = experiment_config
 
         kwargs[Field.Parameters.value] = parameters
         super(TransformStep, self).__init__(state_id, **kwargs)
