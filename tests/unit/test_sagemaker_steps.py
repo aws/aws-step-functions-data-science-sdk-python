@@ -51,6 +51,10 @@ def pca_estimator():
         mini_batch_size=200
     )
 
+    pca.sagemaker_session = MagicMock()
+    pca.sagemaker_session.boto_region_name = 'us-east-1'
+    pca.sagemaker_session._default_bucket = 'sagemaker'
+
     return pca
 
 @pytest.fixture
