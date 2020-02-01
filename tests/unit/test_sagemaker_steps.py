@@ -20,6 +20,7 @@ from sagemaker.transformer import Transformer
 from sagemaker.model import Model
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.pipeline import PipelineModel
+from sagemaker.model_monitor import DataCaptureConfig
 
 from unittest.mock import MagicMock, patch
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep
@@ -366,7 +367,16 @@ def test_model_step_creation(pca_model):
     }
 
 def test_endpoint_config_step_creation(pca_model):
-    step = EndpointConfigStep('Endpoint Config', endpoint_config_name='MyEndpointConfig', model_name='pca-model', initial_instance_count=1, instance_type='ml.p2.xlarge')
+    data_capture_config = DataCaptureConfig(
+        enable_capture=True,
+        sampling_percentage=100,
+        destination_s3_uri='s3://sagemaker/datacapture')
+    step = EndpointConfigStep('Endpoint Config', 
+        endpoint_config_name='MyEndpointConfig', 
+        model_name='pca-model', 
+        initial_instance_count=1, 
+        instance_type='ml.p2.xlarge',
+        data_capture_config=data_capture_config)
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -376,7 +386,20 @@ def test_endpoint_config_step_creation(pca_model):
                 'InstanceType': 'ml.p2.xlarge',
                 'ModelName': 'pca-model',
                 'VariantName': 'AllTraffic'
-            }]
+            }],
+            'DataCaptureConfig': {
+                'EnableCapture': True,
+                'InitialSamplingPercentage': 100,
+                'DestinationS3Uri': 's3://sagemaker/datacapture',
+                'CaptureOptions': [
+                    {'CaptureMode': 'Input'}, 
+                    {'CaptureMode': 'Output'}
+                ],
+                'CaptureContentTypeHeader': {
+                    'CsvContentTypes': ['text/csv'],
+                    'JsonContentTypes': ['application/json']
+                }
+            }
         },
         'Resource': 'arn:aws:states:::sagemaker:createEndpointConfig',
         'End': True
