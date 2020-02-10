@@ -18,6 +18,7 @@ import sagemaker
 from sagemaker.sklearn.estimator import SKLearn
 from unittest.mock import MagicMock, patch
 from stepfunctions.template import TrainingPipeline, InferencePipeline
+from sagemaker.debugger import DebuggerHookConfig
 
 from tests.unit.utils import mock_boto_api_call
 
@@ -65,6 +66,10 @@ def sklearn_preprocessor():
         source_dir=source_dir,
         sagemaker_session=sagemaker_session
     )
+
+    sklearn_preprocessor.debugger_hook_config = DebuggerHookConfig(
+        s3_output_path='s3://sagemaker/source/debug'
+    )
     
     return sklearn_preprocessor
 
@@ -84,6 +89,10 @@ def linear_learner_estimator():
         input_mode='File',
         output_path=s3_output_location,
         sagemaker_session=sagemaker_session
+    )
+
+    ll_estimator.debugger_hook_config = DebuggerHookConfig(
+        s3_output_path='s3://sagemaker/models/debug'
     )
 
     ll_estimator.set_hyperparameters(feature_dim=10, predictor_type='regressor', mini_batch_size=32)
@@ -238,6 +247,7 @@ def test_inference_pipeline(sklearn_preprocessor, linear_learner_estimator):
     assert result['States']['Train Preprocessor'] == {
         'Parameters': {
             'AlgorithmSpecification.$': "$$.Execution.Input['Train Preprocessor'].AlgorithmSpecification",
+            'DebugHookConfig.$': "$$.Execution.Input['Train Preprocessor'].DebugHookConfig",
             'HyperParameters.$': "$$.Execution.Input['Train Preprocessor'].HyperParameters",
             'InputDataConfig.$': "$$.Execution.Input['Train Preprocessor'].InputDataConfig",
             'OutputDataConfig.$': "$$.Execution.Input['Train Preprocessor'].OutputDataConfig",
@@ -342,6 +352,9 @@ def test_inference_pipeline(sklearn_preprocessor, linear_learner_estimator):
             'OutputDataConfig': {
                 'S3OutputPath': 's3://sagemaker-us-east-1/inference-pipeline/models'
             },
+            'DebugHookConfig': {
+                'S3OutputPath': 's3://sagemaker-us-east-1/inference-pipeline/models/debug'
+            },
             'ResourceConfig': {
                 'InstanceCount': 1,
                 'InstanceType': 'ml.c4.xlarge',
@@ -406,6 +419,7 @@ def test_inference_pipeline(sklearn_preprocessor, linear_learner_estimator):
                 }
             }],
             'OutputDataConfig': { 'S3OutputPath': 's3://sagemaker-us-east-1/inference-pipeline/models' },
+            'DebugHookConfig': { 'S3OutputPath': 's3://sagemaker-us-east-1/inference-pipeline/models/debug' },
             'ResourceConfig': {
                 'InstanceCount': 1,
                 'InstanceType': 'ml.c4.xlarge',

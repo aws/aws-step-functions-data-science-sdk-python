@@ -204,6 +204,10 @@ class InferencePipeline(WorkflowTemplate):
             s3_bucket=self.s3_bucket,
             pipeline_name=self.workflow.name
         )
+        inputs[StepId.TrainPreprocessor.value]['DebugHookConfig']['S3OutputPath'] = 's3://{s3_bucket}/{pipeline_name}/models/debug'.format(
+            s3_bucket=self.s3_bucket,
+            pipeline_name=self.workflow.name
+        )
         inputs[StepId.CreatePreprocessorModel.value]['PrimaryContainer']['ModelDataUrl'] = '{s3_uri}/{job}/output/model.tar.gz'.format(
             s3_uri=inputs[StepId.TrainPreprocessor.value]['OutputDataConfig']['S3OutputPath'],
             job=inputs[StepId.TrainPreprocessor.value]['TrainingJobName']
@@ -233,6 +237,10 @@ class InferencePipeline(WorkflowTemplate):
             }
         }]
         inputs[StepId.Train.value]['OutputDataConfig']['S3OutputPath'] = 's3://{s3_bucket}/{pipeline_name}/models'.format(
+            s3_bucket=self.s3_bucket,
+            pipeline_name=self.workflow.name
+        )
+        inputs[StepId.Train.value]['DebugHookConfig']['S3OutputPath'] = 's3://{s3_bucket}/{pipeline_name}/models/debug'.format(
             s3_bucket=self.s3_bucket,
             pipeline_name=self.workflow.name
         )
