@@ -66,6 +66,12 @@ class TrainingStep(Task):
         else:
             parameters = training_config(estimator=estimator, inputs=data, mini_batch_size=mini_batch_size)
 
+        if estimator.debugger_hook_config != None:
+            parameters['DebugHookConfig'] = estimator.debugger_hook_config._to_request_dict()
+
+        if estimator.rules != None:
+            parameters['DebugRuleConfigurations'] = [rule.to_debugger_rule_config_dict() for rule in estimator.rules]
+
         if isinstance(job_name, (ExecutionInput, StepInput)):
             parameters['TrainingJobName'] = job_name
 

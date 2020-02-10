@@ -21,6 +21,7 @@ from sagemaker.model import Model
 from sagemaker.tensorflow import TensorFlow
 from sagemaker.pipeline import PipelineModel
 from sagemaker.model_monitor import DataCaptureConfig
+from sagemaker.debugger import Rule, rule_configs, DebuggerHookConfig, CollectionConfig
 
 from unittest.mock import MagicMock, patch
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep
@@ -42,6 +43,54 @@ def pca_estimator():
         train_instance_count=1,
         train_instance_type='ml.c4.xlarge',
         output_path=s3_output_location
+    )
+
+    pca.set_hyperparameters(
+        feature_dim=50000,
+        num_components=10,
+        subtract_mean=True,
+        algorithm_mode='randomized',
+        mini_batch_size=200
+    )
+
+    pca.sagemaker_session = MagicMock()
+    pca.sagemaker_session.boto_region_name = 'us-east-1'
+    pca.sagemaker_session._default_bucket = 'sagemaker'
+
+    return pca
+
+@pytest.fixture
+def pca_estimator_with_debug_hook():
+    s3_output_location = 's3://sagemaker/models'
+
+    hook_config = DebuggerHookConfig(
+        s3_output_path='s3://sagemaker/output/debug',
+        hook_parameters={
+            "save_interval": "1"
+        },
+        collection_configs=[
+            CollectionConfig("hyperparameters"),
+            CollectionConfig("metrics")
+        ]
+    )
+
+    rules = [Rule.sagemaker(rule_configs.confusion(),
+        rule_parameters={
+            "category_no": "15",
+            "min_diag": "0.7",
+            "max_off_diag": "0.3",
+            "start_step": "17",
+            "end_step": "19"}
+    )]
+
+    pca = sagemaker.estimator.Estimator(
+        PCA_IMAGE,
+        role=EXECUTION_ROLE,
+        train_instance_count=1,
+        train_instance_type='ml.c4.xlarge',
+        output_path=s3_output_location,
+        debugger_hook_config = hook_config,
+        rules=rules
     )
 
     pca.set_hyperparameters(
@@ -95,6 +144,10 @@ def tensorflow_estimator():
         checkpoint_path='s3://sagemaker/models/sagemaker-tensorflow/checkpoints'
     )
 
+    estimator.debugger_hook_config = DebuggerHookConfig(
+        s3_output_path='s3://sagemaker/models/debug'
+    )
+
     estimator.sagemaker_session = MagicMock()
     estimator.sagemaker_session.boto_region_name = 'us-east-1'
     estimator.sagemaker_session._default_bucket = 'sagemaker'
@@ -142,6 +195,65 @@ def test_training_step_creation(pca_estimator):
                 'TrialName': 'pca_trial',
                 'TrialComponentDisplayName': 'Training'                
             },
+            'TrainingJobName': 'TrainingJob'
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
+        'End': True
+    }
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+def test_training_step_creation_with_debug_hook(pca_estimator_with_debug_hook):
+    step = TrainingStep('Training',
+        estimator=pca_estimator_with_debug_hook,
+        job_name='TrainingJob')
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'AlgorithmSpecification': {
+                'TrainingImage': PCA_IMAGE,
+                'TrainingInputMode': 'File'
+            },
+            'OutputDataConfig': {
+                'S3OutputPath': 's3://sagemaker/models'
+            },
+            'StoppingCondition': {
+                'MaxRuntimeInSeconds': 86400
+            },
+            'ResourceConfig': {
+                'InstanceCount': 1,
+                'InstanceType': 'ml.c4.xlarge',
+                'VolumeSizeInGB': 30
+            },
+            'RoleArn': EXECUTION_ROLE,
+            'HyperParameters': {
+                'feature_dim': '50000',
+                'num_components': '10',
+                'subtract_mean': 'True',
+                'algorithm_mode': 'randomized',
+                'mini_batch_size': '200'
+            },
+            'DebugHookConfig': {
+                'S3OutputPath': 's3://sagemaker/output/debug',
+                'HookParameters': {'save_interval': '1'},
+                'CollectionConfigurations': [
+                    {'CollectionName': 'hyperparameters'},
+                    {'CollectionName': 'metrics'}
+                ]
+            },
+            'DebugRuleConfigurations': [
+                {
+                    'RuleConfigurationName': 'Confusion',
+                    'RuleEvaluatorImage': '503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest',
+                    'RuleParameters': {
+                        'rule_to_invoke': 'Confusion',
+                        'category_no': '15',
+                        'min_diag': '0.7',
+                        'max_off_diag': '0.3',
+                        'start_step': '17',
+                        'end_step': '19'
+                    }
+                }
+            ],
             'TrainingJobName': 'TrainingJob'
         },
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
@@ -230,6 +342,9 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
             ],
             'OutputDataConfig': {
                 'S3OutputPath': 's3://sagemaker/models'
+            },
+            'DebugHookConfig': {
+                'S3OutputPath': 's3://sagemaker/models/debug'
             },
             'StoppingCondition': {
                 'MaxRuntimeInSeconds': 86400
