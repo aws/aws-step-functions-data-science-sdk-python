@@ -215,7 +215,7 @@ class EndpointConfigStep(Task):
     Creates a Task State to `create an endpoint configuration in SageMaker <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateEndpointConfig.html>`_.
     """
 
-    def __init__(self, state_id, endpoint_config_name, model_name, initial_instance_count, instance_type, data_capture_config=None, tags=None, **kwargs):
+    def __init__(self, state_id, endpoint_config_name, model_name, initial_instance_count, instance_type, variant_name='AllTraffic', data_capture_config=None, tags=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -223,6 +223,7 @@ class EndpointConfigStep(Task):
             model_name (str or Placeholder): The name of the SageMaker model to attach to the endpoint configuration. We recommend to use :py:class:`~stepfunctions.inputs.ExecutionInput` placeholder collection to pass the value dynamically in each execution.
             initial_instance_count (int or Placeholder): The initial number of instances to run in the ``Endpoint`` created from this ``Model``.
             instance_type (str or Placeholder): The EC2 instance type to deploy this Model to. For example, 'ml.p2.xlarge'.
+            variant_name (str, optional): The name of the production variant.
             data_capture_config (sagemaker.model_monitor.DataCaptureConfig, optional): Specifies
                 configuration related to Endpoint data capture for use with
                 Amazon SageMaker Model Monitoring. Default: None.
@@ -234,7 +235,7 @@ class EndpointConfigStep(Task):
                 'InitialInstanceCount': initial_instance_count,
                 'InstanceType': instance_type,
                 'ModelName': model_name,
-                'VariantName': 'AllTraffic'
+                'VariantName': variant_name
             }]
         }
 
