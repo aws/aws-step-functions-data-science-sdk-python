@@ -35,6 +35,7 @@ MOCK_MODULES = [
     'boto3',
     'sagemaker',
     'sagemaker.model',
+    'sagemaker.model_monitor',
     'sagemaker.pipeline',
     'sagemaker.sklearn',
     'sagemaker.sklearn.estimator',
