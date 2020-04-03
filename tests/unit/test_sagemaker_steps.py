@@ -32,6 +32,8 @@ from tests.unit.utils import mock_boto_api_call
 EXECUTION_ROLE = 'execution-role'
 PCA_IMAGE = '382416733822.dkr.ecr.us-east-1.amazonaws.com/pca:1'
 TENSORFLOW_IMAGE = '520713654638.dkr.ecr.us-east-1.amazonaws.com/sagemaker-tensorflow:1.13-gpu-py2'
+DEFAULT_TAGS = {'Purpose': 'unittests'}
+DEFAULT_TAGS_LIST = [{'Key': 'Purpose', 'Value': 'unittests'}]
 
 @pytest.fixture
 def pca_estimator():
@@ -163,7 +165,9 @@ def test_training_step_creation(pca_estimator):
             'ExperimentName': 'pca_experiment',
             'TrialName': 'pca_trial',
             'TrialComponentDisplayName': 'Training'
-        })
+        },
+        tags=DEFAULT_TAGS,
+    )
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -195,7 +199,8 @@ def test_training_step_creation(pca_estimator):
                 'TrialName': 'pca_trial',
                 'TrialComponentDisplayName': 'Training'                
             },
-            'TrainingJobName': 'TrainingJob'
+            'TrainingJobName': 'TrainingJob',
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
         'End': True
@@ -318,7 +323,8 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
         estimator=tensorflow_estimator,
         data={'train': 's3://sagemaker/train'},
         job_name='tensorflow-job',
-        mini_batch_size=1024
+        mini_batch_size=1024,
+        tags=DEFAULT_TAGS,
     )
     
     assert step.to_dict() == {
@@ -364,7 +370,9 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
                 'sagemaker_region': '"us-east-1"',
                 'sagemaker_submit_directory': '"s3://sagemaker/source"'
             },
-            'TrainingJobName': 'tensorflow-job'
+            'TrainingJobName': 'tensorflow-job',
+            'Tags': DEFAULT_TAGS_LIST
+
         },
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
         'End': True
@@ -380,7 +388,8 @@ def test_transform_step_creation(pca_transformer):
             'ExperimentName': 'pca_experiment',
             'TrialName': 'pca_trial',
             'TrialComponentDisplayName': 'Transform'
-        }
+        },
+        tags=DEFAULT_TAGS,
     )
     assert step.to_dict() == {
         'Type': 'Task',
@@ -406,7 +415,8 @@ def test_transform_step_creation(pca_transformer):
                 'ExperimentName': 'pca_experiment',
                 'TrialName': 'pca_trial',
                 'TrialComponentDisplayName': 'Transform'                
-            }
+            },
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createTransformJob.sync',
         'End': True
@@ -465,7 +475,7 @@ def test_get_expected_model_with_framework_estimator(tensorflow_estimator):
     }
 
 def test_model_step_creation(pca_model):
-    step = ModelStep('Create model', model=pca_model, model_name='pca-model')
+    step = ModelStep('Create model', model=pca_model, model_name='pca-model', tags=DEFAULT_TAGS)
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -475,7 +485,8 @@ def test_model_step_creation(pca_model):
                 'Environment': {},
                 'Image': pca_model.image,
                 'ModelDataUrl': pca_model.model_data
-            }
+            },
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createModel',
         'End': True
@@ -491,7 +502,9 @@ def test_endpoint_config_step_creation(pca_model):
         model_name='pca-model', 
         initial_instance_count=1, 
         instance_type='ml.p2.xlarge',
-        data_capture_config=data_capture_config)
+        data_capture_config=data_capture_config,
+        tags=DEFAULT_TAGS,
+        )
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -514,30 +527,33 @@ def test_endpoint_config_step_creation(pca_model):
                     'CsvContentTypes': ['text/csv'],
                     'JsonContentTypes': ['application/json']
                 }
-            }
+            },
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createEndpointConfig',
         'End': True
     }
 
 def test_endpoint_step_creation(pca_model):
-    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig')
+    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', tags=DEFAULT_TAGS)
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
             'EndpointConfigName': 'MyEndpointConfig',
-            'EndpointName': 'MyEndPoint'
+            'EndpointName': 'MyEndPoint',
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createEndpoint',
         'End': True
     }
 
-    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', update=True)
+    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', update=True, tags=DEFAULT_TAGS)
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
             'EndpointConfigName': 'MyEndpointConfig',
-            'EndpointName': 'MyEndPoint'
+            'EndpointName': 'MyEndPoint',
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:updateEndpoint',
         'End': True
