@@ -351,17 +351,18 @@ def test_retry_fail_for_unsupported_state():
 
 def test_result_path_none():
     task_state = Task('Task', resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda', result_path=None)
-    assert task_state.to_dict() == {
-        'Type': 'Task',
-        'Resource': 'arn:aws:lambda:us-east-1:1234567890:function:StartLambda',
-        'ResultPath': None,
-        'End': True
-    }
+    assert 'ResultPath' in task_state.to_dict()
+    assert task_state.to_dict()['ResultPath'] is None
 
 
 def test_result_path_none_converted_to_null():
     task_state = Task('Task', resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda', result_path=None)
     assert '"ResultPath": null' in task_state.to_json()
+
+
+def test_default_result_path_not_included():
+    task_state = Task('Task', resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda')
+    assert 'ResultPath' not in task_state.to_dict()
 
 
 def test_default_result_path_not_converted_to_null():
