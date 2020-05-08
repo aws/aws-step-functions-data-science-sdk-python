@@ -349,22 +349,40 @@ def test_retry_fail_for_unsupported_state():
         c1.add_catch(Catch(error_equals=["States.NoChoiceMatched"], next_step=Fail("ChoiceFailed")))
 
 
-def test_result_path_none():
-    task_state = Task('Task', resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda', result_path=None)
+def test_paths_none():
+    task_state = Task('Task', resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda',
+                      result_path=None,
+                      input_path=None,
+                      output_path=None)
     assert 'ResultPath' in task_state.to_dict()
     assert task_state.to_dict()['ResultPath'] is None
 
+    assert 'InputPath' in task_state.to_dict()
+    assert task_state.to_dict()['InputPath'] is None
 
-def test_result_path_none_converted_to_null():
-    task_state = Task('Task', resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda', result_path=None)
+    assert 'OutputPath' in task_state.to_dict()
+    assert task_state.to_dict()['OutputPath'] is None
+
+
+def test_paths_none_converted_to_null():
+    task_state = Task('Task', resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda',
+                      result_path=None,
+                      input_path=None,
+                      output_path=None)
     assert '"ResultPath": null' in task_state.to_json()
+    assert '"InputPath": null' in task_state.to_json()
+    assert '"OutputPath": null' in task_state.to_json()
 
 
-def test_default_result_path_not_included():
+def test_default_paths_not_included():
     task_state = Task('Task', resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda')
     assert 'ResultPath' not in task_state.to_dict()
+    assert 'InputPath' not in task_state.to_dict()
+    assert 'OutputPath' not in task_state.to_dict()
 
 
-def test_default_result_path_not_converted_to_null():
+def test_default_paths_not_converted_to_null():
     task_state = Task('Task', resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda')
     assert '"ResultPath": null' not in task_state.to_json()
+    assert '"InputPath": null' not in task_state.to_json()
+    assert '"OutputPath": null' not in task_state.to_json()
