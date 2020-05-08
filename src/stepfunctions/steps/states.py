@@ -66,9 +66,10 @@ class Block(object):
 
     def to_dict(self):
         result = {}
+        fields_accepted_as_none = ('result_path', 'input_path', 'output_path')
         # Common fields
         for k, v in self.fields.items():
-            if v is not None:
+            if v is not None or k in fields_accepted_as_none:
                 k = to_pascalcase(k)
                 if k == to_pascalcase(Field.Parameters.value):
                     result[k] = self._replace_placeholders(v)
