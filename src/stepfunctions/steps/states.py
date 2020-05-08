@@ -68,7 +68,7 @@ class Block(object):
         result = {}
         # Common fields
         for k, v in self.fields.items():
-            if v is not None:
+            if v is not None or k == 'result_path':
                 k = to_pascalcase(k)
                 if k == to_pascalcase(Field.Parameters.value):
                     result[k] = self._replace_placeholders(v)
