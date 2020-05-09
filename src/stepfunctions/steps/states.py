@@ -74,6 +74,10 @@ class Block(object):
                     result[k] = self._replace_placeholders(v)
                 else:
                     result[k] = v
+            else:  # v is None
+                if k == Field.ResultPath.value:
+                    # Need to preserve ResultPath as null in this case
+                    result[k] = None
 
         return result
 

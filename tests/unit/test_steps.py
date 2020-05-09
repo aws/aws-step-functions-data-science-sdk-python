@@ -48,6 +48,34 @@ def test_state_creation():
     with pytest.raises(TypeError):
         State(state_id='State', unknown_attribute=True)
 
+
+def test_state_creation_null_result_path():
+    state = State(
+        state_id='StartState',
+        state_type='Void',
+        comment='This is a comment',
+        input_path='$.Input',
+        output_path='$.Output',
+        parameters={'Key': 'Value'},
+        result_path=None,
+    )
+
+    assert state.to_dict() == {
+        'Type': 'Void',
+        'Comment': 'This is a comment',
+        'InputPath': '$.Input',
+        'OutputPath': '$.Output',
+        'Parameters': {
+            'Key': 'Value'
+        },
+        'ResultPath': None,
+        'End': True
+    }
+
+    with pytest.raises(TypeError):
+        State(state_id='State', unknown_attribute=True)
+
+
 def test_pass_state_creation():
     pass_state = Pass('Pass', result='Pass')
     assert pass_state.state_id == 'Pass'
