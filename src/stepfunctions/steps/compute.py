@@ -27,6 +27,7 @@ class LambdaStep(Task):
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             wait_for_callback(bool, optional): Boolean value set to `True` if the Task state should wait for callback to resume the operation. (default: False)
+            lambda_arn (str, optional): ARN of Lambda Funtion to execute
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
             comment (str, optional): Human-readable comment or description. (default: None)
@@ -38,7 +39,11 @@ class LambdaStep(Task):
         if wait_for_callback:
             kwargs[Field.Resource.value] = 'arn:aws:states:::lambda:invoke.waitForTaskToken'
         else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::lambda:invoke'
+            try:
+                kwargs[Field.Resource.value] = kwargs.pop('lambda_arn')
+            except KeyError:
+                # Lambda ARN is not provided, fallback on Parameters-FunctionName
+                kwargs[Field.Resource.value] = 'arn:aws:states:::lambda:invoke'
 
         super(LambdaStep, self).__init__(state_id, **kwargs)
 
