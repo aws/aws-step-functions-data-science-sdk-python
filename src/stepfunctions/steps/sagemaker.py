@@ -115,7 +115,7 @@ class TransformStep(Task):
     Creates a Task State to execute a `SageMaker Transform Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTransformJob.html>`_.
     """
 
-    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None, compression_type=None, split_type=None, experiment_config=None, wait_for_completion=True, tags=None, **kwargs):
+    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None, compression_type=None, split_type=None, experiment_config=None, wait_for_completion=True, tags=None, input_filter=None, output_filter=None, join_source=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -150,7 +150,10 @@ class TransformStep(Task):
                 content_type=content_type,
                 compression_type=compression_type,
                 split_type=split_type,
-                job_name=job_name
+                job_name=job_name,
+                input_filter=input_filter,
+                join_source=join_source,
+                output_filter=output_filter
             )
         else:
             parameters = transform_config(
@@ -159,7 +162,10 @@ class TransformStep(Task):
                 data_type=data_type,
                 content_type=content_type,
                 compression_type=compression_type,
-                split_type=split_type
+                split_type=split_type,
+                input_filter=input_filter,
+                join_source=join_source,
+                output_filter=output_filter
             )
 
         if isinstance(job_name, (ExecutionInput, StepInput)):
@@ -253,7 +259,7 @@ class EndpointConfigStep(Task):
 
         if isinstance(data_capture_config, DataCaptureConfig):
             parameters['DataCaptureConfig'] = data_capture_config._to_request_dict()
-            
+
         if tags:
             parameters['Tags'] = tags_dict_to_kv_list(tags)
 

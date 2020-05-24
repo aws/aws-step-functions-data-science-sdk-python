@@ -422,6 +422,57 @@ def test_transform_step_creation(pca_transformer):
         'End': True
     }
 
+    step_with_optional_fields = TransformStep('Inference',
+        transformer=pca_transformer,
+        data='s3://sagemaker/inference',
+        job_name='transform-job',
+        model_name='pca-model',
+        experiment_config={
+            'ExperimentName': 'pca_experiment',
+            'TrialName': 'pca_trial',
+            'TrialComponentDisplayName': 'Transform'
+        },
+        tags=DEFAULT_TAGS,
+        join_source='Input',
+        output_filter='$[2:]',
+        input_filter='$[1:]'
+    )
+    assert step_with_optional_fields.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'ModelName': 'pca-model',
+            'TransformInput': {
+                'DataSource': {
+                    'S3DataSource': {
+                        'S3DataType': 'S3Prefix',
+                        'S3Uri': 's3://sagemaker/inference'
+                    }
+                }
+            },
+            'TransformOutput': {
+                'S3OutputPath': 's3://sagemaker/transform-output'
+            },
+            'TransformJobName': 'transform-job',
+            'TransformResources': {
+                'InstanceCount': 1,
+                'InstanceType': 'ml.c4.xlarge'
+            },
+            'DataProcessing': {
+                'InputFilter': '$[1:]',
+                'OutputFilter': '$[2:]',
+                'JoinSource': 'Input',
+            },
+            'ExperimentConfig': {
+                'ExperimentName': 'pca_experiment',
+                'TrialName': 'pca_trial',
+                'TrialComponentDisplayName': 'Transform'
+            },
+            'Tags': DEFAULT_TAGS_LIST
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createTransformJob.sync',
+        'End': True
+    }
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_get_expected_model(pca_estimator):
     training_step = TrainingStep('Training', estimator=pca_estimator, job_name='TrainingJob')
