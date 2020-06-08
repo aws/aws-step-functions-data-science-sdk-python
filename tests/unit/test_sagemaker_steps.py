@@ -419,7 +419,7 @@ def test_transform_step_creation(pca_transformer):
                 'TrialName': 'pca_trial',
                 'TrialComponentDisplayName': 'Transform'                
             },
-            'DataPreProcessing': {
+            'DataProcessing': {
                 'InputFilter': '$[1:]',
                 'OutputFilter': '$[2:]',
                 'JoinSource': 'Input',
