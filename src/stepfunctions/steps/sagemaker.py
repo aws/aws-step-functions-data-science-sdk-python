@@ -154,9 +154,9 @@ class TransformStep(Task):
                 compression_type=compression_type,
                 split_type=split_type,
                 job_name=job_name,
-                input_filter=None,
-                output_filter=None,
-                join_source=None
+                input_filter=input_filter,
+                output_filter=output_filter,
+                join_source=join_source
             )
         else:
             parameters = transform_config(
@@ -166,9 +166,9 @@ class TransformStep(Task):
                 content_type=content_type,
                 compression_type=compression_type,
                 split_type=split_type,
-                input_filter=None,
-                output_filter=None,
-                join_source=None
+                input_filter=input_filter,
+                output_filter=output_filter,
+                join_source=join_source
             )
 
         if isinstance(job_name, (ExecutionInput, StepInput)):
