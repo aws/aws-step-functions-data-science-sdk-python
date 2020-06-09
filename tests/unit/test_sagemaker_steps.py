@@ -390,6 +390,9 @@ def test_transform_step_creation(pca_transformer):
             'TrialComponentDisplayName': 'Transform'
         },
         tags=DEFAULT_TAGS,
+        join_source='Input',
+        output_filter='$[2:]',
+        input_filter='$[1:]'
     )
     assert step.to_dict() == {
         'Type': 'Task',
@@ -415,6 +418,11 @@ def test_transform_step_creation(pca_transformer):
                 'ExperimentName': 'pca_experiment',
                 'TrialName': 'pca_trial',
                 'TrialComponentDisplayName': 'Transform'                
+            },
+            'DataProcessing': {
+                'InputFilter': '$[1:]',
+                'OutputFilter': '$[2:]',
+                'JoinSource': 'Input',
             },
             'Tags': DEFAULT_TAGS_LIST
         },

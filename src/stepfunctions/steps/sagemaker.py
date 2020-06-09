@@ -115,7 +115,7 @@ class TransformStep(Task):
     Creates a Task State to execute a `SageMaker Transform Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTransformJob.html>`_.
     """
 
-    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None, compression_type=None, split_type=None, experiment_config=None, wait_for_completion=True, tags=None, **kwargs):
+    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None, compression_type=None, split_type=None, experiment_config=None, wait_for_completion=True, tags=None, input_filter=None, output_filter=None, join_source=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -136,6 +136,9 @@ class TransformStep(Task):
             experiment_config (dict, optional): Specify the experiment config for the transform. (Default: None)
             wait_for_completion(bool, optional): Boolean value set to `True` if the Task state should wait for the transform job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the transform job and proceed to the next step. (default: True)
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            input_filter (str): A JSONPath to select a portion of the input to pass to the algorithm container for inference. If you omit the field, it gets the value ‘$’, representing the entire input. For CSV data, each row is taken as a JSON array, so only index-based JSONPaths can be applied, e.g. $[0], $[1:]. CSV data should follow the RFC format. See Supported JSONPath Operators for a table of supported JSONPath operators. For more information, see the SageMaker API documentation for CreateTransformJob. Some examples: “$[1:]”, “$.features” (default: None).
+            output_filter (str): A JSONPath to select a portion of the joined/original output to return as the output. For more information, see the SageMaker API documentation for CreateTransformJob. Some examples: “$[1:]”, “$.prediction” (default: None).
+            join_source (str): The source of data to be joined to the transform output. It can be set to ‘Input’ meaning the entire input record will be joined to the inference result. You can use OutputFilter to select the useful portion before uploading to S3. (default: None). Valid values: Input, None.
         """
         if wait_for_completion:
             kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createTransformJob.sync'
@@ -150,7 +153,10 @@ class TransformStep(Task):
                 content_type=content_type,
                 compression_type=compression_type,
                 split_type=split_type,
-                job_name=job_name
+                job_name=job_name,
+                input_filter=input_filter,
+                output_filter=output_filter,
+                join_source=join_source
             )
         else:
             parameters = transform_config(
@@ -159,7 +165,10 @@ class TransformStep(Task):
                 data_type=data_type,
                 content_type=content_type,
                 compression_type=compression_type,
-                split_type=split_type
+                split_type=split_type,
+                input_filter=input_filter,
+                output_filter=output_filter,
+                join_source=join_source
             )
 
         if isinstance(job_name, (ExecutionInput, StepInput)):
