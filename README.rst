@@ -256,7 +256,7 @@ Once the steps are chained together, you can define the workflow definition.
 Visualizing a Workflow
 ~~~~~~~~~~~~~~~~~~~~~~
 
-The following generates a graphical representation of your workflow.
+The following generates a graphical representation of your workflow. Please note that visualization currently only works in Jupyter notebooks. Visualization is not available in JupyterLab.
 
 .. code-block:: python
 
