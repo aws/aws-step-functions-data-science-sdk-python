@@ -463,7 +463,7 @@ The command returns results that are similar to the following:
 
 .. code-block:: text
 
-  gpg: key 60EB103AE314A809: public key "Stepfunctions-Python-SDK-Signing <stepfunctions-developer-experience@amazon.com>" imported
+  gpg: key 60EB103AE314A809: public key "Stepfunctions-Python-SDK-Signing <stepfunctions-developer-experience [at] amazon.com>" imported
   gpg: Total number processed: 1
   gpg:               imported: 1
 
@@ -484,7 +484,7 @@ This command returns results similar to the following:
   pub   rsa4096 2019-10-31 [SC] [expires: 2030-10-31] CC16 0577 B7BF 9D3D 6E5D
   51C5 60EB 103A E314 A809 uid           [ unknown]
   Stepfunctions-Python-SDK-Signing
-  <stepfunctions-developer-experience@amazon.com> sub   rsa4096 2019-10-31 [E]
+  <stepfunctions-developer-experience [at] amazon.com> sub   rsa4096 2019-10-31 [E]
   [expires: 2030-10-31]
 
 Additionally, the fingerprint string should be identical to CC16 0577 B7BF
@@ -529,13 +529,13 @@ The output should look something like the following:
 
   gpg: Signature made Thu 31 Oct 12:14:53 2019 PDT
   gpg:                using RSA key CC160577B7BF9D3D6E5D51C560EB103AE314A809
-  gpg: Good signature from "Stepfunctions-Python-SDK-Signing <stepfunctions-developer-experience@amazon.com>" [unknown]
+  gpg: Good signature from "Stepfunctions-Python-SDK-Signing <stepfunctions-developer-experience [at] amazon.com>" [unknown]
   gpg: WARNING: This key is not certified with a trusted signature!
   gpg:          There is no indication that the signature belongs to the owner.
   Primary key fingerprint: CC16 0577 B7BF 9D3D 6E5D  51C5 60EB 103A E314 A809
 
 If the output contains the phrase Good signature from "AWS Data Science
-Workflows Python SDK <stepfunctions-developer-experience@amazon.com>", it means
+Workflows Python SDK <stepfunctions-developer-experience [at] amazon.com>", it means
 that the signature has successfully been verified, and you can proceed to run
 the AWS Data Science Workflows Python SDK package.
 
