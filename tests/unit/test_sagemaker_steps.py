@@ -167,6 +167,10 @@ def sklearn_processor():
         instance_count=1,
     )
 
+    processor.sagemaker_session = MagicMock()
+    processor.sagemaker_session.boto_region_name = 'us-east-1'
+    processor.sagemaker_session._default_bucket = 'sagemaker'
+
     return processor
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
@@ -643,10 +647,7 @@ def test_processing_step_creation(sklearn_processor):
                 }
             },
             'ProcessingJobName': 'MyProcessingJob',
-            'RoleArn': EXECUTION_ROLE,
-            'StoppingCondition': {
-                'MaxRuntimeInSeconds': None
-            }
+            'RoleArn': EXECUTION_ROLE
         },
         'Resource': 'arn:aws:states:::sagemaker:createProcessingJob.sync',
         'End': True
