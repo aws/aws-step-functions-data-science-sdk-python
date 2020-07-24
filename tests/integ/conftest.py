@@ -20,6 +20,7 @@ import os
 import pickle
 from sagemaker import Session
 from sagemaker.amazon import pca
+from sagemaker.sklearn.processing import SKLearnProcessor
 from tests.integ import DATA_DIR
 
 @pytest.fixture(scope="session")
@@ -57,6 +58,17 @@ def pca_estimator_fixture(sagemaker_role_arn):
         num_components=48
     )
     return estimator
+
+@pytest.fixture(scope="session")
+def sklearn_processor_fixture(sagemaker_role_arn):
+    processor = SKLearnProcessor(
+        framework_version="0.20.0",
+        role=sagemaker_role_arn,
+        instance_type="ml.m5.xlarge",
+        instance_count=1,
+        max_runtime_in_seconds=300
+    )
+    return processor
 
 @pytest.fixture(scope="session")
 def train_set():

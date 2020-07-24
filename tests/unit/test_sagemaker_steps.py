@@ -22,9 +22,11 @@ from sagemaker.tensorflow import TensorFlow
 from sagemaker.pipeline import PipelineModel
 from sagemaker.model_monitor import DataCaptureConfig
 from sagemaker.debugger import Rule, rule_configs, DebuggerHookConfig, CollectionConfig
+from sagemaker.sklearn.processing import SKLearnProcessor
+from sagemaker.processing import ProcessingInput, ProcessingOutput
 
 from unittest.mock import MagicMock, patch
-from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep
+from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, ProcessingStep
 from stepfunctions.steps.sagemaker import tuning_config
 
 from tests.unit.utils import mock_boto_api_call
@@ -155,6 +157,22 @@ def tensorflow_estimator():
     estimator.sagemaker_session._default_bucket = 'sagemaker'
     
     return estimator
+
+@pytest.fixture
+def sklearn_processor():
+    sagemaker_session = MagicMock()
+    sagemaker_session.boto_region_name = 'us-east-1'
+    sagemaker_session._default_bucket = 'sagemaker'
+
+    processor = SKLearnProcessor(
+        framework_version="0.20.0",
+        role=EXECUTION_ROLE,
+        instance_type="ml.m5.xlarge",
+        instance_count=1,
+        sagemaker_session=sagemaker_session
+    )
+
+    return processor
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_training_step_creation(pca_estimator):
@@ -564,5 +582,74 @@ def test_endpoint_step_creation(pca_model):
             'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:updateEndpoint',
+        'End': True
+    }
+
+def test_processing_step_creation(sklearn_processor):
+    inputs = [ProcessingInput(source='dataset.csv', destination='/opt/ml/processing/input')]
+    outputs = [
+        ProcessingOutput(source='/opt/ml/processing/output/train'),
+        ProcessingOutput(source='/opt/ml/processing/output/validation'),
+        ProcessingOutput(source='/opt/ml/processing/output/test')
+    ]
+    step = ProcessingStep('Feature Transformation', sklearn_processor, 'MyProcessingJob', inputs=inputs, outputs=outputs)
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'AppSpecification': {
+                'ImageUri': '683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.20.0-cpu-py3'
+            },
+            'ProcessingInputs': [
+                {
+                    'InputName': None,
+                    'S3Input': {
+                        'LocalPath': '/opt/ml/processing/input',
+                        'S3CompressionType': 'None',
+                        'S3DataDistributionType': 'FullyReplicated',
+                        'S3DataType': 'S3Prefix',
+                        'S3InputMode': 'File',
+                        'S3Uri': 'dataset.csv'
+                    }
+                }
+            ],
+            'ProcessingOutputConfig': {
+                'Outputs': [
+                    {
+                        'OutputName': None,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/train',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    },
+                    {
+                        'OutputName': None,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/validation',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    },
+                    {
+                        'OutputName': None,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/test',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    }
+                ]
+            },
+            'ProcessingResources': {
+                'ClusterConfig': {
+                    'InstanceCount': 1,
+                    'InstanceType': 'ml.m5.xlarge',
+                    'VolumeSizeInGB': 30
+                }
+            },
+            'ProcessingJobName': 'MyProcessingJob',
+            'RoleArn': EXECUTION_ROLE
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createProcessingJob.sync',
         'End': True
     }
