@@ -160,16 +160,17 @@ def tensorflow_estimator():
 
 @pytest.fixture
 def sklearn_processor():
+    sagemaker_session = MagicMock()
+    sagemaker_session.boto_region_name = 'us-east-1'
+    sagemaker_session._default_bucket = 'sagemaker'
+
     processor = SKLearnProcessor(
         framework_version="0.20.0",
         role=EXECUTION_ROLE,
         instance_type="ml.m5.xlarge",
         instance_count=1,
+        sagemaker_session=sagemaker_session
     )
-
-    processor.sagemaker_session = MagicMock()
-    processor.sagemaker_session.boto_region_name = 'us-east-1'
-    processor.sagemaker_session._default_bucket = 'sagemaker'
 
     return processor
 
