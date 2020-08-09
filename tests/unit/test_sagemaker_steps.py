@@ -12,23 +12,22 @@
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 import sagemaker
-import boto3
-
-from sagemaker.transformer import Transformer
-from sagemaker.model import Model
-from sagemaker.tensorflow import TensorFlow
-from sagemaker.pipeline import PipelineModel
-from sagemaker.model_monitor import DataCaptureConfig
 from sagemaker.debugger import Rule, rule_configs, DebuggerHookConfig, CollectionConfig
-from sagemaker.sklearn.processing import SKLearnProcessor
+from sagemaker.model import Model
+from sagemaker.model_monitor import DataCaptureConfig
 from sagemaker.processing import ProcessingInput, ProcessingOutput
+from sagemaker.sklearn.processing import SKLearnProcessor
+from sagemaker.tensorflow import TensorFlow
+from sagemaker.transformer import Transformer
 
-from unittest.mock import MagicMock, patch
-from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, ProcessingStep
-from stepfunctions.steps.sagemaker import tuning_config
-
+from stepfunctions.exceptions import ForbiddenValueParameter
+from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, \
+    ProcessingStep
+from stepfunctions.steps.states import IntegrationPattern
 from tests.unit.utils import mock_boto_api_call
 
 EXECUTION_ROLE = 'execution-role'
@@ -36,6 +35,7 @@ PCA_IMAGE = '382416733822.dkr.ecr.us-east-1.amazonaws.com/pca:1'
 TENSORFLOW_IMAGE = '520713654638.dkr.ecr.us-east-1.amazonaws.com/sagemaker-tensorflow:1.13-gpu-py2'
 DEFAULT_TAGS = {'Purpose': 'unittests'}
 DEFAULT_TAGS_LIST = [{'Key': 'Purpose', 'Value': 'unittests'}]
+
 
 @pytest.fixture
 def pca_estimator():
@@ -63,6 +63,7 @@ def pca_estimator():
 
     return pca
 
+
 @pytest.fixture
 def pca_estimator_with_debug_hook():
     s3_output_location = 's3://sagemaker/models'
@@ -79,13 +80,13 @@ def pca_estimator_with_debug_hook():
     )
 
     rules = [Rule.sagemaker(rule_configs.confusion(),
-        rule_parameters={
-            "category_no": "15",
-            "min_diag": "0.7",
-            "max_off_diag": "0.3",
-            "start_step": "17",
-            "end_step": "19"}
-    )]
+                            rule_parameters={
+                                "category_no": "15",
+                                "min_diag": "0.7",
+                                "max_off_diag": "0.3",
+                                "start_step": "17",
+                                "end_step": "19"}
+                            )]
 
     pca = sagemaker.estimator.Estimator(
         PCA_IMAGE,
@@ -93,7 +94,7 @@ def pca_estimator_with_debug_hook():
         train_instance_count=1,
         train_instance_type='ml.c4.xlarge',
         output_path=s3_output_location,
-        debugger_hook_config = hook_config,
+        debugger_hook_config=hook_config,
         rules=rules
     )
 
@@ -111,6 +112,7 @@ def pca_estimator_with_debug_hook():
 
     return pca
 
+
 @pytest.fixture
 def pca_model():
     model_data = 's3://sagemaker/models/pca.tar.gz'
@@ -121,6 +123,7 @@ def pca_model():
         name='pca-model'
     )
 
+
 @pytest.fixture
 def pca_transformer(pca_model):
     return Transformer(
@@ -130,23 +133,24 @@ def pca_transformer(pca_model):
         output_path='s3://sagemaker/transform-output'
     )
 
+
 @pytest.fixture
 def tensorflow_estimator():
     s3_output_location = 's3://sagemaker/models'
     s3_source_location = 's3://sagemaker/source'
 
     estimator = TensorFlow(entry_point='tf_train.py',
-        role=EXECUTION_ROLE,
-        framework_version='1.13',
-        training_steps=1000,
-        evaluation_steps=100,
-        train_instance_count=1,
-        train_instance_type='ml.p2.xlarge',
-        output_path=s3_output_location,
-        source_dir=s3_source_location,
-        image_name=TENSORFLOW_IMAGE,
-        checkpoint_path='s3://sagemaker/models/sagemaker-tensorflow/checkpoints'
-    )
+                           role=EXECUTION_ROLE,
+                           framework_version='1.13',
+                           training_steps=1000,
+                           evaluation_steps=100,
+                           train_instance_count=1,
+                           train_instance_type='ml.p2.xlarge',
+                           output_path=s3_output_location,
+                           source_dir=s3_source_location,
+                           image_name=TENSORFLOW_IMAGE,
+                           checkpoint_path='s3://sagemaker/models/sagemaker-tensorflow/checkpoints'
+                           )
 
     estimator.debugger_hook_config = DebuggerHookConfig(
         s3_output_path='s3://sagemaker/models/debug'
@@ -155,8 +159,9 @@ def tensorflow_estimator():
     estimator.sagemaker_session = MagicMock()
     estimator.sagemaker_session.boto_region_name = 'us-east-1'
     estimator.sagemaker_session._default_bucket = 'sagemaker'
-    
+
     return estimator
+
 
 @pytest.fixture
 def sklearn_processor():
@@ -174,18 +179,19 @@ def sklearn_processor():
 
     return processor
 
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_training_step_creation(pca_estimator):
-    step = TrainingStep('Training', 
-        estimator=pca_estimator, 
-        job_name='TrainingJob', 
-        experiment_config={
-            'ExperimentName': 'pca_experiment',
-            'TrialName': 'pca_trial',
-            'TrialComponentDisplayName': 'Training'
-        },
-        tags=DEFAULT_TAGS,
-    )
+    step = TrainingStep('Training',
+                        estimator=pca_estimator,
+                        job_name='TrainingJob',
+                        experiment_config={
+                            'ExperimentName': 'pca_experiment',
+                            'TrialName': 'pca_trial',
+                            'TrialComponentDisplayName': 'Training'
+                        },
+                        tags=DEFAULT_TAGS,
+                        )
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -215,7 +221,7 @@ def test_training_step_creation(pca_estimator):
             'ExperimentConfig': {
                 'ExperimentName': 'pca_experiment',
                 'TrialName': 'pca_trial',
-                'TrialComponentDisplayName': 'Training'                
+                'TrialComponentDisplayName': 'Training'
             },
             'TrainingJobName': 'TrainingJob',
             'Tags': DEFAULT_TAGS_LIST
@@ -223,12 +229,24 @@ def test_training_step_creation(pca_estimator):
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
         'End': True
     }
+    with pytest.raises(ForbiddenValueParameter):
+        step = TrainingStep('Training',
+                            estimator=pca_estimator,
+                            job_name='TrainingJob',
+                            experiment_config={
+                                'ExperimentName': 'pca_experiment',
+                                'TrialName': 'pca_trial',
+                                'TrialComponentDisplayName': 'Training'
+                            },
+                            tags=DEFAULT_TAGS,
+                            integration_pattern=IntegrationPattern.WaitForCallback)
+
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_training_step_creation_with_debug_hook(pca_estimator_with_debug_hook):
     step = TrainingStep('Training',
-        estimator=pca_estimator_with_debug_hook,
-        job_name='TrainingJob')
+                        estimator=pca_estimator_with_debug_hook,
+                        job_name='TrainingJob')
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -282,11 +300,17 @@ def test_training_step_creation_with_debug_hook(pca_estimator_with_debug_hook):
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
         'End': True
     }
+    with pytest.raises(ForbiddenValueParameter):
+        step = TrainingStep('Training',
+                            estimator=pca_estimator_with_debug_hook,
+                            job_name='TrainingJob', integration_pattern=IntegrationPattern.WaitForCallback)
+
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_training_step_creation_with_model(pca_estimator):
     training_step = TrainingStep('Training', estimator=pca_estimator, job_name='TrainingJob')
-    model_step = ModelStep('Training - Save Model', training_step.get_expected_model(model_name=training_step.output()['TrainingJobName']))
+    model_step = ModelStep('Training - Save Model',
+                           training_step.get_expected_model(model_name=training_step.output()['TrainingJobName']))
     training_step.next(model_step)
     assert training_step.to_dict() == {
         'Type': 'Task',
@@ -334,17 +358,20 @@ def test_training_step_creation_with_model(pca_estimator):
         },
         'End': True
     }
+    with pytest.raises(ForbiddenValueParameter):
+        training_step = TrainingStep('Training', estimator=pca_estimator, job_name='TrainingJob', integration_pattern=IntegrationPattern.WaitForCallback)
+
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_training_step_creation_with_framework(tensorflow_estimator):
     step = TrainingStep('Training',
-        estimator=tensorflow_estimator,
-        data={'train': 's3://sagemaker/train'},
-        job_name='tensorflow-job',
-        mini_batch_size=1024,
-        tags=DEFAULT_TAGS,
-    )
-    
+                        estimator=tensorflow_estimator,
+                        data={'train': 's3://sagemaker/train'},
+                        job_name='tensorflow-job',
+                        mini_batch_size=1024,
+                        tags=DEFAULT_TAGS,
+                        )
+
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -395,23 +422,32 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
         'End': True
     }
+    with pytest.raises(ForbiddenValueParameter):
+        step = TrainingStep('Training',
+                        estimator=tensorflow_estimator,
+                        data={'train': 's3://sagemaker/train'},
+                        job_name='tensorflow-job',
+                        mini_batch_size=1024,
+                        tags=DEFAULT_TAGS,
+                        integration_pattern=IntegrationPattern.WaitForCallback)
+
 
 def test_transform_step_creation(pca_transformer):
     step = TransformStep('Inference',
-        transformer=pca_transformer,
-        data='s3://sagemaker/inference',
-        job_name='transform-job',
-        model_name='pca-model',
-        experiment_config={
-            'ExperimentName': 'pca_experiment',
-            'TrialName': 'pca_trial',
-            'TrialComponentDisplayName': 'Transform'
-        },
-        tags=DEFAULT_TAGS,
-        join_source='Input',
-        output_filter='$[2:]',
-        input_filter='$[1:]'
-    )
+                         transformer=pca_transformer,
+                         data='s3://sagemaker/inference',
+                         job_name='transform-job',
+                         model_name='pca-model',
+                         experiment_config={
+                             'ExperimentName': 'pca_experiment',
+                             'TrialName': 'pca_trial',
+                             'TrialComponentDisplayName': 'Transform'
+                         },
+                         tags=DEFAULT_TAGS,
+                         join_source='Input',
+                         output_filter='$[2:]',
+                         input_filter='$[1:]'
+                         )
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -435,7 +471,7 @@ def test_transform_step_creation(pca_transformer):
             'ExperimentConfig': {
                 'ExperimentName': 'pca_experiment',
                 'TrialName': 'pca_trial',
-                'TrialComponentDisplayName': 'Transform'                
+                'TrialComponentDisplayName': 'Transform'
             },
             'DataProcessing': {
                 'InputFilter': '$[1:]',
@@ -447,6 +483,24 @@ def test_transform_step_creation(pca_transformer):
         'Resource': 'arn:aws:states:::sagemaker:createTransformJob.sync',
         'End': True
     }
+
+    with pytest.raises(ForbiddenValueParameter):
+        step = TransformStep('Inference',
+                             transformer=pca_transformer,
+                             data='s3://sagemaker/inference',
+                             job_name='transform-job',
+                             model_name='pca-model',
+                             experiment_config={
+                                 'ExperimentName': 'pca_experiment',
+                                 'TrialName': 'pca_trial',
+                                 'TrialComponentDisplayName': 'Transform'
+                             },
+                             tags=DEFAULT_TAGS,
+                             join_source='Input',
+                             output_filter='$[2:]',
+                             input_filter='$[1:]',
+                             integration_pattern=IntegrationPattern.WaitForCallback)
+
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_get_expected_model(pca_estimator):
@@ -468,14 +522,15 @@ def test_get_expected_model(pca_estimator):
         'End': True
     }
 
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_get_expected_model_with_framework_estimator(tensorflow_estimator):
     training_step = TrainingStep('Training',
-        estimator=tensorflow_estimator,
-        data={'train': 's3://sagemaker/train'},
-        job_name='tensorflow-job',
-        mini_batch_size=1024
-    )
+                                 estimator=tensorflow_estimator,
+                                 data={'train': 's3://sagemaker/train'},
+                                 job_name='tensorflow-job',
+                                 mini_batch_size=1024
+                                 )
     expected_model = training_step.get_expected_model()
     expected_model.entry_point = 'tf_train.py'
     model_step = ModelStep('Create model', model=expected_model, model_name='tf-model')
@@ -500,6 +555,7 @@ def test_get_expected_model_with_framework_estimator(tensorflow_estimator):
         'End': True
     }
 
+
 def test_model_step_creation(pca_model):
     step = ModelStep('Create model', model=pca_model, model_name='pca-model', tags=DEFAULT_TAGS)
     assert step.to_dict() == {
@@ -518,19 +574,20 @@ def test_model_step_creation(pca_model):
         'End': True
     }
 
+
 def test_endpoint_config_step_creation(pca_model):
     data_capture_config = DataCaptureConfig(
         enable_capture=True,
         sampling_percentage=100,
         destination_s3_uri='s3://sagemaker/datacapture')
-    step = EndpointConfigStep('Endpoint Config', 
-        endpoint_config_name='MyEndpointConfig', 
-        model_name='pca-model', 
-        initial_instance_count=1, 
-        instance_type='ml.p2.xlarge',
-        data_capture_config=data_capture_config,
-        tags=DEFAULT_TAGS,
-        )
+    step = EndpointConfigStep('Endpoint Config',
+                              endpoint_config_name='MyEndpointConfig',
+                              model_name='pca-model',
+                              initial_instance_count=1,
+                              instance_type='ml.p2.xlarge',
+                              data_capture_config=data_capture_config,
+                              tags=DEFAULT_TAGS,
+                              )
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -546,7 +603,7 @@ def test_endpoint_config_step_creation(pca_model):
                 'InitialSamplingPercentage': 100,
                 'DestinationS3Uri': 's3://sagemaker/datacapture',
                 'CaptureOptions': [
-                    {'CaptureMode': 'Input'}, 
+                    {'CaptureMode': 'Input'},
                     {'CaptureMode': 'Output'}
                 ],
                 'CaptureContentTypeHeader': {
@@ -560,8 +617,10 @@ def test_endpoint_config_step_creation(pca_model):
         'End': True
     }
 
+
 def test_endpoint_step_creation(pca_model):
-    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', tags=DEFAULT_TAGS)
+    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig',
+                        tags=DEFAULT_TAGS)
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -573,7 +632,8 @@ def test_endpoint_step_creation(pca_model):
         'End': True
     }
 
-    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', update=True, tags=DEFAULT_TAGS)
+    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', update=True,
+                        tags=DEFAULT_TAGS)
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -585,6 +645,7 @@ def test_endpoint_step_creation(pca_model):
         'End': True
     }
 
+
 def test_processing_step_creation(sklearn_processor):
     inputs = [ProcessingInput(source='dataset.csv', destination='/opt/ml/processing/input')]
     outputs = [
@@ -592,7 +653,8 @@ def test_processing_step_creation(sklearn_processor):
         ProcessingOutput(source='/opt/ml/processing/output/validation'),
         ProcessingOutput(source='/opt/ml/processing/output/test')
     ]
-    step = ProcessingStep('Feature Transformation', sklearn_processor, 'MyProcessingJob', inputs=inputs, outputs=outputs)
+    step = ProcessingStep('Feature Transformation', sklearn_processor, 'MyProcessingJob', inputs=inputs,
+                          outputs=outputs)
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -653,3 +715,7 @@ def test_processing_step_creation(sklearn_processor):
         'Resource': 'arn:aws:states:::sagemaker:createProcessingJob.sync',
         'End': True
     }
+
+    with pytest.raises(ForbiddenValueParameter):
+        step = ProcessingStep('Feature Transformation', sklearn_processor, 'MyProcessingJob', inputs=inputs,
+                              outputs=outputs, integration_pattern=IntegrationPattern.WaitForCallback)

@@ -21,5 +21,9 @@ class MissingRequiredParameter(Exception):
     pass
 
 
+class ForbiddenValueParameter(Exception):
+    pass
+
+
 class DuplicateStatesInChain(Exception):
     pass

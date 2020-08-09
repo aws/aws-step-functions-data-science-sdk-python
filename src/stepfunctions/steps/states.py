@@ -14,11 +14,11 @@ from __future__ import absolute_import
 
 import json
 import logging
+from enum import Enum
 
-from stepfunctions.exceptions import DuplicateStatesInChain
-from stepfunctions.steps.fields import Field
+from stepfunctions.exceptions import DuplicateStatesInChain, ForbiddenValueParameter
 from stepfunctions.inputs import ExecutionInput, StepInput
-
+from stepfunctions.steps.fields import Field
 
 logger = logging.getLogger('stepfunctions.states')
 
@@ -28,7 +28,6 @@ def to_pascalcase(text):
 
 
 class Block(object):
-
     """
     Base class to abstract blocks used in `Amazon States Language <https://states-language.net/spec.html>`_.
     """
@@ -94,8 +93,8 @@ class Block(object):
 
     def __repr__(self):
         return '{}({})'.format(
-           self.__class__.__name__,
-           ', '.join(['{}={!r}'.format(k, v) for k, v in self.fields.items()])
+            self.__class__.__name__,
+            ', '.join(['{}={!r}'.format(k, v) for k, v in self.fields.items()])
         )
 
     def __str__(self):
@@ -103,7 +102,6 @@ class Block(object):
 
 
 class Retry(Block):
-
     """
     A class for creating a Retry block.
     """
@@ -129,7 +127,6 @@ class Retry(Block):
 
 
 class Catch(Block):
-
     """
     A class for creating a Catch block.
     """
@@ -157,7 +154,6 @@ class Catch(Block):
 
 
 class State(Block):
-
     """
     Base class to abstract states in `Amazon States Language <https://states-language.net/spec.html>`_.
     """
@@ -219,7 +215,9 @@ class State(Block):
             State or Chain: Next state or chain that will be transitioned to.
         """
         if self.type in ('Choice', 'Succeed', 'Fail'):
-            raise ValueError('Unexpected State instance `{step}`, State type `{state_type}` does not support method `next`.'.format(step=next_step, state_type=self.type))
+            raise ValueError(
+                'Unexpected State instance `{step}`, State type `{state_type}` does not support method `next`.'.format(
+                    step=next_step, state_type=self.type))
 
         self.next_step = next_step
         return self.next_step
@@ -284,8 +282,8 @@ class State(Block):
 
         return result
 
-class Pass(State):
 
+class Pass(State):
     """
     Pass State simply passes its input to its output, performing no work. Pass States are useful when constructing and debugging state machines.
     """
@@ -316,7 +314,6 @@ class Pass(State):
 
 
 class Succeed(State):
-
     """
     Succeed State terminates a state machine successfully. The Succeed State is a useful target for  :py:class:`Choice`-state branches that don't do anything but terminate the machine.
     """
@@ -340,7 +337,6 @@ class Succeed(State):
 
 
 class Fail(State):
-
     """
     Fail State terminates the machine and marks it as a failure.
     """
@@ -364,7 +360,6 @@ class Fail(State):
 
 
 class Wait(State):
-
     """
     Wait state causes the interpreter to delay the machine from continuing for a specified time. The time can be specified as a wait duration, specified in seconds, or an absolute expiry time, specified as an ISO-8601 extended offset date-time format string.
     """
@@ -384,8 +379,10 @@ class Wait(State):
             output_path (str, optional): Path applied to the state’s output, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         super(Wait, self).__init__(state_id, 'Wait', **kwargs)
-        if len([v for v in (self.seconds, self.timestamp, self.timestamp_path, self.seconds_path) if v is not None]) != 1:
-            raise ValueError("The Wait state MUST contain exactly one of 'seconds', 'seconds_path', 'timestamp' or 'timestamp_path'.")
+        if len([v for v in (self.seconds, self.timestamp, self.timestamp_path, self.seconds_path) if
+                v is not None]) != 1:
+            raise ValueError(
+                "The Wait state MUST contain exactly one of 'seconds', 'seconds_path', 'timestamp' or 'timestamp_path'.")
 
     def allowed_fields(self):
         return [
@@ -400,7 +397,6 @@ class Wait(State):
 
 
 class Choice(State):
-
     """
     Choice state adds branching logic to a state machine. The state holds a list of *rule* and *next_step* pairs. The interpreter attempts pattern-matches against the rules in list order and transitions to the state or chain specified in the *next_step* field on the first *rule* where there is an exact match between the input value and a member of the comparison-operator array.
     """
@@ -471,7 +467,6 @@ class Choice(State):
 
 
 class Parallel(State):
-
     """
     Parallel State causes parallel execution of "branches".
 
@@ -520,7 +515,6 @@ class Parallel(State):
 
 
 class Map(State):
-
     """
     Map state provides the ability to dynamically iterate over a state/subgraph for each entry in a list.
 
@@ -571,13 +565,21 @@ class Map(State):
         return result
 
 
-class Task(State):
+# https://docs.aws.amazon.com/step-functions/latest/dg/connect-supported-services.html
+class IntegrationPattern(Enum):
+    RequestResponse = ""
+    RunAJob = ".sync"
+    WaitForCallback = ".waitForTaskToken"
 
+
+class Task(State):
+    _valid_patterns = [IntegrationPattern.RequestResponse]
+    _integration_pattern = IntegrationPattern.RequestResponse
     """
     Task State causes the interpreter to execute the work identified by the state’s `resource` field.
     """
 
-    def __init__(self, state_id, **kwargs):
+    def __init__(self, state_id, action=None, step_name="Unknow", **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -590,6 +592,11 @@ class Task(State):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
+        if self._integration_pattern not in self._valid_patterns:
+            raise ForbiddenValueParameter(
+                f"{step_name} only supports {', '.join(map(lambda pattern: pattern.name, self._valid_patterns))} integration pattern.")
+        if action:
+            kwargs[Field.Resource.value] = ''.join([f'arn:aws:states:::{action}', self._integration_pattern.value])
         super(Task, self).__init__(state_id, 'Task', **kwargs)
 
     def allowed_fields(self):
@@ -647,7 +654,9 @@ class Chain(object):
             self.steps.append(step)
         else:
             if step in self.steps:
-                raise DuplicateStatesInChain("State '{step_name}' is already inside this chain. A chain cannot have duplicate states.".format(step_name=step.state_id))
+                raise DuplicateStatesInChain(
+                    "State '{step_name}' is already inside this chain. A chain cannot have duplicate states.".format(
+                        step_name=step.state_id))
             last_step = self.steps[-1]
             last_step.next(step)
             self.steps.append(step)
@@ -658,8 +667,8 @@ class Chain(object):
 
     def __repr__(self):
         return '{}(steps={!r})'.format(
-           self.__class__.__name__,
-           self.steps
+            self.__class__.__name__,
+            self.steps
         )
 
 
@@ -688,7 +697,9 @@ class ValidationVisitor(object):
 
     def visit(self, state):
         if state.state_id in self.states:
-            raise ValueError("Each state in a workflow must have a unique state id. Found duplicate state id '{}' in workflow.".format(state.state_id))
+            raise ValueError(
+                "Each state in a workflow must have a unique state id. Found duplicate state id '{}' in workflow.".format(
+                    state.state_id))
         self.states[state.state_id] = state.to_dict()
         if state.next_step is None:
             return
@@ -697,7 +708,9 @@ class ValidationVisitor(object):
         params = state.next_step.fields[Field.Parameters.value]
         valid, invalid_param_name = self._validate_next_step_params(params, state.step_output)
         if not valid:
-            raise ValueError('State \'{state_name}\' is using an illegal placeholder for the \'{param_name}\' parameter.'.format(state_name=state.next_step.state_id, param_name=invalid_param_name))
+            raise ValueError(
+                'State \'{state_name}\' is using an illegal placeholder for the \'{param_name}\' parameter.'.format(
+                    state_name=state.next_step.state_id, param_name=invalid_param_name))
 
     def _validate_next_step_params(self, params, step_output):
         for k, v in params.items():
@@ -709,6 +722,7 @@ class ValidationVisitor(object):
                 if not valid:
                     return valid, invalid_param_name
         return True, None
+
 
 class Graph(Block):
 

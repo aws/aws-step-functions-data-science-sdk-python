@@ -12,8 +12,9 @@
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
-from stepfunctions.steps.states import Task
+
 from stepfunctions.steps.fields import Field
+from stepfunctions.steps.states import Task, IntegrationPattern
 
 
 class DynamoDBGetItemStep(Task):
@@ -32,11 +33,11 @@ class DynamoDBGetItemStep(Task):
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         kwargs[Field.Resource.value] = 'arn:aws:states:::dynamodb:getItem'
-        super(DynamoDBGetItemStep, self).__init__(state_id, **kwargs)
+        super(DynamoDBGetItemStep, self).__init__(state_id, 'dynamodb:getItem',
+                                                  'DynamoDB', **kwargs)
 
 
 class DynamoDBPutItemStep(Task):
-
     """
     Creates a Task state to put an item to DynamoDB. See `Call DynamoDB APIs with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html>`_ for more details.
     """
@@ -51,12 +52,11 @@ class DynamoDBPutItemStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:aws:states:::dynamodb:putItem'
-        super(DynamoDBPutItemStep, self).__init__(state_id, **kwargs)
+        super(DynamoDBPutItemStep, self).__init__(state_id, 'dynamodb:putItem',
+                                                  'DynamoDB', **kwargs)
 
 
 class DynamoDBDeleteItemStep(Task):
-
     """
     Creates a Task state to delete an item from DynamoDB. See `Call DynamoDB APIs with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html>`_ for more details.
     """
@@ -71,12 +71,11 @@ class DynamoDBDeleteItemStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:aws:states:::dynamodb:deleteItem'
-        super(DynamoDBDeleteItemStep, self).__init__(state_id, **kwargs)
+        super(DynamoDBDeleteItemStep, self).__init__(state_id, 'dynamodb:deleteItem',
+                                                     'DynamoDB', **kwargs)
 
 
 class DynamoDBUpdateItemStep(Task):
-
     """
     Creates a Task state to update an item from DynamoDB. See `Call DynamoDB APIs with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-ddb.html>`_ for more details.
     """
@@ -91,21 +90,20 @@ class DynamoDBUpdateItemStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:aws:states:::dynamodb:updateItem'
-        super(DynamoDBUpdateItemStep, self).__init__(state_id, **kwargs)
+        super(DynamoDBUpdateItemStep, self).__init__(state_id, 'dynamodb:updateItem',
+                                                     'DynamoDB', **kwargs)
 
 
 class SnsPublishStep(Task):
-
     """
     Creates a Task state to publish a message to SNS topic. See `Call Amazon SNS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-sns.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_callback=False, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.RequestResponse, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
-            wait_for_callback(bool, optional): Boolean value set to `True` if the Task state should wait for callback to resume the operation. (default: False)
+            integration_pattern(stepfunctions.states.IntegrationPattern, optional): Enum value set to RunAJob if the task should wait to complete before proceeding to the next step in the workflow, set to WaitForCallback if the Task state should wait for callback to resume the operation or set to RequestResponse if the Task should wait for HTTP response (default: RequestResponse)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
             comment (str, optional): Human-readable comment or description. (default: None)
@@ -114,25 +112,21 @@ class SnsPublishStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        if wait_for_callback:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sns:publish.waitForTaskToken'
-        else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sns:publish'
-        
-        super(SnsPublishStep, self).__init__(state_id, **kwargs)
+        self._valid_patterns = [IntegrationPattern.RequestResponse, IntegrationPattern.WaitForCallback]
+        self._integration_pattern = integration_pattern
+        super(SnsPublishStep, self).__init__(state_id, 'sns:publish', 'Amazon SNS', **kwargs)
 
 
 class SqsSendMessageStep(Task):
-
     """
     Creates a Task state to send a message to SQS queue. See `Call Amazon SQS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-sqs.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_callback=False, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.RequestResponse, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
-            wait_for_callback(bool, optional): Boolean value set to `True` if the Task state should wait for callback to resume the operation. (default: False)
+            integration_pattern(stepfunctions.states.IntegrationPattern, optional): Enum value set to RunAJob if the task should wait to complete before proceeding to the next step in the workflow, set to WaitForCallback if the Task state should wait for callback to resume the operation or set to RequestResponse if the Task should wait for HTTP response (default: RequestResponse)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
             comment (str, optional): Human-readable comment or description. (default: None)
@@ -141,12 +135,10 @@ class SqsSendMessageStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        if wait_for_callback:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sqs:sendMessage.waitForTaskToken'
-        else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sqs:sendMessage'
-        
-        super(SqsSendMessageStep, self).__init__(state_id, **kwargs)
+        self._valid_patterns = [IntegrationPattern.RequestResponse, IntegrationPattern.WaitForCallback]
+        self._integration_pattern = integration_pattern
+        super(SqsSendMessageStep, self).__init__(state_id, 'sqs:sendMessage',
+                                                 'Amazon SQS', **kwargs)
 
 
 class EmrCreateClusterStep(Task):
@@ -154,7 +146,7 @@ class EmrCreateClusterStep(Task):
     Creates a Task state to create and start running a cluster (job flow). See `Call Amazon EMR with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-emr.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.RunAJob, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -163,14 +155,12 @@ class EmrCreateClusterStep(Task):
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+            integration_pattern(stepfunctions.states.IntegrationPattern, optional): Enum value set to RunAJob if the task should wait to complete before proceeding to the next step in the workflow, set to WaitForCallback if the Task state should wait for callback to resume the operation or set to RequestResponse if the Task should wait for HTTP response (default: RequestResponse)
         """
-        if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:createCluster.sync'
-        else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:createCluster'
-
-        super(EmrCreateClusterStep, self).__init__(state_id, **kwargs)
+        self._valid_patterns = [IntegrationPattern.RequestResponse, IntegrationPattern.RunAJob]
+        self._integration_pattern = integration_pattern
+        super(EmrCreateClusterStep, self).__init__(state_id, 'elasticmapreduce:createCluster',
+                                                   'Amazon EMR', **kwargs)
 
 
 class EmrTerminateClusterStep(Task):
@@ -178,7 +168,7 @@ class EmrTerminateClusterStep(Task):
     Creates a Task state to shut down a cluster (job flow). See `Call Amazon EMR with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-emr.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.RunAJob, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -187,14 +177,12 @@ class EmrTerminateClusterStep(Task):
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+            integration_pattern(stepfunctions.states.IntegrationPattern, optional): Enum value set to RunAJob if the task should wait to complete before proceeding to the next step in the workflow, set to WaitForCallback if the Task state should wait for callback to resume the operation or set to RequestResponse if the Task should wait for HTTP response (default: RequestResponse)
         """
-        if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:terminateCluster.sync'
-        else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:terminateCluster'
-
-        super(EmrTerminateClusterStep, self).__init__(state_id, **kwargs)
+        self._valid_patterns = [IntegrationPattern.RequestResponse, IntegrationPattern.RunAJob]
+        self._integration_pattern = integration_pattern
+        super(EmrTerminateClusterStep, self).__init__(state_id, 'elasticmapreduce:terminateCluster',
+                                                      'Amazon EMR', **kwargs)
 
 
 class EmrAddStepStep(Task):
@@ -202,7 +190,7 @@ class EmrAddStepStep(Task):
     Creates a Task state to add a new step to a running cluster. See `Call Amazon EMR with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-emr.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.RunAJob, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -211,14 +199,12 @@ class EmrAddStepStep(Task):
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+            integration_pattern(stepfunctions.states.IntegrationPattern, optional): Enum value set to RunAJob if the task should wait to complete before proceeding to the next step in the workflow, set to WaitForCallback if the Task state should wait for callback to resume the operation or set to RequestResponse if the Task should wait for HTTP response (default: RequestResponse)
         """
-        if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:addStep.sync'
-        else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:addStep'
-
-        super(EmrAddStepStep, self).__init__(state_id, **kwargs)
+        self._valid_patterns = [IntegrationPattern.RequestResponse, IntegrationPattern.RunAJob]
+        self._integration_pattern = integration_pattern
+        super(EmrAddStepStep, self).__init__(state_id, 'elasticmapreduce:addStep',
+                                             'Amazon EMR', **kwargs)
 
 
 class EmrCancelStepStep(Task):
@@ -236,9 +222,8 @@ class EmrCancelStepStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:cancelStep'
-
-        super(EmrCancelStepStep, self).__init__(state_id, **kwargs)
+        super(EmrCancelStepStep, self).__init__(state_id, 'elasticmapreduce:cancelStep',
+                                                'Amazon EMR', **kwargs)
 
 
 class EmrSetClusterTerminationProtectionStep(Task):
@@ -256,9 +241,9 @@ class EmrSetClusterTerminationProtectionStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:setClusterTerminationProtection'
-
-        super(EmrSetClusterTerminationProtectionStep, self).__init__(state_id, **kwargs)
+        super(EmrSetClusterTerminationProtectionStep, self).__init__(state_id,
+                                                                     'elasticmapreduce:setClusterTerminationProtection',
+                                                                     'Amazon EMR', **kwargs)
 
 
 class EmrModifyInstanceFleetByNameStep(Task):
@@ -276,9 +261,8 @@ class EmrModifyInstanceFleetByNameStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:modifyInstanceFleetByName'
-
-        super(EmrModifyInstanceFleetByNameStep, self).__init__(state_id, **kwargs)
+        super(EmrModifyInstanceFleetByNameStep, self).__init__(state_id, 'elasticmapreduce:modifyInstanceFleetByName',
+                                                               'Amazon EMR', **kwargs)
 
 
 class EmrModifyInstanceGroupByNameStep(Task):
@@ -296,7 +280,5 @@ class EmrModifyInstanceGroupByNameStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:aws:states:::elasticmapreduce:modifyInstanceGroupByName'
-
-        super(EmrModifyInstanceGroupByNameStep, self).__init__(state_id, **kwargs)
-
+        super(EmrModifyInstanceGroupByNameStep, self).__init__(state_id, 'elasticmapreduce:modifyInstanceGroupByName',
+                                                               'Amazon EMR', **kwargs)

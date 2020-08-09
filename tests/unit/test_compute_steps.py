@@ -14,7 +14,9 @@ from __future__ import absolute_import
 
 import pytest
 
+from stepfunctions.exceptions import ForbiddenValueParameter
 from stepfunctions.steps.compute import LambdaStep, GlueStartJobRunStep, BatchSubmitJobStep, EcsRunTaskStep
+from stepfunctions.steps.states import IntegrationPattern
 
 
 def test_lambda_step_creation():
@@ -26,7 +28,7 @@ def test_lambda_step_creation():
         'End': True
     }
 
-    step = LambdaStep('lambda', wait_for_callback=True, parameters={
+    step = LambdaStep('lambda', integration_pattern=IntegrationPattern.WaitForCallback, parameters={
         'Payload': {
             'model.$': '$.new_model',
             'token.$': '$$.Task.Token'
@@ -37,7 +39,7 @@ def test_lambda_step_creation():
         'Type': 'Task',
         'Resource': 'arn:aws:states:::lambda:invoke.waitForTaskToken',
         'Parameters': {
-            'Payload': {  
+            'Payload': {
                 'model.$': '$.new_model',
                 'token.$': '$$.Task.Token'
             },
@@ -45,8 +47,12 @@ def test_lambda_step_creation():
         'End': True
     }
 
+    with pytest.raises(ForbiddenValueParameter):
+        step = LambdaStep('Echo', integration_pattern=IntegrationPattern.RunAJob)
+
+
 def test_glue_start_job_run_step_creation():
-    step = GlueStartJobRunStep('Glue Job', wait_for_completion=False)
+    step = GlueStartJobRunStep('Glue Job', integration_pattern=IntegrationPattern.RequestResponse)
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -67,8 +73,12 @@ def test_glue_start_job_run_step_creation():
         'End': True
     }
 
+    with pytest.raises(ForbiddenValueParameter):
+        step = GlueStartJobRunStep('Glue Job', integration_pattern=IntegrationPattern.WaitForCallback)
+
+
 def test_batch_submit_job_step_creation():
-    step = BatchSubmitJobStep('Batch Job', wait_for_completion=False)
+    step = BatchSubmitJobStep('Batch Job', integration_pattern=IntegrationPattern.RequestResponse)
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -91,8 +101,12 @@ def test_batch_submit_job_step_creation():
         'End': True
     }
 
+    with pytest.raises(ForbiddenValueParameter):
+        step = BatchSubmitJobStep('Batch Job', integration_pattern=IntegrationPattern.WaitForCallback)
+
+
 def test_ecs_run_task_step_creation():
-    step = EcsRunTaskStep('Ecs Job', wait_for_completion=False)
+    step = EcsRunTaskStep('Ecs Job')
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -100,13 +114,26 @@ def test_ecs_run_task_step_creation():
         'End': True
     }
 
-    step = EcsRunTaskStep('Ecs Job', parameters={
+    step = EcsRunTaskStep('Ecs Job', integration_pattern=IntegrationPattern.RunAJob, parameters={
         'TaskDefinition': 'Task'
     })
 
     assert step.to_dict() == {
         'Type': 'Task',
         'Resource': 'arn:aws:states:::ecs:runTask.sync',
+        'Parameters': {
+            'TaskDefinition': 'Task'
+        },
+        'End': True
+    }
+
+    step = EcsRunTaskStep('Ecs Job', integration_pattern=IntegrationPattern.WaitForCallback, parameters={
+        'TaskDefinition': 'Task'
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::ecs:runTask.waitForTaskToken',
         'Parameters': {
             'TaskDefinition': 'Task'
         },

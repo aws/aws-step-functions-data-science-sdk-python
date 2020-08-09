@@ -14,6 +14,9 @@ from __future__ import absolute_import
 
 import pytest
 
+from stepfunctions.exceptions import ForbiddenValueParameter
+from stepfunctions.steps.states import IntegrationPattern
+
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateClusterStep, EmrAddStepStep, EmrCancelStepStep, EmrSetClusterTerminationProtectionStep, EmrModifyInstanceFleetByNameStep, EmrModifyInstanceGroupByNameStep
@@ -35,7 +38,7 @@ def test_sns_publish_step_creation():
         'End': True
     }
 
-    step = SnsPublishStep('Publish to SNS', wait_for_callback=True, parameters={
+    step = SnsPublishStep('Publish to SNS', integration_pattern=IntegrationPattern.WaitForCallback, parameters={
         'TopicArn': 'arn:aws:sns:us-east-1:123456789012:myTopic',
         'Message': {
             'Input.$': '$',
@@ -56,6 +59,8 @@ def test_sns_publish_step_creation():
         'End': True
     }
 
+    with pytest.raises(ForbiddenValueParameter):
+        step = SnsPublishStep('Publish to SNS', integration_pattern=IntegrationPattern.RunAJob)
 
 def test_sqs_send_message_step_creation():
     step = SqsSendMessageStep('Send to SQS', parameters={
@@ -73,7 +78,7 @@ def test_sqs_send_message_step_creation():
         'End': True
     }
 
-    step = SqsSendMessageStep('Send to SQS', wait_for_callback=True, parameters={
+    step = SqsSendMessageStep('Send to SQS', integration_pattern=IntegrationPattern.WaitForCallback, parameters={
         'QueueUrl': 'https://sqs.us-east-1.amazonaws.com/123456789012/myQueue',
         'MessageBody': {
             'Input.$': '$',
@@ -93,6 +98,9 @@ def test_sqs_send_message_step_creation():
         },
         'End': True
     }
+
+    with pytest.raises(ForbiddenValueParameter):
+        step = SqsSendMessageStep('Send to SQS', integration_pattern=IntegrationPattern.RunAJob)
 
 
 def test_dynamodb_get_item_step_creation():
@@ -287,7 +295,7 @@ def test_emr_create_cluster_step_creation():
         'End': True
     }
 
-    step = EmrCreateClusterStep('Create EMR cluster', wait_for_completion=False, parameters={
+    step = EmrCreateClusterStep('Create EMR cluster', integration_pattern=IntegrationPattern.RequestResponse, parameters={
         'Name': 'MyWorkflowCluster',
         'VisibleToAllUsers': True,
         'ReleaseLabel': 'emr-5.28.0',
@@ -371,6 +379,9 @@ def test_emr_create_cluster_step_creation():
         'End': True
     }
 
+    with pytest.raises(ForbiddenValueParameter):
+        step = EmrCreateClusterStep('Create EMR cluster', integration_pattern=IntegrationPattern.WaitForCallback)
+
 
 def test_emr_terminate_cluster_step_creation():
     step = EmrTerminateClusterStep('Terminate EMR cluster', parameters={
@@ -386,7 +397,7 @@ def test_emr_terminate_cluster_step_creation():
         'End': True
     }
 
-    step = EmrTerminateClusterStep('Terminate EMR cluster', wait_for_completion=False, parameters={
+    step = EmrTerminateClusterStep('Terminate EMR cluster', integration_pattern=IntegrationPattern.RequestResponse, parameters={
         'ClusterId': 'MyWorkflowClusterId'
     })
 
@@ -398,6 +409,9 @@ def test_emr_terminate_cluster_step_creation():
         },
         'End': True
     }
+
+    with pytest.raises(ForbiddenValueParameter):
+        step = EmrTerminateClusterStep('Terminate EMR cluster', integration_pattern=IntegrationPattern.WaitForCallback)
 
 def test_emr_add_step_step_creation():
     step = EmrAddStepStep('Add step to EMR cluster', parameters={
@@ -449,7 +463,7 @@ def test_emr_add_step_step_creation():
         'End': True
     }
 
-    step = EmrAddStepStep('Add step to EMR cluster', wait_for_completion=False, parameters={
+    step = EmrAddStepStep('Add step to EMR cluster', integration_pattern=IntegrationPattern.RequestResponse, parameters={
         'ClusterId': 'MyWorkflowClusterId',
         'Step': {
             'Name': 'The first step',
@@ -497,6 +511,9 @@ def test_emr_add_step_step_creation():
         },
         'End': True
     }
+
+    with pytest.raises(ForbiddenValueParameter):
+        step = EmrAddStepStep('Add step to EMR cluster', integration_pattern=IntegrationPattern.WaitForCallback)
 
 def test_emr_cancel_step_step_creation():
     step = EmrCancelStepStep('Cancel step from EMR cluster', parameters={

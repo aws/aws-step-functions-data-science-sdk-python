@@ -12,22 +12,24 @@
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
-from stepfunctions.inputs import ExecutionInput, StepInput
-from stepfunctions.steps.states import Task
-from stepfunctions.steps.fields import Field
-from stepfunctions.steps.utils import tags_dict_to_kv_list
-
-from sagemaker.workflow.airflow import training_config, transform_config, model_config, tuning_config, processing_config
 from sagemaker.model import Model, FrameworkModel
 from sagemaker.model_monitor import DataCaptureConfig
+from sagemaker.workflow.airflow import training_config, transform_config, model_config, tuning_config, processing_config
+from stepfunctions.steps.states import IntegrationPattern
+
+from stepfunctions.inputs import ExecutionInput, StepInput
+from stepfunctions.steps.fields import Field
+from stepfunctions.steps.states import Task
+from stepfunctions.steps.utils import tags_dict_to_kv_list
+
 
 class TrainingStep(Task):
-
     """
     Creates a Task State to execute a `SageMaker Training Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTrainingJob.html>`_. The TrainingStep will also create a model by default, and the model shares the same name as the training job.
     """
 
-    def __init__(self, state_id, estimator, job_name, data=None, hyperparameters=None, mini_batch_size=None, experiment_config=None, wait_for_completion=True, tags=None, **kwargs):
+    def __init__(self, state_id, estimator, job_name, data=None, hyperparameters=None, mini_batch_size=None,
+                 experiment_config=None, integration_pattern=IntegrationPattern.RunAJob, tags=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -51,19 +53,18 @@ class TrainingStep(Task):
             hyperparameters (dict, optional): Specify the hyper parameters for the training. (Default: None)
             mini_batch_size (int): Specify this argument only when estimator is a built-in estimator of an Amazon algorithm. For other estimators, batch size should be specified in the estimator.
             experiment_config (dict, optional): Specify the experiment config for the training. (Default: None)
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the training job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the training job and proceed to the next step. (default: True)
+            integration_pattern(stepfunctions.states.IntegrationPattern, optional): Enum value set to RunAJob if the task should wait to complete before proceeding to the next step in the workflow, set to WaitForCallback if the Task state should wait for callback to resume the operation or set to RequestResponse if the Task should wait for HTTP response (default: RequestResponse)
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
         """
         self.estimator = estimator
         self.job_name = job_name
 
-        if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createTrainingJob.sync'
-        else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createTrainingJob'
+        self._valid_patterns = [IntegrationPattern.RequestResponse, IntegrationPattern.RunAJob]
+        self._integration_pattern = integration_pattern
 
         if isinstance(job_name, str):
-            parameters = training_config(estimator=estimator, inputs=data, job_name=job_name, mini_batch_size=mini_batch_size)
+            parameters = training_config(estimator=estimator, inputs=data, job_name=job_name,
+                                         mini_batch_size=mini_batch_size)
         else:
             parameters = training_config(estimator=estimator, inputs=data, mini_batch_size=mini_batch_size)
 
@@ -89,7 +90,7 @@ class TrainingStep(Task):
             parameters['Tags'] = tags_dict_to_kv_list(tags)
 
         kwargs[Field.Parameters.value] = parameters
-        super(TrainingStep, self).__init__(state_id, **kwargs)
+        super(TrainingStep, self).__init__(state_id, 'sagemaker:createTrainingJob', 'Amazon SageMaker', **kwargs)
 
     def get_expected_model(self, model_name=None):
         """
@@ -110,12 +111,13 @@ class TrainingStep(Task):
 
 
 class TransformStep(Task):
-
     """
     Creates a Task State to execute a `SageMaker Transform Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTransformJob.html>`_.
     """
 
-    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None, compression_type=None, split_type=None, experiment_config=None, wait_for_completion=True, tags=None, input_filter=None, output_filter=None, join_source=None, **kwargs):
+    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None,
+                 compression_type=None, split_type=None, experiment_config=None, integration_pattern=IntegrationPattern.RunAJob, tags=None,
+                 input_filter=None, output_filter=None, join_source=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -134,16 +136,14 @@ class TransformStep(Task):
             compression_type (str): Compression type of the input data, if compressed (default: None). Valid values: 'Gzip', None.
             split_type (str): The record delimiter for the input object (default: 'None'). Valid values: 'None', 'Line', 'RecordIO', and 'TFRecord'.
             experiment_config (dict, optional): Specify the experiment config for the transform. (Default: None)
-            wait_for_completion(bool, optional): Boolean value set to `True` if the Task state should wait for the transform job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the transform job and proceed to the next step. (default: True)
+            integration_pattern(stepfunctions.states.IntegrationPattern, optional): Enum value set to RunAJob if the task should wait to complete before proceeding to the next step in the workflow, set to WaitForCallback if the Task state should wait for callback to resume the operation or set to RequestResponse if the Task should wait for HTTP response (default: RequestResponse)
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
             input_filter (str): A JSONPath to select a portion of the input to pass to the algorithm container for inference. If you omit the field, it gets the value ‘$’, representing the entire input. For CSV data, each row is taken as a JSON array, so only index-based JSONPaths can be applied, e.g. $[0], $[1:]. CSV data should follow the RFC format. See Supported JSONPath Operators for a table of supported JSONPath operators. For more information, see the SageMaker API documentation for CreateTransformJob. Some examples: “$[1:]”, “$.features” (default: None).
             output_filter (str): A JSONPath to select a portion of the joined/original output to return as the output. For more information, see the SageMaker API documentation for CreateTransformJob. Some examples: “$[1:]”, “$.prediction” (default: None).
             join_source (str): The source of data to be joined to the transform output. It can be set to ‘Input’ meaning the entire input record will be joined to the inference result. You can use OutputFilter to select the useful portion before uploading to S3. (default: None). Valid values: Input, None.
         """
-        if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createTransformJob.sync'
-        else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createTransformJob'
+        self._valid_patterns = [IntegrationPattern.RequestResponse, IntegrationPattern.RunAJob]
+        self._integration_pattern = integration_pattern
 
         if isinstance(job_name, str):
             parameters = transform_config(
@@ -183,11 +183,10 @@ class TransformStep(Task):
             parameters['Tags'] = tags_dict_to_kv_list(tags)
 
         kwargs[Field.Parameters.value] = parameters
-        super(TransformStep, self).__init__(state_id, **kwargs)
+        super(TransformStep, self).__init__(state_id, 'sagemaker:createTransformJob', 'Amazon SageMaker', **kwargs)
 
 
 class ModelStep(Task):
-
     """
     Creates a Task State to `create a model in SageMaker <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateModel.html>`_.
     """
@@ -216,7 +215,9 @@ class ModelStep(Task):
                 }
             }
         else:
-            raise ValueError("Expected 'model' parameter to be of type 'sagemaker.model.Model', but received type '{}'".format(type(model).__name__))
+            raise ValueError(
+                "Expected 'model' parameter to be of type 'sagemaker.model.Model', but received type '{}'".format(
+                    type(model).__name__))
 
         if 'S3Operations' in parameters:
             del parameters['S3Operations']
@@ -225,18 +226,17 @@ class ModelStep(Task):
             parameters['Tags'] = tags_dict_to_kv_list(tags)
 
         kwargs[Field.Parameters.value] = parameters
-        kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createModel'
 
-        super(ModelStep, self).__init__(state_id, **kwargs)
+        super(ModelStep, self).__init__(state_id, 'sagemaker:createModel', 'Amazon SageMaker', **kwargs)
 
 
 class EndpointConfigStep(Task):
-
     """
     Creates a Task State to `create an endpoint configuration in SageMaker <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateEndpointConfig.html>`_.
     """
 
-    def __init__(self, state_id, endpoint_config_name, model_name, initial_instance_count, instance_type, variant_name='AllTraffic', data_capture_config=None, tags=None, **kwargs):
+    def __init__(self, state_id, endpoint_config_name, model_name, initial_instance_count, instance_type,
+                 variant_name='AllTraffic', data_capture_config=None, tags=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -262,18 +262,16 @@ class EndpointConfigStep(Task):
 
         if isinstance(data_capture_config, DataCaptureConfig):
             parameters['DataCaptureConfig'] = data_capture_config._to_request_dict()
-            
+
         if tags:
             parameters['Tags'] = tags_dict_to_kv_list(tags)
 
-        kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createEndpointConfig'
         kwargs[Field.Parameters.value] = parameters
 
-        super(EndpointConfigStep, self).__init__(state_id, **kwargs)
+        super(EndpointConfigStep, self).__init__(state_id, 'sagemaker:createEndpointConfig', 'Amazon SageMaker', **kwargs)
 
 
 class EndpointStep(Task):
-
     """
     Creates a Task State to `create <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateEndpoint.html>`_ or `update <https://docs.aws.amazon.com/sagemaker/latest/dg/API_UpdateEndpoint.html>`_ an endpoint in SageMaker.
     """
@@ -297,23 +295,17 @@ class EndpointStep(Task):
         if tags:
             parameters['Tags'] = tags_dict_to_kv_list(tags)
 
-        if update:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:updateEndpoint'
-        else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createEndpoint'
-
         kwargs[Field.Parameters.value] = parameters
 
-        super(EndpointStep, self).__init__(state_id, **kwargs)
+        super(EndpointStep, self).__init__(state_id, f'sagemaker:{"updateEndpoint" if update else "createEndpoint"}', 'Amazon SageMaker', **kwargs)
 
 
 class TuningStep(Task):
-
     """
     Creates a Task State to execute a SageMaker HyperParameterTuning Job.
     """
 
-    def __init__(self, state_id, tuner, job_name, data, wait_for_completion=True, tags=None, **kwargs):
+    def __init__(self, state_id, tuner, job_name, data, integration_pattern=IntegrationPattern.RunAJob, tags=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -334,13 +326,11 @@ class TuningStep(Task):
                 * (list[sagemaker.amazon.amazon_estimator.RecordSet]) - A list of
                     :class:`sagemaker.amazon.amazon_estimator.RecordSet` objects,
                     where each instance is a different channel of training data.
-            wait_for_completion(bool, optional): Boolean value set to `True` if the Task state should wait for the tuning job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the tuning job and proceed to the next step. (default: True)
+            integration_pattern(stepfunctions.states.IntegrationPattern, optional): Enum value set to RunAJob if the task should wait to complete before proceeding to the next step in the workflow, set to WaitForCallback if the Task state should wait for callback to resume the operation or set to RequestResponse if the Task should wait for HTTP response (default: RequestResponse)
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
         """
-        if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createHyperParameterTuningJob.sync'
-        else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createHyperParameterTuningJob'
+        self._valid_patterns = [IntegrationPattern.RequestResponse, IntegrationPattern.RunAJob]
+        self._integration_pattern = integration_pattern
 
         parameters = tuning_config(tuner=tuner, inputs=data, job_name=job_name).copy()
 
@@ -355,16 +345,17 @@ class TuningStep(Task):
 
         kwargs[Field.Parameters.value] = parameters
 
-        super(TuningStep, self).__init__(state_id, **kwargs)
+        super(TuningStep, self).__init__(state_id, 'sagemaker:createHyperParameterTuningJob', 'Amazon SageMaker', **kwargs)
 
 
 class ProcessingStep(Task):
-
     """
     Creates a Task State to execute a SageMaker Processing Job.
     """
 
-    def __init__(self, state_id, processor, job_name, inputs=None, outputs=None, experiment_config=None, container_arguments=None, container_entrypoint=None, kms_key_id=None, wait_for_completion=True, tags=None, **kwargs):
+    def __init__(self, state_id, processor, job_name, inputs=None, outputs=None, experiment_config=None,
+                 container_arguments=None, container_entrypoint=None, kms_key_id=None, integration_pattern=IntegrationPattern.RunAJob,
+                 tags=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -383,31 +374,34 @@ class ProcessingStep(Task):
                 uses to encrypt the processing job output. KmsKeyId can be an ID of a KMS key,
                 ARN of a KMS key, alias of a KMS key, or alias of a KMS key.
                 The KmsKeyId is applied to all outputs.
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the processing job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the processing job and proceed to the next step. (default: True)
+            integration_pattern(stepfunctions.states.IntegrationPattern, optional): Enum value set to RunAJob if the task should wait to complete before proceeding to the next step in the workflow, set to WaitForCallback if the Task state should wait for callback to resume the operation or set to RequestResponse if the Task should wait for HTTP response (default: RequestResponse)
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
         """
-        if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createProcessingJob.sync'
-        else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::sagemaker:createProcessingJob'
-        
+        self._valid_patterns = [IntegrationPattern.RequestResponse, IntegrationPattern.RunAJob]
+        self._integration_pattern = integration_pattern
+
         if isinstance(job_name, str):
-            parameters = processing_config(processor=processor, inputs=inputs, outputs=outputs, container_arguments=container_arguments, container_entrypoint=container_entrypoint, kms_key_id=kms_key_id, job_name=job_name)
+            parameters = processing_config(processor=processor, inputs=inputs, outputs=outputs,
+                                           container_arguments=container_arguments,
+                                           container_entrypoint=container_entrypoint, kms_key_id=kms_key_id,
+                                           job_name=job_name)
         else:
-            parameters = processing_config(processor=processor, inputs=inputs, outputs=outputs, container_arguments=container_arguments, container_entrypoint=container_entrypoint, kms_key_id=kms_key_id)
+            parameters = processing_config(processor=processor, inputs=inputs, outputs=outputs,
+                                           container_arguments=container_arguments,
+                                           container_entrypoint=container_entrypoint, kms_key_id=kms_key_id)
 
         if isinstance(job_name, (ExecutionInput, StepInput)):
             parameters['ProcessingJobName'] = job_name
-        
+
         if experiment_config is not None:
             parameters['ExperimentConfig'] = experiment_config
-        
+
         if tags:
             parameters['Tags'] = tags_dict_to_kv_list(tags)
-        
+
         if 'S3Operations' in parameters:
             del parameters['S3Operations']
-        
+
         kwargs[Field.Parameters.value] = parameters
 
-        super(ProcessingStep, self).__init__(state_id, **kwargs)
+        super(ProcessingStep, self).__init__(state_id, 'sagemaker:createProcessingJob', 'Amazon SageMaker', **kwargs)
