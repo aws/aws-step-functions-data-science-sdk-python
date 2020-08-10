@@ -266,7 +266,7 @@ def test_training_step_creation_with_debug_hook(pca_estimator_with_debug_hook):
             'DebugRuleConfigurations': [
                 {
                     'RuleConfigurationName': 'Confusion',
-                    'RuleEvaluatorImage': '503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest',
+                    'RuleEvaluatorImage': '199566480951.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest',
                     'RuleParameters': {
                         'rule_to_invoke': 'Confusion',
                         'category_no': '15',
