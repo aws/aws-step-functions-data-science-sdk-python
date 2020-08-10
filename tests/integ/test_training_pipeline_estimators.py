@@ -25,7 +25,7 @@ import boto3
 
 # import Sagemaker
 from sagemaker.amazon.pca import PCA
-from sagemaker.amazon.amazon_estimator import get_image_uri
+from sagemaker.image_uris import retrieve 
 
 # import StepFunctions
 from stepfunctions.template.pipeline import TrainingPipeline
@@ -105,7 +105,7 @@ def test_pca_estimator(sfn_client, sagemaker_session, sagemaker_role_arn, sfn_ro
         job_name = workflow_execution_info['name']
         s3_manifest_uri = inputs.s3_data
         status = 'SUCCEEDED'
-        estimator_image_uri = get_image_uri(sagemaker_session.boto_region_name, 'pca')
+        estimator_image_uri = retrieve(region=sagemaker_session.boto_region_name,  framework='pca')
 
         execution_info = sfn_client.describe_execution(executionArn=execution_arn)
         execution_info['input'] = json.loads(execution_info['input'])
