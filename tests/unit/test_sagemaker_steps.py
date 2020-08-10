@@ -44,8 +44,8 @@ def pca_estimator():
     pca = sagemaker.estimator.Estimator(
         PCA_IMAGE,
         role=EXECUTION_ROLE,
-        train_instance_count=1,
-        train_instance_type='ml.c4.xlarge',
+        instance_count=1,
+        instance_type='ml.c4.xlarge',
         output_path=s3_output_location
     )
 
@@ -90,8 +90,8 @@ def pca_estimator_with_debug_hook():
     pca = sagemaker.estimator.Estimator(
         PCA_IMAGE,
         role=EXECUTION_ROLE,
-        train_instance_count=1,
-        train_instance_type='ml.c4.xlarge',
+        instance_count=1,
+        instance_type='ml.c4.xlarge',
         output_path=s3_output_location,
         debugger_hook_config = hook_config,
         rules=rules
@@ -116,7 +116,7 @@ def pca_model():
     model_data = 's3://sagemaker/models/pca.tar.gz'
     return Model(
         model_data=model_data,
-        image=PCA_IMAGE,
+        image_uri=PCA_IMAGE,
         role=EXECUTION_ROLE,
         name='pca-model'
     )
@@ -140,8 +140,8 @@ def tensorflow_estimator():
         framework_version='1.13',
         training_steps=1000,
         evaluation_steps=100,
-        train_instance_count=1,
-        train_instance_type='ml.p2.xlarge',
+        instance_count=1,
+        instance_type='ml.p2.xlarge',
         output_path=s3_output_location,
         source_dir=s3_source_location,
         image_name=TENSORFLOW_IMAGE,
@@ -460,7 +460,7 @@ def test_get_expected_model(pca_estimator):
             'ModelName': 'pca-model',
             'PrimaryContainer': {
                 'Environment': {},
-                'Image': expected_model.image,
+                'Image': expected_model.image_uri,
                 'ModelDataUrl.$': "$['ModelArtifacts']['S3ModelArtifacts']"
             }
         },
@@ -492,7 +492,7 @@ def test_get_expected_model_with_framework_estimator(tensorflow_estimator):
                     'SAGEMAKER_CONTAINER_LOG_LEVEL': '20',
                     'SAGEMAKER_REGION': 'us-east-1',
                 },
-                'Image': expected_model.image,
+                'Image': expected_model.image_uri,
                 'ModelDataUrl.$': "$['ModelArtifacts']['S3ModelArtifacts']"
             }
         },
@@ -509,7 +509,7 @@ def test_model_step_creation(pca_model):
             'ModelName': 'pca-model',
             'PrimaryContainer': {
                 'Environment': {},
-                'Image': pca_model.image,
+                'Image': pca_model.image_uri,
                 'ModelDataUrl': pca_model.model_data
             },
             'Tags': DEFAULT_TAGS_LIST

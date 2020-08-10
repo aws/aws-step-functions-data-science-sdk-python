@@ -36,8 +36,8 @@ def pca_estimator():
     pca = sagemaker.estimator.Estimator(
         PCA_IMAGE,
         role=SAGEMAKER_EXECUTION_ROLE,
-        train_instance_count=1,
-        train_instance_type='ml.c4.xlarge',
+        instance_count=1,
+        instance_type='ml.c4.xlarge',
         output_path=s3_output_location,
         sagemaker_session=sagemaker_session
     )
@@ -62,7 +62,7 @@ def sklearn_preprocessor():
     sklearn_preprocessor = SKLearn(
         entry_point=script_path,
         role=SAGEMAKER_EXECUTION_ROLE,
-        train_instance_type="ml.c4.xlarge",
+        instance_type="ml.c4.xlarge",
         source_dir=source_dir,
         sagemaker_session=sagemaker_session
     )
@@ -82,10 +82,10 @@ def linear_learner_estimator():
     ll_estimator = sagemaker.estimator.Estimator(
         LINEAR_LEARNER_IMAGE,
         SAGEMAKER_EXECUTION_ROLE, 
-        train_instance_count=1, 
-        train_instance_type='ml.c4.xlarge',
-        train_volume_size=20,
-        train_max_run=3600,
+        instance_count=1, 
+        instance_type='ml.c4.xlarge',
+        volume_size=20,
+        max_run=3600,
         input_mode='File',
         output_path=s3_output_location,
         sagemaker_session=sagemaker_session

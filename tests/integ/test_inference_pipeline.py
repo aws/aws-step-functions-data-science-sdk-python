@@ -45,7 +45,7 @@ def sklearn_preprocessor(sagemaker_role_arn, sagemaker_session):
     sklearn_preprocessor = SKLearn(
         entry_point=script_path,
         role=sagemaker_role_arn,
-        train_instance_type="ml.m5.large",
+        instance_type="ml.m5.large",
         sagemaker_session=sagemaker_session,
         hyperparameters={"epochs": 1},
     )
@@ -60,7 +60,7 @@ def sklearn_estimator(sagemaker_role_arn, sagemaker_session):
     sklearn_estimator = SKLearn(
         entry_point=script_path,
         role=sagemaker_role_arn,
-        train_instance_type="ml.m5.large",
+        instance_type="ml.m5.large",
         sagemaker_session=sagemaker_session,
         hyperparameters={"epochs": 1},
         input_mode='File'

@@ -50,8 +50,8 @@ def pca_estimator(sagemaker_role_arn):
     pca_estimator = PCA(
         role=sagemaker_role_arn,
         num_components=1,
-        train_instance_count=1,
-        train_instance_type='ml.m5.large',
+        instance_count=1,
+        instance_type='ml.m5.large',
         )
 
     pca_estimator.feature_dim=500

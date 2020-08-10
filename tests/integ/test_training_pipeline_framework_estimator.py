@@ -36,8 +36,8 @@ def torch_estimator(sagemaker_role_arn):
         entry_point=script_path,
         role=sagemaker_role_arn,
         framework_version='1.2.0',
-        train_instance_count=1,
-        train_instance_type='ml.m5.large',
+        instance_count=1,
+        instance_type='ml.m5.large',
         hyperparameters={
             'epochs': 6,
             'backend': 'gloo'
@@ -50,8 +50,8 @@ def sklearn_estimator(sagemaker_role_arn):
     return SKLearn(
         entry_point=script_path,
         role=sagemaker_role_arn,
-        train_instance_count=1,
-        train_instance_type='ml.m5.large',
+        instance_count=1,
+        instance_type='ml.m5.large',
         framework_version='0.20.0',
         hyperparameters={
             "epochs": 1
