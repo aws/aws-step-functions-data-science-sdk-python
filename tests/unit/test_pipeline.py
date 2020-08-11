@@ -60,11 +60,12 @@ def sklearn_preprocessor():
     sagemaker_session.boto_region_name = 'us-east-1'
 
     sklearn_preprocessor = SKLearn(
+        framework_version='0.20.0',
+        py_version='py3',
         entry_point=script_path,
         role=SAGEMAKER_EXECUTION_ROLE,
         instance_type="ml.c4.xlarge",
         source_dir=source_dir,
-        sagemaker_session=sagemaker_session
     )
 
     sklearn_preprocessor.debugger_hook_config = DebuggerHookConfig(

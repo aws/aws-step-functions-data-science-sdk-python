@@ -135,17 +135,21 @@ def tensorflow_estimator():
     s3_output_location = 's3://sagemaker/models'
     s3_source_location = 's3://sagemaker/source'
 
-    estimator = TensorFlow(entry_point='tf_train.py',
+    estimator = TensorFlow(
+        entry_point='tf_train.py',
         role=EXECUTION_ROLE,
         framework_version='1.13',
-        training_steps=1000,
-        evaluation_steps=100,
         instance_count=1,
         instance_type='ml.p2.xlarge',
         output_path=s3_output_location,
         source_dir=s3_source_location,
-        image_name=TENSORFLOW_IMAGE,
-        checkpoint_path='s3://sagemaker/models/sagemaker-tensorflow/checkpoints'
+        image_uri=TENSORFLOW_IMAGE,
+        model_dir=False,
+        hyperparameters={
+            'training_steps': 1000,
+            'evaluation_steps': 100,
+            'checkpoint_path': 's3://sagemaker/models/sagemaker-tensorflow/checkpoints',
+        }
     )
 
     estimator.debugger_hook_config = DebuggerHookConfig(

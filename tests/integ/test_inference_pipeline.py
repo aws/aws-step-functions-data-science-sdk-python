@@ -43,6 +43,8 @@ def sklearn_preprocessor(sagemaker_role_arn, sagemaker_session):
                                'one_p_mnist',
                                'sklearn_mnist_preprocessor.py')
     sklearn_preprocessor = SKLearn(
+        framework_version='0.20.0',
+        py_version='py3',
         entry_point=script_path,
         role=sagemaker_role_arn,
         instance_type="ml.m5.large",
@@ -58,6 +60,8 @@ def sklearn_estimator(sagemaker_role_arn, sagemaker_session):
                                'one_p_mnist',
                                'sklearn_mnist_estimator.py')
     sklearn_estimator = SKLearn(
+        framework_version='0.20.0',
+        py_version='py3',
         entry_point=script_path,
         role=sagemaker_role_arn,
         instance_type="ml.m5.large",
