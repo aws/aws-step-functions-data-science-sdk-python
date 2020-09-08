@@ -210,7 +210,7 @@ class ModelStep(Task):
                 'ExecutionRoleArn': model.role,
                 'ModelName': model_name or model.name,
                 'PrimaryContainer': {
-                    'Environment': {},
+                    'Environment': model.env,
                     'Image': model.image,
                     'ModelDataUrl': model.model_data
                 }
