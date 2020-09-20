@@ -67,7 +67,7 @@ class TrainingStep(Task):
         else:
             parameters = training_config(estimator=estimator, inputs=data, mini_batch_size=mini_batch_size)
 
-        if estimator.debugger_hook_config != None:
+        if estimator.debugger_hook_config != None and estimator.debugger_hook_config is not False:
             parameters['DebugHookConfig'] = estimator.debugger_hook_config._to_request_dict()
 
         if estimator.rules != None:
