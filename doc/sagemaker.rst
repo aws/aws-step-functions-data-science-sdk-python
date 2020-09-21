@@ -14,3 +14,5 @@ This module provides classes to build steps that integrate with Amazon SageMaker
 .. autoclass:: stepfunctions.steps.sagemaker.EndpointConfigStep
 
 .. autoclass:: stepfunctions.steps.sagemaker.EndpointStep
+
+.. autoclass:: stepfunctions.steps.sagemaker.ProcessingStep

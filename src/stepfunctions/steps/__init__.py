@@ -16,7 +16,7 @@ from stepfunctions.steps.choice_rule import ChoiceRule
 
 from stepfunctions.steps.states import Pass, Succeed, Fail, Wait, Choice, Parallel, Map, Task, Chain, Retry, Catch
 from stepfunctions.steps.states import Graph, FrozenGraph
-from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointConfigStep, EndpointStep, TuningStep
+from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointConfigStep, EndpointStep, TuningStep, ProcessingStep
 from stepfunctions.steps.compute import LambdaStep, BatchSubmitJobStep, GlueStartJobRunStep, EcsRunTaskStep
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep

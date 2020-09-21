@@ -22,9 +22,11 @@ from sagemaker.tensorflow import TensorFlow
 from sagemaker.pipeline import PipelineModel
 from sagemaker.model_monitor import DataCaptureConfig
 from sagemaker.debugger import Rule, rule_configs, DebuggerHookConfig, CollectionConfig
+from sagemaker.sklearn.processing import SKLearnProcessor
+from sagemaker.processing import ProcessingInput, ProcessingOutput
 
 from unittest.mock import MagicMock, patch
-from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep
+from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, ProcessingStep
 from stepfunctions.steps.sagemaker import tuning_config
 
 from tests.unit.utils import mock_boto_api_call
@@ -32,6 +34,8 @@ from tests.unit.utils import mock_boto_api_call
 EXECUTION_ROLE = 'execution-role'
 PCA_IMAGE = '382416733822.dkr.ecr.us-east-1.amazonaws.com/pca:1'
 TENSORFLOW_IMAGE = '520713654638.dkr.ecr.us-east-1.amazonaws.com/sagemaker-tensorflow:1.13-gpu-py2'
+DEFAULT_TAGS = {'Purpose': 'unittests'}
+DEFAULT_TAGS_LIST = [{'Key': 'Purpose', 'Value': 'unittests'}]
 
 @pytest.fixture
 def pca_estimator():
@@ -107,6 +111,34 @@ def pca_estimator_with_debug_hook():
 
     return pca
 
+
+@pytest.fixture
+def pca_estimator_with_falsy_debug_hook():
+    s3_output_location = 's3://sagemaker/models'
+
+    pca = sagemaker.estimator.Estimator(
+        PCA_IMAGE,
+        role=EXECUTION_ROLE,
+        train_instance_count=1,
+        train_instance_type='ml.c4.xlarge',
+        output_path=s3_output_location,
+        debugger_hook_config = False
+    )
+
+    pca.set_hyperparameters(
+        feature_dim=50000,
+        num_components=10,
+        subtract_mean=True,
+        algorithm_mode='randomized',
+        mini_batch_size=200
+    )
+
+    pca.sagemaker_session = MagicMock()
+    pca.sagemaker_session.boto_region_name = 'us-east-1'
+    pca.sagemaker_session._default_bucket = 'sagemaker'
+
+    return pca
+
 @pytest.fixture
 def pca_model():
     model_data = 's3://sagemaker/models/pca.tar.gz'
@@ -154,6 +186,22 @@ def tensorflow_estimator():
     
     return estimator
 
+@pytest.fixture
+def sklearn_processor():
+    sagemaker_session = MagicMock()
+    sagemaker_session.boto_region_name = 'us-east-1'
+    sagemaker_session._default_bucket = 'sagemaker'
+
+    processor = SKLearnProcessor(
+        framework_version="0.20.0",
+        role=EXECUTION_ROLE,
+        instance_type="ml.m5.xlarge",
+        instance_count=1,
+        sagemaker_session=sagemaker_session
+    )
+
+    return processor
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_training_step_creation(pca_estimator):
     step = TrainingStep('Training', 
@@ -163,7 +211,9 @@ def test_training_step_creation(pca_estimator):
             'ExperimentName': 'pca_experiment',
             'TrialName': 'pca_trial',
             'TrialComponentDisplayName': 'Training'
-        })
+        },
+        tags=DEFAULT_TAGS,
+    )
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -195,7 +245,8 @@ def test_training_step_creation(pca_estimator):
                 'TrialName': 'pca_trial',
                 'TrialComponentDisplayName': 'Training'                
             },
-            'TrainingJobName': 'TrainingJob'
+            'TrainingJobName': 'TrainingJob',
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
         'End': True
@@ -261,6 +312,43 @@ def test_training_step_creation_with_debug_hook(pca_estimator_with_debug_hook):
     }
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+def test_training_step_creation_with_falsy_debug_hook(pca_estimator_with_falsy_debug_hook):
+    step = TrainingStep('Training',
+        estimator=pca_estimator_with_falsy_debug_hook,
+        job_name='TrainingJob')
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'AlgorithmSpecification': {
+                'TrainingImage': PCA_IMAGE,
+                'TrainingInputMode': 'File'
+            },
+            'OutputDataConfig': {
+                'S3OutputPath': 's3://sagemaker/models'
+            },
+            'StoppingCondition': {
+                'MaxRuntimeInSeconds': 86400
+            },
+            'ResourceConfig': {
+                'InstanceCount': 1,
+                'InstanceType': 'ml.c4.xlarge',
+                'VolumeSizeInGB': 30
+            },
+            'RoleArn': EXECUTION_ROLE,
+            'HyperParameters': {
+                'feature_dim': '50000',
+                'num_components': '10',
+                'subtract_mean': 'True',
+                'algorithm_mode': 'randomized',
+                'mini_batch_size': '200'
+            },
+            'TrainingJobName': 'TrainingJob'
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
+        'End': True
+    }
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_training_step_creation_with_model(pca_estimator):
     training_step = TrainingStep('Training', estimator=pca_estimator, job_name='TrainingJob')
     model_step = ModelStep('Training - Save Model', training_step.get_expected_model(model_name=training_step.output()['TrainingJobName']))
@@ -318,7 +406,8 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
         estimator=tensorflow_estimator,
         data={'train': 's3://sagemaker/train'},
         job_name='tensorflow-job',
-        mini_batch_size=1024
+        mini_batch_size=1024,
+        tags=DEFAULT_TAGS,
     )
     
     assert step.to_dict() == {
@@ -364,7 +453,9 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
                 'sagemaker_region': '"us-east-1"',
                 'sagemaker_submit_directory': '"s3://sagemaker/source"'
             },
-            'TrainingJobName': 'tensorflow-job'
+            'TrainingJobName': 'tensorflow-job',
+            'Tags': DEFAULT_TAGS_LIST
+
         },
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
         'End': True
@@ -380,7 +471,11 @@ def test_transform_step_creation(pca_transformer):
             'ExperimentName': 'pca_experiment',
             'TrialName': 'pca_trial',
             'TrialComponentDisplayName': 'Transform'
-        }
+        },
+        tags=DEFAULT_TAGS,
+        join_source='Input',
+        output_filter='$[2:]',
+        input_filter='$[1:]'
     )
     assert step.to_dict() == {
         'Type': 'Task',
@@ -406,7 +501,13 @@ def test_transform_step_creation(pca_transformer):
                 'ExperimentName': 'pca_experiment',
                 'TrialName': 'pca_trial',
                 'TrialComponentDisplayName': 'Transform'                
-            }
+            },
+            'DataProcessing': {
+                'InputFilter': '$[1:]',
+                'OutputFilter': '$[2:]',
+                'JoinSource': 'Input',
+            },
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createTransformJob.sync',
         'End': True
@@ -465,7 +566,7 @@ def test_get_expected_model_with_framework_estimator(tensorflow_estimator):
     }
 
 def test_model_step_creation(pca_model):
-    step = ModelStep('Create model', model=pca_model, model_name='pca-model')
+    step = ModelStep('Create model', model=pca_model, model_name='pca-model', tags=DEFAULT_TAGS)
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -475,7 +576,8 @@ def test_model_step_creation(pca_model):
                 'Environment': {},
                 'Image': pca_model.image,
                 'ModelDataUrl': pca_model.model_data
-            }
+            },
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createModel',
         'End': True
@@ -491,7 +593,9 @@ def test_endpoint_config_step_creation(pca_model):
         model_name='pca-model', 
         initial_instance_count=1, 
         instance_type='ml.p2.xlarge',
-        data_capture_config=data_capture_config)
+        data_capture_config=data_capture_config,
+        tags=DEFAULT_TAGS,
+        )
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -514,31 +618,103 @@ def test_endpoint_config_step_creation(pca_model):
                     'CsvContentTypes': ['text/csv'],
                     'JsonContentTypes': ['application/json']
                 }
-            }
+            },
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createEndpointConfig',
         'End': True
     }
 
 def test_endpoint_step_creation(pca_model):
-    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig')
+    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', tags=DEFAULT_TAGS)
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
             'EndpointConfigName': 'MyEndpointConfig',
-            'EndpointName': 'MyEndPoint'
+            'EndpointName': 'MyEndPoint',
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createEndpoint',
         'End': True
     }
 
-    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', update=True)
+    step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', update=True, tags=DEFAULT_TAGS)
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
             'EndpointConfigName': 'MyEndpointConfig',
-            'EndpointName': 'MyEndPoint'
+            'EndpointName': 'MyEndPoint',
+            'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:updateEndpoint',
+        'End': True
+    }
+
+def test_processing_step_creation(sklearn_processor):
+    inputs = [ProcessingInput(source='dataset.csv', destination='/opt/ml/processing/input')]
+    outputs = [
+        ProcessingOutput(source='/opt/ml/processing/output/train'),
+        ProcessingOutput(source='/opt/ml/processing/output/validation'),
+        ProcessingOutput(source='/opt/ml/processing/output/test')
+    ]
+    step = ProcessingStep('Feature Transformation', sklearn_processor, 'MyProcessingJob', inputs=inputs, outputs=outputs)
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'AppSpecification': {
+                'ImageUri': '683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.20.0-cpu-py3'
+            },
+            'ProcessingInputs': [
+                {
+                    'InputName': None,
+                    'S3Input': {
+                        'LocalPath': '/opt/ml/processing/input',
+                        'S3CompressionType': 'None',
+                        'S3DataDistributionType': 'FullyReplicated',
+                        'S3DataType': 'S3Prefix',
+                        'S3InputMode': 'File',
+                        'S3Uri': 'dataset.csv'
+                    }
+                }
+            ],
+            'ProcessingOutputConfig': {
+                'Outputs': [
+                    {
+                        'OutputName': None,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/train',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    },
+                    {
+                        'OutputName': None,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/validation',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    },
+                    {
+                        'OutputName': None,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/test',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    }
+                ]
+            },
+            'ProcessingResources': {
+                'ClusterConfig': {
+                    'InstanceCount': 1,
+                    'InstanceType': 'ml.m5.xlarge',
+                    'VolumeSizeInGB': 30
+                }
+            },
+            'ProcessingJobName': 'MyProcessingJob',
+            'RoleArn': EXECUTION_ROLE
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createProcessingJob.sync',
         'End': True
     }

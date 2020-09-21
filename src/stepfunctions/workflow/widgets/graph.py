@@ -55,8 +55,10 @@ require.config({
 });
 
 require(['sfn'], function(sfn) {
+    var element = document.getElementById('$element_id')
+
     var options = {
-        width: $$('#$element_id').width(),
+        width: parseFloat(getComputedStyle(element, null).width.replace("px", "")),
         height: 600,
         layout: '$layout',
         resizeHeight: true
@@ -78,8 +80,10 @@ require.config({
 });
 
 require(['sfn'], function(sfn) {
+    var element = document.getElementById('$element_id')
+
     var options = {
-        width: $$('#$element_id').width(),
+        width: parseFloat(getComputedStyle(element, null).width.replace("px", "")),
         height: 1000,
         layout: '$layout',
         resizeHeight: true

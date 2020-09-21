@@ -20,6 +20,9 @@
                 "sagemaker:DeleteEndpoint",
                 "sagemaker:UpdateEndpoint",
                 "sagemaker:ListTags",
+                "sagemaker:CreateProcessingJob",
+                "sagemaker:DescribeProcessingJob",
+                "sagemaker:StopProcessingJob",
                 "lambda:InvokeFunction",
                 "sqs:SendMessage",
                 "sns:Publish",
@@ -63,6 +66,7 @@
                 "arn:aws:events:*:*:rule/StepFunctionsGetEventsForSageMakerTrainingJobsRule",
                 "arn:aws:events:*:*:rule/StepFunctionsGetEventsForSageMakerTransformJobsRule",
                 "arn:aws:events:*:*:rule/StepFunctionsGetEventsForSageMakerTuningJobsRule",
+                "arn:aws:events:*:*:rule/StepFunctionsGetEventsForSageMakerProcessingJobsRule",
                 "arn:aws:events:*:*:rule/StepFunctionsGetEventsForECSTaskRule",
                 "arn:aws:events:*:*:rule/StepFunctionsGetEventsForBatchJobsRule"
             ]

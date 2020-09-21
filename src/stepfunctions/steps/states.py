@@ -66,9 +66,10 @@ class Block(object):
 
     def to_dict(self):
         result = {}
+        fields_accepted_as_none = ('result_path', 'input_path', 'output_path')
         # Common fields
         for k, v in self.fields.items():
-            if v is not None:
+            if v is not None or k in fields_accepted_as_none:
                 k = to_pascalcase(k)
                 if k == to_pascalcase(Field.Parameters.value):
                     result[k] = self._replace_placeholders(v)
@@ -536,7 +537,6 @@ class Map(State):
             comment (str, optional): Human-readable comment or description. (default: None)
             input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
             parameters (dict, optional): The value of this field becomes the effective input for the state.
-            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """

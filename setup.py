@@ -30,7 +30,7 @@ def read_version():
 
 # Declare minimal set for installation
 required_packages = [
-    "sagemaker>=1.42.8",
+    "sagemaker>=1.71.0,<2.0.0",
     "boto3>=1.9.213",
     "pyyaml"
 ]

@@ -152,7 +152,7 @@ class Workflow(object):
                 * wildcard characters ? *
                 * special characters " # % \\ ^ | ~ ` $ & , ; : /
                 * control characters (U+0000-001F , U+007F-009F )
-            definition (str): The `Amazon States Language <https://states-language.net/spec.html>`_ definition of the workflow.
+            definition (State or Chain): The `Amazon States Language <https://states-language.net/spec.html>`_ definition of the workflow.
             role (str): The Amazon Resource Name (ARN) of the IAM role to use for creating, managing, and running the workflow.
             tags (list): Tags to be added when creating a workflow. Tags are key-value pairs that can be associated with Step Functions workflows and activities. (default: [])
             execution_input (ExecutionInput, optional): Placeholder collection that defines the placeholder variables for the workflow execution. \
@@ -223,8 +223,9 @@ class Workflow(object):
         """
         Updates an existing state machine by modifying its definition and/or role. Executions started immediately after calling this method may use the previous definition and role.
 
-        definition (str, optional): The `Amazon States Language <https://states-language.net/spec.html>`_ definition to update the workflow with. (default: None)
-        role (str, optional): The Amazon Resource Name (ARN) of the IAM role to use for creating, managing, and running the workflow. (default: None)
+        Args:
+            definition (State or Chain, optional): The `Amazon States Language <https://states-language.net/spec.html>`_ definition to update the workflow with. (default: None)
+            role (str, optional): The Amazon Resource Name (ARN) of the IAM role to use for creating, managing, and running the workflow. (default: None)
 
         Returns:
             str: The state machine definition and/or role updated. If the update fails, None will be returned.
