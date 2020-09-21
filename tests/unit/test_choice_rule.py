@@ -6,9 +6,9 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# or in the "license" file accompanying this file. This file is distributed 
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-# express or implied. See the License for the specific language governing 
+# or in the "license" file accompanying this file. This file is distributed
+# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
@@ -45,7 +45,7 @@ def test_variable_value_must_be_consistent():
         func = getattr(ChoiceRule, numeric_function)
         with pytest.raises(ValueError):
             func('$.Variable', 'ABC')
-    
+
     with pytest.raises(ValueError):
         ChoiceRule.BooleanEquals('$.Variable', 42)
 
@@ -60,6 +60,35 @@ def test_variable_value_must_be_consistent():
         func = getattr(ChoiceRule, timestamp_function)
         with pytest.raises(ValueError):
             func('$.Variable', True)
+
+def test_path_function_value_must_be_consistent():
+    path_functions = {
+        'StringEqualsPath',
+        'NumericEqualsPath',
+        'TimestampEqualsPath',
+        'BooleanEqualsPath'
+    }
+    for path_function in path_functions:
+        func = getattr(ChoiceRule, path_function)
+        with pytest.raises(ValueError):
+            func('$.Variable', 'string')
+
+def test_is_function_value_must_be_consistent():
+    is_functions = {
+        'IsPresent',
+        'IsNull',
+        'IsString',
+        'IsNumeric',
+        'IsBoolean',
+        'IsTimestamp'
+    }
+
+    for is_function in is_functions:
+        func = getattr(ChoiceRule, is_function)
+        with pytest.raises(ValueError):
+            func('$.Variable', 'string')
+        with pytest.raises(ValueError):
+            func('$.Variable', 101)
 
 def test_rule_serialization():
     bool_rule = ChoiceRule.BooleanEquals('$.BooleanVariable', True)
