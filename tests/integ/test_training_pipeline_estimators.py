@@ -119,6 +119,8 @@ def test_pca_estimator(sfn_client, sagemaker_session, sagemaker_role_arn, sfn_ro
          'status': status,
          'startDate': execution_info['startDate'],
          'stopDate': execution_info['stopDate'],
+         'inputDetails': {'included': True},
+         'outputDetails': {'included': True},
          'input': {'Training': {'AlgorithmSpecification': {'TrainingImage': estimator_image_uri,
             'TrainingInputMode': 'File'},
            'OutputDataConfig': {'S3OutputPath': s3_output_path},
