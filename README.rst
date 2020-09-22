@@ -104,7 +104,6 @@ Supported Python Versions
 
 The AWS Step Functions Data Science SDK is tested on:
 
-* Python 2.7
 * Python 3.6
 
 Overview of SDK
