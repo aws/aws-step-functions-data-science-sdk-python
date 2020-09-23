@@ -119,8 +119,8 @@ def pca_estimator_with_falsy_debug_hook():
     pca = sagemaker.estimator.Estimator(
         PCA_IMAGE,
         role=EXECUTION_ROLE,
-        train_instance_count=1,
-        train_instance_type='ml.c4.xlarge',
+        instance_count=1,
+        instance_type='ml.c4.xlarge',
         output_path=s3_output_location,
         debugger_hook_config = False
     )
@@ -298,7 +298,7 @@ def test_training_step_creation_with_debug_hook(pca_estimator_with_debug_hook):
             'DebugRuleConfigurations': [
                 {
                     'RuleConfigurationName': 'Confusion',
-                    'RuleEvaluatorImage': '199566480951.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest',
+                    'RuleEvaluatorImage': '503895931360.dkr.ecr.us-east-1.amazonaws.com/sagemaker-debugger-rules:latest',
                     'RuleParameters': {
                         'rule_to_invoke': 'Confusion',
                         'category_no': '15',
@@ -449,13 +449,14 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
             },
             'RoleArn': EXECUTION_ROLE,
             'HyperParameters': {
-                'model_dir': '"s3://sagemaker/models/tensorflow-job/model"',
+                'checkpoint_path': '"s3://sagemaker/models/sagemaker-tensorflow/checkpoints"',
+                'evaluation_steps': '100',
                 'sagemaker_container_log_level': '20',
-                'sagemaker_enable_cloudwatch_metrics': 'false',
                 'sagemaker_job_name': '"tensorflow-job"',
                 'sagemaker_program': '"tf_train.py"',
                 'sagemaker_region': '"us-east-1"',
-                'sagemaker_submit_directory': '"s3://sagemaker/source"'
+                'sagemaker_submit_directory': '"s3://sagemaker/source"',
+                'training_steps': '1000',
             },
             'TrainingJobName': 'tensorflow-job',
             'Tags': DEFAULT_TAGS_LIST
@@ -557,7 +558,6 @@ def test_get_expected_model_with_framework_estimator(tensorflow_estimator):
                 'Environment': {
                     'SAGEMAKER_PROGRAM': 'tf_train.py',
                     'SAGEMAKER_SUBMIT_DIRECTORY': 's3://sagemaker/tensorflow-job/source/sourcedir.tar.gz',
-                    'SAGEMAKER_ENABLE_CLOUDWATCH_METRICS': 'false',
                     'SAGEMAKER_CONTAINER_LOG_LEVEL': '20',
                     'SAGEMAKER_REGION': 'us-east-1',
                 },

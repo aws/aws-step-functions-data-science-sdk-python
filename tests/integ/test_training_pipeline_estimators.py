@@ -115,7 +115,9 @@ def test_pca_estimator(sfn_client, sagemaker_session, sagemaker_role_arn, sfn_ro
         s3_output_path = 's3://{bucket_name}/{workflow_name}/models'.format(bucket_name=bucket_name, workflow_name=unique_name)
         expected_execution_info = {'executionArn': execution_arn,
          'stateMachineArn': state_machine_arn,
+         'inputDetails': {'included': True},
          'name': job_name,
+         'outputDetails': {'included': True},
          'status': status,
          'startDate': execution_info['startDate'],
          'stopDate': execution_info['stopDate'],

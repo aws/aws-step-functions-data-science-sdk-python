@@ -66,6 +66,7 @@ def sklearn_preprocessor():
         role=SAGEMAKER_EXECUTION_ROLE,
         instance_type="ml.c4.xlarge",
         source_dir=source_dir,
+        sagemaker_session = sagemaker_session
     )
 
     sklearn_preprocessor.debugger_hook_config = DebuggerHookConfig(
@@ -334,11 +335,10 @@ def test_inference_pipeline(sklearn_preprocessor, linear_learner_estimator):
             },
             'HyperParameters': {
                 'sagemaker_container_log_level': '20',
-                'sagemaker_enable_cloudwatch_metrics': 'false',
                 'sagemaker_job_name': '"preprocessor-linear_learner"',
                 'sagemaker_program': '"sklearn_abalone_featurizer.py"',
                 'sagemaker_region': '"us-east-1"',
-                'sagemaker_submit_directory': '"s3://sagemaker/source"'
+                'sagemaker_submit_directory': '"s3://sagemaker/source"',
             },
             'InputDataConfig': [{
                 'ChannelName': 'train',
@@ -371,7 +371,6 @@ def test_inference_pipeline(sklearn_preprocessor, linear_learner_estimator):
             'PrimaryContainer': {
                 'Environment': {
                     'SAGEMAKER_CONTAINER_LOG_LEVEL': '20',
-                    'SAGEMAKER_ENABLE_CLOUDWATCH_METRICS': 'false',
                     'SAGEMAKER_PROGRAM': 'sklearn_abalone_featurizer.py',
                     'SAGEMAKER_REGION': 'us-east-1',
                     'SAGEMAKER_SUBMIT_DIRECTORY': 's3://sagemaker/source'
@@ -435,7 +434,6 @@ def test_inference_pipeline(sklearn_preprocessor, linear_learner_estimator):
                 {
                     'Environment': {
                         'SAGEMAKER_CONTAINER_LOG_LEVEL': '20',
-                        'SAGEMAKER_ENABLE_CLOUDWATCH_METRICS': 'false',
                         'SAGEMAKER_PROGRAM': 'sklearn_abalone_featurizer.py',
                         'SAGEMAKER_REGION': 'us-east-1',
                         'SAGEMAKER_SUBMIT_DIRECTORY': 's3://sagemaker/source'
