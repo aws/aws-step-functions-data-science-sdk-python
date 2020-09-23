@@ -16,7 +16,7 @@ import pytest
 import json
 
 from sagemaker.utils import unique_name_from_base
-from sagemaker.amazon.amazon_estimator import get_image_uri
+from sagemaker.image_uris import retrieve 
 from stepfunctions import steps
 from stepfunctions.workflow import Workflow
 from tests.integ.utils import state_machine_delete_wait
@@ -25,7 +25,7 @@ from tests.integ.utils import state_machine_delete_wait
 def training_job_parameters(sagemaker_session, sagemaker_role_arn, record_set_fixture):
     parameters = { 
         "AlgorithmSpecification": { 
-            "TrainingImage": get_image_uri(sagemaker_session.boto_session.region_name, 'pca'),
+            "TrainingImage": retrieve(region=sagemaker_session.boto_session.region_name, framework='pca'),
             "TrainingInputMode": "File"
         },
         "OutputDataConfig": { 
