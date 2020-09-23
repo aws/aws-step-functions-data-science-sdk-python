@@ -53,8 +53,8 @@ def sagemaker_role_arn(aws_account_id):
 def pca_estimator_fixture(sagemaker_role_arn):
     estimator = pca.PCA(
         role=sagemaker_role_arn,
-        train_instance_count=1,
-        train_instance_type="ml.m5.large",
+        instance_count=1,
+        instance_type="ml.m5.large",
         num_components=48
     )
     return estimator
