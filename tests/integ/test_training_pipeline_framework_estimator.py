@@ -33,11 +33,12 @@ from tests.integ.utils import (
 def torch_estimator(sagemaker_role_arn):
     script_path = os.path.join(DATA_DIR, "pytorch_mnist", "mnist.py")   
     return PyTorch(
+        py_version='py3',
         entry_point=script_path,
         role=sagemaker_role_arn,
         framework_version='1.2.0',
-        train_instance_count=1,
-        train_instance_type='ml.m5.large',
+        instance_count=1,
+        instance_type='ml.m5.large',
         hyperparameters={
             'epochs': 6,
             'backend': 'gloo'
@@ -48,11 +49,12 @@ def torch_estimator(sagemaker_role_arn):
 def sklearn_estimator(sagemaker_role_arn):
     script_path = os.path.join(DATA_DIR, "sklearn_mnist", "mnist.py")   
     return SKLearn(
+        framework_version='0.20.0',
+        py_version='py3',
         entry_point=script_path,
         role=sagemaker_role_arn,
-        train_instance_count=1,
-        train_instance_type='ml.m5.large',
-        framework_version='0.20.0',
+        instance_count=1,
+        instance_type='ml.m5.large',
         hyperparameters={
             "epochs": 1
         }
