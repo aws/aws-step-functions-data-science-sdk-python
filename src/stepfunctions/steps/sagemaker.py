@@ -36,12 +36,12 @@ class TrainingStep(Task):
             data: Information about the training data. Please refer to the ``fit()`` method of the associated estimator, as this can take any of the following forms:
 
                 * (str) - The S3 location where training data is saved.
-                * (dict[str, str] or dict[str, sagemaker.session.s3_input]) - If using multiple
+                * (dict[str, str] or dict[str, sagemaker.inputs.TrainingInput]) - If using multiple
                     channels for training data, you can specify a dict mapping channel names to
-                    strings or :func:`~sagemaker.session.s3_input` objects.
-                * (sagemaker.session.s3_input) - Channel configuration for S3 data sources that can
+                    strings or :func:`~sagemaker.inputs.TrainingInput` objects.
+                * (sagemaker.inputs.TrainingInput) - Channel configuration for S3 data sources that can
                     provide additional information about the training dataset. See
-                    :func:`sagemaker.session.s3_input` for full details.
+                    :func:`sagemaker.inputs.TrainingInput` for full details.
                 * (sagemaker.amazon.amazon_estimator.RecordSet) - A collection of
                     Amazon :class:`Record` objects serialized and stored in S3.
                     For use with an estimator for an Amazon algorithm.
@@ -198,11 +198,11 @@ class ModelStep(Task):
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             model (sagemaker.model.Model): The SageMaker model to use in the ModelStep. If :py:class:`TrainingStep` was used to train the model and saving the model is the next step in the workflow, the output of :py:func:`TrainingStep.get_expected_model()` can be passed here.
             model_name (str or Placeholder, optional): Specify a model name, this is required for creating the model. We recommend to use :py:class:`~stepfunctions.inputs.ExecutionInput` placeholder collection to pass the value dynamically in each execution.
-            instance_type (str, optional): The EC2 instance type to deploy this Model to. For example, 'ml.p2.xlarge'. This parameter is typically required when the estimator used is not an `Amazon built-in algorithm <https://docs.aws.amazon.com/sagemaker/latest/dg/algos.html>`_.
+            instance_type (str, optional): The EC2 instance type to deploy this Model to. For example, 'ml.p2.xlarge'.
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
         """
         if isinstance(model, FrameworkModel):
-            parameters = model_config(model=model, instance_type=instance_type, role=model.role, image=model.image)
+            parameters = model_config(model=model, instance_type=instance_type, role=model.role, image_uri=model.image_uri)
             if model_name:
                 parameters['ModelName'] = model_name
         elif isinstance(model, Model):
@@ -211,7 +211,7 @@ class ModelStep(Task):
                 'ModelName': model_name or model.name,
                 'PrimaryContainer': {
                     'Environment': {},
-                    'Image': model.image,
+                    'Image': model.image_uri,
                     'ModelDataUrl': model.model_data
                 }
             }
@@ -322,12 +322,12 @@ class TuningStep(Task):
             data: Information about the training data. Please refer to the ``fit()`` method of the associated estimator in the tuner, as this can take any of the following forms:
 
                 * (str) - The S3 location where training data is saved.
-                * (dict[str, str] or dict[str, sagemaker.session.s3_input]) - If using multiple
+                * (dict[str, str] or dict[str, sagemaker.inputs.TrainingInput]) - If using multiple
                     channels for training data, you can specify a dict mapping channel names to
-                    strings or :func:`~sagemaker.session.s3_input` objects.
-                * (sagemaker.session.s3_input) - Channel configuration for S3 data sources that can
+                    strings or :func:`~sagemaker.inputs.TrainingInput` objects.
+                * (sagemaker.inputs.TrainingInput) - Channel configuration for S3 data sources that can
                     provide additional information about the training dataset. See
-                    :func:`sagemaker.session.s3_input` for full details.
+                    :func:`sagemaker.inputs.TrainingInput` for full details.
                 * (sagemaker.amazon.amazon_estimator.RecordSet) - A collection of
                     Amazon :class:`Record` objects serialized and stored in S3.
                     For use with an estimator for an Amazon algorithm.

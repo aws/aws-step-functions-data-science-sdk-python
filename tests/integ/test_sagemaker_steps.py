@@ -254,8 +254,8 @@ def test_tuning_step(sfn_client, record_set_for_hyperparameter_tuning, sagemaker
 
     kmeans = KMeans(
         role=sagemaker_role_arn,
-        train_instance_count=1,
-        train_instance_type=INSTANCE_TYPE,
+        instance_count=1,
+        instance_type=INSTANCE_TYPE,
         k=10
     )
 

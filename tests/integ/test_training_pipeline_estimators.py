@@ -25,7 +25,7 @@ import boto3
 
 # import Sagemaker
 from sagemaker.amazon.pca import PCA
-from sagemaker.amazon.amazon_estimator import get_image_uri
+from sagemaker.image_uris import retrieve 
 
 # import StepFunctions
 from stepfunctions.template.pipeline import TrainingPipeline
@@ -50,8 +50,8 @@ def pca_estimator(sagemaker_role_arn):
     pca_estimator = PCA(
         role=sagemaker_role_arn,
         num_components=1,
-        train_instance_count=1,
-        train_instance_type='ml.m5.large',
+        instance_count=1,
+        instance_type='ml.m5.large',
         )
 
     pca_estimator.feature_dim=500
@@ -105,7 +105,7 @@ def test_pca_estimator(sfn_client, sagemaker_session, sagemaker_role_arn, sfn_ro
         job_name = workflow_execution_info['name']
         s3_manifest_uri = inputs.s3_data
         status = 'SUCCEEDED'
-        estimator_image_uri = get_image_uri(sagemaker_session.boto_region_name, 'pca')
+        estimator_image_uri = retrieve(region=sagemaker_session.boto_region_name,  framework='pca')
 
         execution_info = sfn_client.describe_execution(executionArn=execution_arn)
         execution_info['input'] = json.loads(execution_info['input'])
@@ -115,10 +115,14 @@ def test_pca_estimator(sfn_client, sagemaker_session, sagemaker_role_arn, sfn_ro
         s3_output_path = 's3://{bucket_name}/{workflow_name}/models'.format(bucket_name=bucket_name, workflow_name=unique_name)
         expected_execution_info = {'executionArn': execution_arn,
          'stateMachineArn': state_machine_arn,
+         'inputDetails': {'included': True},
          'name': job_name,
+         'outputDetails': {'included': True},
          'status': status,
          'startDate': execution_info['startDate'],
          'stopDate': execution_info['stopDate'],
+         'inputDetails': {'included': True},
+         'outputDetails': {'included': True},
          'input': {'Training': {'AlgorithmSpecification': {'TrainingImage': estimator_image_uri,
             'TrainingInputMode': 'File'},
            'OutputDataConfig': {'S3OutputPath': s3_output_path},

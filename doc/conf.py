@@ -94,7 +94,7 @@ html_static_path = []
 htmlhelp_basename = "%sdoc" % project
 
 intersphinx_mapping = {
-    "https://docs.python.org/2.7/": None,
+    "https://docs.python.org/3.6/": None,
     "https://boto3.readthedocs.io/en/latest": None,
     "https://sagemaker.readthedocs.io/en/stable": None,
 }
