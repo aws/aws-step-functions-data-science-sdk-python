@@ -613,7 +613,7 @@ class ChoiceRule(object):
 
         Args:
             variable (str): Path to the variable to compare.
-            value (bool): Constant value to compare `variable` against.
+            value (bool): Whether the value at variable is equal to the JSON literal null or not.
 
         Returns:
             Rule: Rule with `IsNull` operator.
@@ -627,7 +627,7 @@ class ChoiceRule(object):
 
         Args:
             variable (str): Path to the variable to compare.
-            value (bool): Constant value to compare `variable` against.
+            value (bool): Whether a field at variable exists in the input or not.
 
         Returns:
             Rule: Rule with `IsPresent` operator.
@@ -641,7 +641,7 @@ class ChoiceRule(object):
 
         Args:
             variable (str): Path to the variable to compare.
-            value (bool): Constant value to compare `variable` against.
+            value (bool): Whether the value at variable is a string or not.
 
         Returns:
             Rule: Rule with `IsString` operator.
@@ -655,7 +655,7 @@ class ChoiceRule(object):
 
         Args:
             variable (str): Path to the variable to compare.
-            value (bool): Constant value to compare `variable` against.
+            value (bool): Whether the value at variable is a number or not.
 
         Returns:
             Rule: Rule with `IsNumeric` operator.
@@ -669,7 +669,7 @@ class ChoiceRule(object):
 
         Args:
             variable (str): Path to the variable to compare.
-            value (bool): Constant value to compare `variable` against.
+            value (bool): Whether the value at variable is a timestamp or not.
 
         Returns:
             Rule: Rule with `IsTimestamp` operator.
@@ -683,7 +683,7 @@ class ChoiceRule(object):
 
         Args:
             variable (str): Path to the variable to compare.
-            value (bool): Constant value to compare `variable` against.
+            value (bool): Whether the value at variable is a boolean or not.
 
         Returns:
             Rule: Rule with `IsBoolean` operator.

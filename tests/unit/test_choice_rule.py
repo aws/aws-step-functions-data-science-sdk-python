@@ -74,7 +74,7 @@ def test_path_function_value_must_be_consistent():
             func('$.Variable', 'string')
 
 def test_is_function_value_must_be_consistent():
-    is_functions = {
+    type_functions = {
         'IsPresent',
         'IsNull',
         'IsString',
@@ -83,12 +83,109 @@ def test_is_function_value_must_be_consistent():
         'IsTimestamp'
     }
 
-    for is_function in is_functions:
-        func = getattr(ChoiceRule, is_function)
+    for type_function in type_functions:
+        func = getattr(ChoiceRule, type_function)
         with pytest.raises(ValueError):
             func('$.Variable', 'string')
         with pytest.raises(ValueError):
             func('$.Variable', 101)
+
+# tox -e py37 -- -s -vv tests/unit/test_choice_rule.py::test_dynamic_comparator_serialization
+def test_static_comparator_serialization():
+    string_timestamp_static_comparators = {
+        'StringEquals',
+        'StringLessThan',
+        'StringLessThanEquals',
+        'StringGreaterThan',
+        'StringGreaterThanEquals',
+        'TimestampEquals',
+        'TimestampLessThan',
+        'TimestampGreaterThan',
+        'TimestampLessThanEquals'
+    }
+
+    for string_timestamp_static_comparator in string_timestamp_static_comparators:
+        type_rule = getattr(ChoiceRule, string_timestamp_static_comparator)('$.input', 'hello')
+        expected_dict = {}
+        expected_dict['Variable'] = '$.input'
+        expected_dict[string_timestamp_static_comparator] = 'hello'
+        assert type_rule.to_dict() == expected_dict
+
+    number_static_comparators = {
+        'NumericEquals',
+        'NumericLessThan',
+        'NumericGreaterThan',
+        'NumericLessThanEquals',
+        'NumericGreaterThanEquals'
+    }
+
+    for number_static_comparator in number_static_comparators:
+        type_rule = getattr(ChoiceRule, number_static_comparator)('$.input', 123)
+        expected_dict = {}
+        expected_dict['Variable'] = '$.input'
+        expected_dict[number_static_comparator] = 123
+        assert type_rule.to_dict() == expected_dict
+
+    boolean_static_comparators = {
+        'BooleanEquals'
+    }
+
+    for boolean_static_comparator in boolean_static_comparators:
+        type_rule = getattr(ChoiceRule, boolean_static_comparator)('$.input', False)
+        expected_dict = {}
+        expected_dict['Variable'] = '$.input'
+        expected_dict[boolean_static_comparator] = False
+        assert type_rule.to_dict() == expected_dict
+
+def test_dynamic_comparator_serialization():
+    dynamic_comparators = {
+        'StringEqualsPath',
+        'StringLessThanPath',
+        'StringLessThanEqualsPath',
+        'StringGreaterThanPath',
+        'StringGreaterThanEqualsPath',
+        'TimestampEqualsPath',
+        'TimestampLessThanPath',
+        'TimestampGreaterThanPath',
+        'TimestampLessThanEqualsPath',
+        'NumericEqualsPath',
+        'NumericLessThanPath',
+        'NumericGreaterThanPath',
+        'NumericLessThanEqualsPath',
+        'NumericGreaterThanEqualsPath',
+        'BooleanEqualsPath'
+    }
+
+    for dynamic_comparator in dynamic_comparators:
+        type_rule = getattr(ChoiceRule, dynamic_comparator)('$.input', '$.input2')
+        expected_dict = {}
+        expected_dict['Variable'] = '$.input'
+        expected_dict[dynamic_comparator] = '$.input2'
+        assert type_rule.to_dict() == expected_dict
+
+def test_type_check_comparators_serialization():
+    type_comparators = {
+        'IsPresent',
+        'IsNull',
+        'IsString',
+        'IsNumeric',
+        'IsBoolean',
+        'IsTimestamp'
+    }
+
+    for type_comparator in type_comparators:
+        type_rule = getattr(ChoiceRule, type_comparator)('$.input', True)
+        expected_dict = {}
+        expected_dict['Variable'] = '$.input'
+        expected_dict[type_comparator] = True
+        assert type_rule.to_dict() == expected_dict
+
+def test_string_matches_serialization():
+    string_matches_rule = ChoiceRule.StringMatches('$.input', 'hello*world\\*')
+    assert string_matches_rule.to_dict() == {
+        'Variable': '$.input',
+        'StringMatches': 'hello*world\\*'
+    }
 
 def test_rule_serialization():
     bool_rule = ChoiceRule.BooleanEquals('$.BooleanVariable', True)
