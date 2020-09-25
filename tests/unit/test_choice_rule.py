@@ -61,20 +61,20 @@ def test_variable_value_must_be_consistent():
         with pytest.raises(ValueError):
             func('$.Variable', True)
 
-def test_path_function_value_must_be_consistent():
-    path_functions = {
+def test_path_comparator_raises_error_when_value_is_not_a_path():
+    path_comparators = {
         'StringEqualsPath',
         'NumericEqualsPath',
         'TimestampEqualsPath',
         'BooleanEqualsPath'
     }
-    for path_function in path_functions:
-        func = getattr(ChoiceRule, path_function)
+    for path_comparator in path_comparators:
+        func = getattr(ChoiceRule, path_comparator)
         with pytest.raises(ValueError):
             func('$.Variable', 'string')
 
-def test_is_function_value_must_be_consistent():
-    type_functions = {
+def test_is_comparator_raises_error_when_value_is_not_a_bool():
+    type_comparators = {
         'IsPresent',
         'IsNull',
         'IsString',
@@ -83,14 +83,13 @@ def test_is_function_value_must_be_consistent():
         'IsTimestamp'
     }
 
-    for type_function in type_functions:
-        func = getattr(ChoiceRule, type_function)
+    for type_comparator in type_comparators:
+        func = getattr(ChoiceRule, type_comparator)
         with pytest.raises(ValueError):
             func('$.Variable', 'string')
         with pytest.raises(ValueError):
             func('$.Variable', 101)
 
-# tox -e py37 -- -s -vv tests/unit/test_choice_rule.py::test_dynamic_comparator_serialization
 def test_static_comparator_serialization():
     string_timestamp_static_comparators = {
         'StringEquals',
