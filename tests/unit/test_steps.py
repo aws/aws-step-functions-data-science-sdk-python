@@ -6,9 +6,9 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# or in the "license" file accompanying this file. This file is distributed 
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-# express or implied. See the License for the specific language governing 
+# or in the "license" file accompanying this file. This file is distributed
+# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
@@ -32,7 +32,7 @@ def test_state_creation():
         parameters = {'Key': 'Value'},
         result_path = '$.Result'
     )
-    
+
     assert state.to_dict() == {
         'Type': 'Void',
         'Comment': 'This is a comment',
@@ -56,7 +56,7 @@ def test_pass_state_creation():
         'Result': 'Pass',
         'End': True
     }
-    
+
 def test_verify_pass_state_fields():
     pass_state = Pass(
         state_id='Pass',
@@ -149,11 +149,12 @@ def test_verify_wait_state_fields():
 
 def test_choice_state_creation():
     choice_state = Choice('Choice', input_path='$.Input')
+    choice_state.add_choice(ChoiceRule.IsPresent("$.StringVariable1", True), Pass("End State 1"))
     choice_state.add_choice(ChoiceRule.StringEquals("$.StringVariable1", "ABC"), Pass("End State 1"))
-    choice_state.add_choice(ChoiceRule.StringLessThanEquals("$.StringVariable2", "ABC"), Pass("End State 2"))
+    choice_state.add_choice(ChoiceRule.StringLessThanEqualsPath("$.StringVariable2", "$.value"), Pass("End State 2"))
     choice_state.default_choice(Pass('End State 3'))
     assert choice_state.state_id == 'Choice'
-    assert len(choice_state.choices) == 2
+    assert len(choice_state.choices) == 3
     assert choice_state.default.state_id == 'End State 3'
     assert choice_state.to_dict() == {
         'Type': 'Choice',
@@ -161,12 +162,17 @@ def test_choice_state_creation():
         'Choices': [
             {
                 'Variable': '$.StringVariable1',
+                'IsPresent': True,
+                'Next': 'End State 1'
+            },
+            {
+                'Variable': '$.StringVariable1',
                 'StringEquals': 'ABC',
                 'Next': 'End State 1'
             },
             {
                 'Variable': '$.StringVariable2',
-                'StringLessThanEquals': 'ABC',
+                'StringLessThanEqualsPath': '$.value',
                 'Next': 'End State 2'
             }
         ],
@@ -283,13 +289,13 @@ def test_append_states_after_terminal_state_will_fail():
         chain.append(Pass('Pass'))
         chain.append(Fail('Fail'))
         chain.append(Pass('Pass2'))
-    
+
     with pytest.raises(ValueError):
         chain = Chain()
         chain.append(Pass('Pass'))
         chain.append(Succeed('Succeed'))
         chain.append(Pass('Pass2'))
-    
+
     with pytest.raises(ValueError):
         chain = Chain()
         chain.append(Pass('Pass'))
@@ -317,7 +323,7 @@ def test_chaining_steps():
 
     with pytest.raises(DuplicateStatesInChain):
         chain3 = Chain([chain1, chain2])
-    
+
     s1.next(s2)
     chain3 = Chain([s3, s1])
     assert chain3.steps == [s3, s1]
@@ -344,7 +350,7 @@ def test_catch_fail_for_unsupported_state():
 def test_retry_fail_for_unsupported_state():
 
     c1 = Choice('My Choice')
-    
+
     with pytest.raises(ValueError):
         c1.add_catch(Catch(error_equals=["States.NoChoiceMatched"], next_step=Fail("ChoiceFailed")))
 
