@@ -6,9 +6,9 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# or in the "license" file accompanying this file. This file is distributed 
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-# express or implied. See the License for the specific language governing 
+# or in the "license" file accompanying this file. This file is distributed
+# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
@@ -51,11 +51,11 @@ class Placeholder(object):
             self._set_schema(schema)
             self._make_immutable()
         self.json_str_template = "{}"
-        
+
         self.name = kwargs.get("name")
         self.type = kwargs.get("type")
         self.parent = kwargs.get("parent")
-        
+
 
     def get(self, name, type):
         """
@@ -64,11 +64,11 @@ class Placeholder(object):
         Args:
             name (str): Name of the placeholder variable.
             type (type): Type of the placeholder variable.
-        
+
         Raises:
             ValueError: If placeholder variable with the same name but different type already exists.
             ValueError: If placeholder variable does not fit into a previously specified schema for the placeholder collection.
-        
+
         Returns:
             Placeholder: Placeholder variable.
         """
@@ -240,7 +240,7 @@ class Placeholder(object):
     def to_jsonpath(self):
         """
         Returns a JSON path representation of the placeholder variable to be used for step parameters.
-        
+
         Returns:
             str: JSON path representation of the placeholder variable
         """
@@ -252,7 +252,7 @@ class ExecutionInput(Placeholder):
     """
         Top-level class for execution input placeholders.
     """
-    
+
     def __init__(self, schema=None, **kwargs):
         super(ExecutionInput, self).__init__(schema, **kwargs)
         self.json_str_template = '$$.Execution.Input{}'
@@ -268,7 +268,7 @@ class ExecutionInput(Placeholder):
             return ExecutionInput(name=name, parent=parent, type=type)
         else:
             return ExecutionInput(name=name, parent=parent)
-    
+
 
 class StepInput(Placeholder):
 
@@ -279,7 +279,7 @@ class StepInput(Placeholder):
     def __init__(self, schema=None, **kwargs):
         super(StepInput, self).__init__(schema, **kwargs)
         self.json_str_template = '${}'
-        
+
     def _create_variable(self, name, parent, type=None):
         """
             Creates a placeholder variable for Step Input.
@@ -291,3 +291,26 @@ class StepInput(Placeholder):
             return StepInput(name=name, parent=parent, type=type)
         else:
             return StepInput(name=name, parent=parent)
+
+
+class StepResult(Placeholder):
+
+    """
+        Top-level class for step result placeholders.
+    """
+
+    def __init__(self, schema=None, **kwargs):
+        super(StepResult, self).__init__(schema, **kwargs)
+        self.json_str_template = '${}'
+
+    def _create_variable(self, name, parent, type=None):
+        """
+            Creates a placeholder variable for Step Result.
+            A placeholder variable can only be created if the collection is not immutable due to a pre-specified schema.
+        """
+        if self.immutable:
+            raise ValueError("Placeholder variable does not conform to schema set for the placeholder collection.")
+        if type:
+            return StepResult(name=name, parent=parent, type=type)
+        else:
+            return StepResult(name=name, parent=parent)

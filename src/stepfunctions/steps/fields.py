@@ -22,6 +22,7 @@ class Field(Enum):
     InputPath        = 'input_path'
     OutputPath       = 'output_path'
     Parameters       = 'parameters'
+    ResultSelector   = 'result_selector'
     ResultPath       = 'result_path'
     Next             = 'next'
     Retry            = 'retry'

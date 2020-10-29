@@ -6,16 +6,16 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# or in the "license" file accompanying this file. This file is distributed 
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-# express or implied. See the License for the specific language governing 
+# or in the "license" file accompanying this file. This file is distributed
+# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
 import pytest
 import json
 
-from stepfunctions.inputs import ExecutionInput, StepInput
+from stepfunctions.inputs import ExecutionInput, StepInput, StepResult
 
 def test_placeholder_creation_with_subscript_operator():
     step_input = StepInput()
@@ -154,7 +154,7 @@ def test_placeholder_with_schema():
 
     with pytest.raises(ValueError):
         workflow_input["A"]["B"]["D"]
-    
+
     with pytest.raises(ValueError):
         workflow_input["A"]["B"].get("C", float)
 
