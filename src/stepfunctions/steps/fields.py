@@ -6,9 +6,9 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# or in the "license" file accompanying this file. This file is distributed 
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-# express or implied. See the License for the specific language governing 
+# or in the "license" file accompanying this file. This file is distributed
+# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
@@ -53,9 +53,12 @@ class Field(Enum):
     MaxConcurrency   = 'max_concurrency'
 
     # Task state fields
-    Resource         = 'resource'
-    TimeoutSeconds   = 'timeout_seconds'
-    HeartbeatSeconds = 'heartbeat_seconds'
+    Resource             = 'resource'
+    TimeoutSeconds       = 'timeout_seconds'
+    TimeoutSecondsPath   = 'timeout_seconds_path'
+    HeartbeatSeconds     = 'heartbeat_seconds'
+    HeartbeatSecondsPath = 'heartbeat_seconds_path'
+
 
     # Retry and catch fields
     ErrorEquals      = 'error_equals'
