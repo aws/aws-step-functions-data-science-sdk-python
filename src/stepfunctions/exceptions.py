@@ -23,3 +23,7 @@ class MissingRequiredParameter(Exception):
 
 class DuplicateStatesInChain(Exception):
     pass
+
+
+class TooManyProductionVariants(Exception):
+    pass

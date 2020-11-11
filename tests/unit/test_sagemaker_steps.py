@@ -26,6 +26,7 @@ from sagemaker.sklearn.processing import SKLearnProcessor
 from sagemaker.processing import ProcessingInput, ProcessingOutput
 
 from unittest.mock import MagicMock, patch
+from stepfunctions.exceptions import TooManyProductionVariants
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, ProcessingStep
 from stepfunctions.steps.sagemaker import tuning_config
 
@@ -714,6 +715,35 @@ def test_endpoint_config_step_with_additional_production_variant(pca_model):
         'Resource': 'arn:aws:states:::sagemaker:createEndpointConfig',
         'End': True
     }
+
+def test_endpoint_config_step_allows_ten_variants(pca_model):
+    data_capture_config = DataCaptureConfig(
+        enable_capture=True,
+        sampling_percentage=100,
+        destination_s3_uri='s3://sagemaker/datacapture')
+    step = EndpointConfigStep('Endpoint Config',
+        endpoint_config_name='MyEndpointConfig',
+        model_name='pca-model',
+        initial_instance_count=1,
+        instance_type='ml.p2.xlarge',
+        variant_name='PCA Model',
+        data_capture_config=data_capture_config,
+        tags=DEFAULT_TAGS,
+    )
+    for variant in range(1, 10):
+        step.add_production_variant(
+            model_name='linear-model-{}'.format(variant),
+            initial_instance_count=1,
+            instance_type='ml.p2.xlarge',
+            variant_name='Linear Model {}'.format(variant)
+        )
+    with pytest.raises(TooManyProductionVariants):
+        step.add_production_variant(
+            model_name='best-model-yet',
+            initial_instance_count=1,
+            instance_type='ml.p2.xlarge',
+            variant_name='Best Model Yet'
+        )
 
 def test_endpoint_step_creation(pca_model):
     step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', tags=DEFAULT_TAGS)

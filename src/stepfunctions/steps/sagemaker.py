@@ -12,6 +12,7 @@
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
+from stepfunctions.exceptions import TooManyProductionVariants
 from stepfunctions.inputs import ExecutionInput, StepInput
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
@@ -279,7 +280,11 @@ class EndpointConfigStep(Task):
             instance_type (str or Placeholder): The EC2 instance type to deploy this Model to. For example, 'ml.p2.xlarge'.
             variant_name (str): The name of the production variant.
         """
-        self.fields[Field.Parameters.value]['ProductionVariants'].append({
+        parameters = self.fields[Field.Parameters.value]
+        if len(parameters['ProductionVariants']) >= 10:
+            raise TooManyProductionVariants('Maximum number of 10 variants allowed')
+
+        parameters['ProductionVariants'].append({
             'InitialInstanceCount': initial_instance_count,
             'InstanceType': instance_type,
             'ModelName': model_name,
