@@ -640,7 +640,7 @@ def test_endpoint_config_step_with_additional_production_variant(pca_model):
         model_name='pca-model',
         initial_instance_count=1,
         instance_type='ml.p2.xlarge',
-        variant_name='PCA Model',
+        variant_name='PCAModel',
         data_capture_config=data_capture_config,
         tags=DEFAULT_TAGS,
         )
@@ -652,7 +652,7 @@ def test_endpoint_config_step_with_additional_production_variant(pca_model):
                 'InitialInstanceCount': 1,
                 'InstanceType': 'ml.p2.xlarge',
                 'ModelName': 'pca-model',
-                'VariantName': 'PCA Model'
+                'VariantName': 'PCAModel'
             }],
             'DataCaptureConfig': {
                 'EnableCapture': True,
@@ -677,7 +677,7 @@ def test_endpoint_config_step_with_additional_production_variant(pca_model):
         model_name='linear-model',
         initial_instance_count=1,
         instance_type='ml.p2.xlarge',
-        variant_name='Linear Model'
+        variant_name='LinearModel'
     )
     assert step.to_dict() == {
         'Type': 'Task',
@@ -688,13 +688,13 @@ def test_endpoint_config_step_with_additional_production_variant(pca_model):
                     'InitialInstanceCount': 1,
                     'InstanceType': 'ml.p2.xlarge',
                     'ModelName': 'pca-model',
-                    'VariantName': 'PCA Model'
+                    'VariantName': 'PCAModel'
                 },
                 {
                     'InitialInstanceCount': 1,
                     'InstanceType': 'ml.p2.xlarge',
                     'ModelName': 'linear-model',
-                    'VariantName': 'Linear Model'
+                    'VariantName': 'LinearModel'
                 }
             ],
             'DataCaptureConfig': {
@@ -726,7 +726,7 @@ def test_endpoint_config_step_allows_ten_variants(pca_model):
         model_name='pca-model',
         initial_instance_count=1,
         instance_type='ml.p2.xlarge',
-        variant_name='PCA Model',
+        variant_name='PCAModel',
         data_capture_config=data_capture_config,
         tags=DEFAULT_TAGS,
     )
@@ -735,14 +735,14 @@ def test_endpoint_config_step_allows_ten_variants(pca_model):
             model_name='linear-model-{}'.format(variant),
             initial_instance_count=1,
             instance_type='ml.p2.xlarge',
-            variant_name='Linear Model {}'.format(variant)
+            variant_name='LinearModel-{}'.format(variant)
         )
     with pytest.raises(TooManyProductionVariants):
         step.add_production_variant(
             model_name='best-model-yet',
             initial_instance_count=1,
             instance_type='ml.p2.xlarge',
-            variant_name='Best Model Yet'
+            variant_name='BestModelYet'
         )
 
 def test_endpoint_step_creation(pca_model):

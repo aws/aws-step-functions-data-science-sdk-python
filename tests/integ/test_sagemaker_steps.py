@@ -223,13 +223,13 @@ def test_endpoint_config_step_with_two_production_variants(trained_estimator, sf
         model_name=first_model.name,
         initial_instance_count=INSTANCE_COUNT,
         instance_type=INSTANCE_TYPE,
-        variant_name="First model"
+        variant_name="FirstModel"
     )
     endpoint_config_step.add_production_variant(
         model_name=second_model.name,
         initial_instance_count=INSTANCE_COUNT,
         instance_type=INSTANCE_TYPE,
-        variant_name="Second model"
+        variant_name="SecondModel"
     )
     workflow_graph = Chain([endpoint_config_step])
 
