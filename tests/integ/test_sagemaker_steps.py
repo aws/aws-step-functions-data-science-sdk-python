@@ -207,6 +207,56 @@ def test_endpoint_config_step(trained_estimator, sfn_client, sagemaker_session, 
         delete_sagemaker_model(model.name, sagemaker_session)
         # End of Cleanup
 
+def test_endpoint_config_step_with_two_production_variants(trained_estimator, sfn_client, sagemaker_session, sfn_role_arn):
+    # Setup: Create models for trained estimator in SageMaker
+    first_model = trained_estimator.create_model()
+    first_model._create_sagemaker_model(instance_type=INSTANCE_TYPE)
+
+    second_model = trained_estimator.create_model()
+    second_model._create_sagemaker_model(instance_type=INSTANCE_TYPE)
+    # End of Setup
+
+    # Build workflow definition
+    endpoint_config_name = unique_name_from_base("integ-test-endpoint-config-two-variants")
+    endpoint_config_step = EndpointConfigStep('create_endpoint_config_step_with_two_variants',
+        endpoint_config_name=endpoint_config_name,
+        model_name=first_model.name,
+        initial_instance_count=INSTANCE_COUNT,
+        instance_type=INSTANCE_TYPE,
+        variant_name="First model"
+    )
+    endpoint_config_step.add_production_variant(
+        model_name=second_model.name,
+        initial_instance_count=INSTANCE_COUNT,
+        instance_type=INSTANCE_TYPE,
+        variant_name="Second model"
+    )
+    workflow_graph = Chain([endpoint_config_step])
+
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
+        # Create workflow and check definition
+        workflow = create_workflow_and_check_definition(
+            workflow_graph=workflow_graph,
+            workflow_name=unique_name_from_base("integ-test-create-endpoint-config-step-two-variants-workflow"),
+            sfn_client=sfn_client,
+            sfn_role_arn=sfn_role_arn
+        )
+
+        # Execute workflow
+        execution = workflow.execute()
+        execution_output = execution.get_output(wait=True)
+
+        # Check workflow output
+        assert execution_output.get("EndpointConfigArn") is not None
+        assert execution_output["SdkHttpMetadata"]["HttpStatusCode"] == 200
+
+        # Cleanup
+        state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
+        delete_sagemaker_endpoint_config(endpoint_config_name, sagemaker_session)
+        delete_sagemaker_model(first_model.name, sagemaker_session)
+        delete_sagemaker_model(second_model.name, sagemaker_session)
+        # End of Cleanup
+
 def test_create_endpoint_step(trained_estimator, record_set_fixture, sfn_client, sagemaker_session, sfn_role_arn):
     # Setup: Create model and endpoint config for trained estimator in SageMaker
     model = trained_estimator.create_model()
