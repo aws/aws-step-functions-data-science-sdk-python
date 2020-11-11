@@ -629,6 +629,92 @@ def test_endpoint_config_step_creation(pca_model):
         'End': True
     }
 
+def test_endpoint_config_step_with_additional_production_variant(pca_model):
+    data_capture_config = DataCaptureConfig(
+        enable_capture=True,
+        sampling_percentage=100,
+        destination_s3_uri='s3://sagemaker/datacapture')
+    step = EndpointConfigStep('Endpoint Config',
+        endpoint_config_name='MyEndpointConfig',
+        model_name='pca-model',
+        initial_instance_count=1,
+        instance_type='ml.p2.xlarge',
+        variant_name='PCA Model',
+        data_capture_config=data_capture_config,
+        tags=DEFAULT_TAGS,
+        )
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'EndpointConfigName': 'MyEndpointConfig',
+            'ProductionVariants': [{
+                'InitialInstanceCount': 1,
+                'InstanceType': 'ml.p2.xlarge',
+                'ModelName': 'pca-model',
+                'VariantName': 'PCA Model'
+            }],
+            'DataCaptureConfig': {
+                'EnableCapture': True,
+                'InitialSamplingPercentage': 100,
+                'DestinationS3Uri': 's3://sagemaker/datacapture',
+                'CaptureOptions': [
+                    {'CaptureMode': 'Input'},
+                    {'CaptureMode': 'Output'}
+                ],
+                'CaptureContentTypeHeader': {
+                    'CsvContentTypes': ['text/csv'],
+                    'JsonContentTypes': ['application/json']
+                }
+            },
+            'Tags': DEFAULT_TAGS_LIST
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createEndpointConfig',
+        'End': True
+    }
+
+    step.add_production_variant(
+        model_name='linear-model',
+        initial_instance_count=1,
+        instance_type='ml.p2.xlarge',
+        variant_name='Linear Model'
+    )
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'EndpointConfigName': 'MyEndpointConfig',
+            'ProductionVariants': [
+                {
+                    'InitialInstanceCount': 1,
+                    'InstanceType': 'ml.p2.xlarge',
+                    'ModelName': 'pca-model',
+                    'VariantName': 'PCA Model'
+                },
+                {
+                    'InitialInstanceCount': 1,
+                    'InstanceType': 'ml.p2.xlarge',
+                    'ModelName': 'linear-model',
+                    'VariantName': 'Linear Model'
+                }
+            ],
+            'DataCaptureConfig': {
+                'EnableCapture': True,
+                'InitialSamplingPercentage': 100,
+                'DestinationS3Uri': 's3://sagemaker/datacapture',
+                'CaptureOptions': [
+                    {'CaptureMode': 'Input'},
+                    {'CaptureMode': 'Output'}
+                ],
+                'CaptureContentTypeHeader': {
+                    'CsvContentTypes': ['text/csv'],
+                    'JsonContentTypes': ['application/json']
+                }
+            },
+            'Tags': DEFAULT_TAGS_LIST
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createEndpointConfig',
+        'End': True
+    }
+
 def test_endpoint_step_creation(pca_model):
     step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', tags=DEFAULT_TAGS)
     assert step.to_dict() == {

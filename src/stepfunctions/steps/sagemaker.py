@@ -271,6 +271,21 @@ class EndpointConfigStep(Task):
 
         super(EndpointConfigStep, self).__init__(state_id, **kwargs)
 
+    def add_production_variant(self, model_name, initial_instance_count, instance_type, variant_name):
+        """
+        Args:
+            model_name (str or Placeholder): The name of the SageMaker model to attach to the endpoint configuration. We recommend to use :py:class:`~stepfunctions.inputs.ExecutionInput` placeholder collection to pass the value dynamically in each execution.
+            initial_instance_count (int or Placeholder): The initial number of instances to run in the ``Endpoint`` created from this ``Model``.
+            instance_type (str or Placeholder): The EC2 instance type to deploy this Model to. For example, 'ml.p2.xlarge'.
+            variant_name (str): The name of the production variant.
+        """
+        self.fields[Field.Parameters.value]['ProductionVariants'].append({
+            'InitialInstanceCount': initial_instance_count,
+            'InstanceType': instance_type,
+            'ModelName': model_name,
+            'VariantName': variant_name
+        })
+
 
 class EndpointStep(Task):
 
