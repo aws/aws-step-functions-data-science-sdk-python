@@ -44,8 +44,8 @@ def pca_estimator():
     pca = sagemaker.estimator.Estimator(
         PCA_IMAGE,
         role=EXECUTION_ROLE,
-        train_instance_count=1,
-        train_instance_type='ml.c4.xlarge',
+        instance_count=1,
+        instance_type='ml.c4.xlarge',
         output_path=s3_output_location
     )
 
@@ -90,8 +90,8 @@ def pca_estimator_with_debug_hook():
     pca = sagemaker.estimator.Estimator(
         PCA_IMAGE,
         role=EXECUTION_ROLE,
-        train_instance_count=1,
-        train_instance_type='ml.c4.xlarge',
+        instance_count=1,
+        instance_type='ml.c4.xlarge',
         output_path=s3_output_location,
         debugger_hook_config = hook_config,
         rules=rules
@@ -119,8 +119,8 @@ def pca_estimator_with_falsy_debug_hook():
     pca = sagemaker.estimator.Estimator(
         PCA_IMAGE,
         role=EXECUTION_ROLE,
-        train_instance_count=1,
-        train_instance_type='ml.c4.xlarge',
+        instance_count=1,
+        instance_type='ml.c4.xlarge',
         output_path=s3_output_location,
         debugger_hook_config = False
     )
@@ -144,7 +144,7 @@ def pca_model():
     model_data = 's3://sagemaker/models/pca.tar.gz'
     return Model(
         model_data=model_data,
-        image=PCA_IMAGE,
+        image_uri=PCA_IMAGE,
         role=EXECUTION_ROLE,
         name='pca-model'
     )
@@ -163,17 +163,21 @@ def tensorflow_estimator():
     s3_output_location = 's3://sagemaker/models'
     s3_source_location = 's3://sagemaker/source'
 
-    estimator = TensorFlow(entry_point='tf_train.py',
+    estimator = TensorFlow(
+        entry_point='tf_train.py',
         role=EXECUTION_ROLE,
         framework_version='1.13',
-        training_steps=1000,
-        evaluation_steps=100,
-        train_instance_count=1,
-        train_instance_type='ml.p2.xlarge',
+        instance_count=1,
+        instance_type='ml.p2.xlarge',
         output_path=s3_output_location,
         source_dir=s3_source_location,
-        image_name=TENSORFLOW_IMAGE,
-        checkpoint_path='s3://sagemaker/models/sagemaker-tensorflow/checkpoints'
+        image_uri=TENSORFLOW_IMAGE,
+        model_dir=False,
+        hyperparameters={
+            'training_steps': 1000,
+            'evaluation_steps': 100,
+            'checkpoint_path': 's3://sagemaker/models/sagemaker-tensorflow/checkpoints',
+        }
     )
 
     estimator.debugger_hook_config = DebuggerHookConfig(
@@ -445,13 +449,14 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
             },
             'RoleArn': EXECUTION_ROLE,
             'HyperParameters': {
-                'model_dir': '"s3://sagemaker/models/tensorflow-job/model"',
+                'checkpoint_path': '"s3://sagemaker/models/sagemaker-tensorflow/checkpoints"',
+                'evaluation_steps': '100',
                 'sagemaker_container_log_level': '20',
-                'sagemaker_enable_cloudwatch_metrics': 'false',
                 'sagemaker_job_name': '"tensorflow-job"',
                 'sagemaker_program': '"tf_train.py"',
                 'sagemaker_region': '"us-east-1"',
-                'sagemaker_submit_directory': '"s3://sagemaker/source"'
+                'sagemaker_submit_directory': '"s3://sagemaker/source"',
+                'training_steps': '1000',
             },
             'TrainingJobName': 'tensorflow-job',
             'Tags': DEFAULT_TAGS_LIST
@@ -525,7 +530,7 @@ def test_get_expected_model(pca_estimator):
             'ModelName': 'pca-model',
             'PrimaryContainer': {
                 'Environment': {},
-                'Image': expected_model.image,
+                'Image': expected_model.image_uri,
                 'ModelDataUrl.$': "$['ModelArtifacts']['S3ModelArtifacts']"
             }
         },
@@ -553,11 +558,10 @@ def test_get_expected_model_with_framework_estimator(tensorflow_estimator):
                 'Environment': {
                     'SAGEMAKER_PROGRAM': 'tf_train.py',
                     'SAGEMAKER_SUBMIT_DIRECTORY': 's3://sagemaker/tensorflow-job/source/sourcedir.tar.gz',
-                    'SAGEMAKER_ENABLE_CLOUDWATCH_METRICS': 'false',
                     'SAGEMAKER_CONTAINER_LOG_LEVEL': '20',
                     'SAGEMAKER_REGION': 'us-east-1',
                 },
-                'Image': expected_model.image,
+                'Image': expected_model.image_uri,
                 'ModelDataUrl.$': "$['ModelArtifacts']['S3ModelArtifacts']"
             }
         },
@@ -574,7 +578,7 @@ def test_model_step_creation(pca_model):
             'ModelName': 'pca-model',
             'PrimaryContainer': {
                 'Environment': {},
-                'Image': pca_model.image,
+                'Image': pca_model.image_uri,
                 'ModelDataUrl': pca_model.model_data
             },
             'Tags': DEFAULT_TAGS_LIST
