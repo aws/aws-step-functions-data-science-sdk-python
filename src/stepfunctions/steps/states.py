@@ -594,7 +594,7 @@ class Task(State):
         """
         super(Task, self).__init__(state_id, 'Task', **kwargs)
         if self.timeout_seconds is not None and self.timeout_seconds_path is not None:
-            raise ValueError("The Task state can contain at most one of 'timeout_seconds' or 'timeout_seconds_path'.")
+            raise ValueError("Only one of 'timeout_seconds' or 'timeout_seconds_path' can be provided.")
 
         if self.heartbeat_seconds is not None and self.heartbeat_seconds_path is not None:
             raise ValueError("The Task state can contain at most one of 'heartbeat_seconds' or 'heartbeat_seconds_path'.")
