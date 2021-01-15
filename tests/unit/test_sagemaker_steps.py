@@ -6,9 +6,9 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# or in the "license" file accompanying this file. This file is distributed 
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-# express or implied. See the License for the specific language governing 
+# or in the "license" file accompanying this file. This file is distributed
+# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
@@ -187,7 +187,7 @@ def tensorflow_estimator():
     estimator.sagemaker_session = MagicMock()
     estimator.sagemaker_session.boto_region_name = 'us-east-1'
     estimator.sagemaker_session._default_bucket = 'sagemaker'
-    
+
     return estimator
 
 @pytest.fixture
@@ -208,9 +208,9 @@ def sklearn_processor():
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 def test_training_step_creation(pca_estimator):
-    step = TrainingStep('Training', 
-        estimator=pca_estimator, 
-        job_name='TrainingJob', 
+    step = TrainingStep('Training',
+        estimator=pca_estimator,
+        job_name='TrainingJob',
         experiment_config={
             'ExperimentName': 'pca_experiment',
             'TrialName': 'pca_trial',
@@ -247,7 +247,7 @@ def test_training_step_creation(pca_estimator):
             'ExperimentConfig': {
                 'ExperimentName': 'pca_experiment',
                 'TrialName': 'pca_trial',
-                'TrialComponentDisplayName': 'Training'                
+                'TrialComponentDisplayName': 'Training'
             },
             'TrainingJobName': 'TrainingJob',
             'Tags': DEFAULT_TAGS_LIST
@@ -413,7 +413,7 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
         mini_batch_size=1024,
         tags=DEFAULT_TAGS,
     )
-    
+
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
@@ -505,7 +505,7 @@ def test_transform_step_creation(pca_transformer):
             'ExperimentConfig': {
                 'ExperimentName': 'pca_experiment',
                 'TrialName': 'pca_trial',
-                'TrialComponentDisplayName': 'Transform'                
+                'TrialComponentDisplayName': 'Transform'
             },
             'DataProcessing': {
                 'InputFilter': '$[1:]',
@@ -592,10 +592,10 @@ def test_endpoint_config_step_creation(pca_model):
         enable_capture=True,
         sampling_percentage=100,
         destination_s3_uri='s3://sagemaker/datacapture')
-    step = EndpointConfigStep('Endpoint Config', 
-        endpoint_config_name='MyEndpointConfig', 
-        model_name='pca-model', 
-        initial_instance_count=1, 
+    step = EndpointConfigStep('Endpoint Config',
+        endpoint_config_name='MyEndpointConfig',
+        model_name='pca-model',
+        initial_instance_count=1,
         instance_type='ml.p2.xlarge',
         data_capture_config=data_capture_config,
         tags=DEFAULT_TAGS,
@@ -615,7 +615,7 @@ def test_endpoint_config_step_creation(pca_model):
                 'InitialSamplingPercentage': 100,
                 'DestinationS3Uri': 's3://sagemaker/datacapture',
                 'CaptureOptions': [
-                    {'CaptureMode': 'Input'}, 
+                    {'CaptureMode': 'Input'},
                     {'CaptureMode': 'Output'}
                 ],
                 'CaptureContentTypeHeader': {
@@ -671,6 +671,7 @@ def test_processing_step_creation(sklearn_processor):
             'ProcessingInputs': [
                 {
                     'InputName': None,
+                    'AppManaged': False,
                     'S3Input': {
                         'LocalPath': '/opt/ml/processing/input',
                         'S3CompressionType': 'None',
@@ -685,6 +686,7 @@ def test_processing_step_creation(sklearn_processor):
                 'Outputs': [
                     {
                         'OutputName': None,
+                        'AppManaged': False,
                         'S3Output': {
                             'LocalPath': '/opt/ml/processing/output/train',
                             'S3UploadMode': 'EndOfJob',
@@ -693,6 +695,7 @@ def test_processing_step_creation(sklearn_processor):
                     },
                     {
                         'OutputName': None,
+                        'AppManaged': False,
                         'S3Output': {
                             'LocalPath': '/opt/ml/processing/output/validation',
                             'S3UploadMode': 'EndOfJob',
@@ -701,6 +704,7 @@ def test_processing_step_creation(sklearn_processor):
                     },
                     {
                         'OutputName': None,
+                        'AppManaged': False,
                         'S3Output': {
                             'LocalPath': '/opt/ml/processing/output/test',
                             'S3UploadMode': 'EndOfJob',
