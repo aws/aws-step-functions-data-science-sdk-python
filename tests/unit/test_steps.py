@@ -214,6 +214,21 @@ def test_task_state_creation():
         'End': True
     }
 
+def test_task_state_creation_with_dynamic_timeout():
+    task_state = Task(
+        'Task',
+        resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda',
+        timeout_seconds_path='$.timeout',
+        heartbeat_seconds_path='$.heartbeat',
+    )
+    assert task_state.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:lambda:us-east-1:1234567890:function:StartLambda',
+        'HeartbeatSecondsPath': '$.heartbeat',
+        'TimeoutSecondsPath': '$.timeout',
+        'End': True
+    }
+
 def test_task_state_create_fail_for_duplicated_dynamic_timeout_fields():
     with pytest.raises(ValueError):
         Task(
