@@ -214,6 +214,38 @@ def test_task_state_creation():
         'End': True
     }
 
+def test_task_state_creation_with_dynamic_timeout():
+    task_state = Task(
+        'Task',
+        resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda',
+        timeout_seconds_path='$.timeout',
+        heartbeat_seconds_path='$.heartbeat',
+    )
+    assert task_state.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:lambda:us-east-1:1234567890:function:StartLambda',
+        'HeartbeatSecondsPath': '$.heartbeat',
+        'TimeoutSecondsPath': '$.timeout',
+        'End': True
+    }
+
+def test_task_state_create_fail_for_duplicated_dynamic_timeout_fields():
+    with pytest.raises(ValueError):
+        Task(
+            'Task',
+            resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda',
+            timeout_seconds=1,
+            timeout_seconds_path='$.timeout',
+        )
+
+    with pytest.raises(ValueError):
+        Task(
+            'Task',
+            resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda',
+            heartbeat_seconds=1,
+            heartbeat_seconds_path='$.heartbeat',
+        )
+
 def test_parallel_state_creation():
     parallel_state = Parallel('Parallel')
     parallel_state.add_branch(Pass('Branch 1'))
