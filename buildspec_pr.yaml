@@ -3,9 +3,8 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - pip install setuptools wheel twine
+      - pip install setuptools wheel twine tox
       - python setup.py sdist
-      - pip install tox
   build:
     commands:
       - twine check dist/*
