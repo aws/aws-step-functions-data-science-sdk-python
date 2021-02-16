@@ -37,7 +37,7 @@ def source_version():
 
 def generate_build_metadata():
     build_metadata = {"name": "aws-step-functions-data-science-sdk-python", "version": read_version(),
-                      "commit_id": source_version()}
+                      "commit": source_version()}
     with open("build.json", "w") as outputfile:
         json.dump(build_metadata, outputfile)
 
