@@ -124,5 +124,8 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# build metadata
+build.json
+
 .DS_Store
 .vscode/
