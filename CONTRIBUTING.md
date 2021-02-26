@@ -56,7 +56,7 @@ Before sending us a pull request, please ensure that:
 
 ### Running the Unit Tests
 
-1. Install tox using `pip install tox` 
+1. Install tox using `pip install tox`
 1. Install test dependencies, including coverage, using `pip install .[test]`
 1. cd into the aws-step-functions-data-science-sdk-python folder: `cd aws-step-functions-data-science-sdk-python` or `cd /environment/aws-step-functions-data-science-sdk-python`
 1. Run the following tox command and verify that all code checks and unit tests pass: `tox tests/unit`
