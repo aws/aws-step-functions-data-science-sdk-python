@@ -1,9 +1,0 @@
-version: 0.2
-
-phases:
-  pre_build:
-    commands:
-      - pip install tox
-  build:
-    commands:
-      - tox tests/integ/
