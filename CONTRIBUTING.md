@@ -54,7 +54,7 @@ Before sending us a pull request, please ensure that:
 1. Clone your fork of the repository: `git clone https://github.com/<username>/aws-step-functions-data-science-sdk-python` where `<username>` is your github username.
 
 
-### Running the Unit Tests 
+### Running the Unit Tests
 
 1. Install tox using `pip install tox`
 1. Install test dependencies, including coverage, using `pip install .[test]`
