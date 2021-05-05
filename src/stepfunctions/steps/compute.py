@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
+from stepfunctions.steps.utils import get_aws_partition
 
 
 class LambdaStep(Task):
@@ -38,9 +39,9 @@ class LambdaStep(Task):
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         if wait_for_callback:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::lambda:invoke.waitForTaskToken'
+            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::lambda:invoke.waitForTaskToken'
         else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::lambda:invoke'
+            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::lambda:invoke'
 
         super(LambdaStep, self).__init__(state_id, **kwargs)
 
@@ -67,9 +68,9 @@ class GlueStartJobRunStep(Task):
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::glue:startJobRun.sync'
+            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::glue:startJobRun.sync'
         else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::glue:startJobRun'
+            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::glue:startJobRun'
 
         super(GlueStartJobRunStep, self).__init__(state_id, **kwargs)
 
@@ -96,9 +97,9 @@ class BatchSubmitJobStep(Task):
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::batch:submitJob.sync'
+            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::batch:submitJob.sync'
         else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::batch:submitJob'
+            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::batch:submitJob'
 
         super(BatchSubmitJobStep, self).__init__(state_id, **kwargs)
 
@@ -125,8 +126,8 @@ class EcsRunTaskStep(Task):
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::ecs:runTask.sync'
+            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::ecs:runTask.sync'
         else:
-            kwargs[Field.Resource.value] = 'arn:aws:states:::ecs:runTask'
+            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::ecs:runTask'
 
         super(EcsRunTaskStep, self).__init__(state_id, **kwargs)

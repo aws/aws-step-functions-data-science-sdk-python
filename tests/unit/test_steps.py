@@ -13,24 +13,28 @@
 from __future__ import absolute_import
 
 import pytest
+import boto3
+import os
 
 from stepfunctions.exceptions import DuplicateStatesInChain
-from stepfunctions.steps import Pass, Succeed, Fail, Wait, Choice, ChoiceRule, Parallel, Map, Task, Retry, Catch, Chain
+from stepfunctions.steps import Pass, Succeed, Fail, Wait, Choice, ChoiceRule, Parallel, Map, Task, Retry, Catch, Chain, \
+    utils
 from stepfunctions.steps.states import State, to_pascalcase
 
 
 def test_to_pascalcase():
     assert 'InputPath' == to_pascalcase('input_path')
 
+
 def test_state_creation():
     state = State(
         state_id='StartState',
         state_type='Void',
-        comment = 'This is a comment',
-        input_path = '$.Input',
-        output_path = '$.Output',
-        parameters = {'Key': 'Value'},
-        result_path = '$.Result'
+        comment='This is a comment',
+        input_path='$.Input',
+        output_path='$.Output',
+        parameters={'Key': 'Value'},
+        result_path='$.Result'
     )
 
     assert state.to_dict() == {
@@ -48,6 +52,7 @@ def test_state_creation():
     with pytest.raises(TypeError):
         State(state_id='State', unknown_attribute=True)
 
+
 def test_pass_state_creation():
     pass_state = Pass('Pass', result='Pass')
     assert pass_state.state_id == 'Pass'
@@ -56,6 +61,7 @@ def test_pass_state_creation():
         'Result': 'Pass',
         'End': True
     }
+
 
 def test_verify_pass_state_fields():
     pass_state = Pass(
@@ -76,6 +82,7 @@ def test_verify_pass_state_fields():
     with pytest.raises(TypeError):
         Pass('Pass', unknown_field='Unknown Field')
 
+
 def test_succeed_state_creation():
     succeed_state = Succeed(
         state_id='Succeed',
@@ -88,9 +95,11 @@ def test_succeed_state_creation():
         'Comment': 'This is a comment'
     }
 
+
 def test_verify_succeed_state_fields():
     with pytest.raises(TypeError):
         Succeed('Succeed', unknown_field='Unknown Field')
+
 
 def test_fail_creation():
     fail_state = Fail(
@@ -110,9 +119,11 @@ def test_fail_creation():
         'Cause': 'Kaiju attack'
     }
 
+
 def test_verify_fail_state_fields():
     with pytest.raises(TypeError):
         Fail('Succeed', unknown_field='Unknown Field')
+
 
 def test_wait_state_creation():
     wait_state = Wait(
@@ -139,6 +150,7 @@ def test_wait_state_creation():
         'End': True
     }
 
+
 def test_verify_wait_state_fields():
     with pytest.raises(ValueError):
         Wait(
@@ -146,6 +158,7 @@ def test_verify_wait_state_fields():
             seconds=10,
             seconds_path='$.SecondsPath'
         )
+
 
 def test_choice_state_creation():
     choice_state = Choice('Choice', input_path='$.Input')
@@ -182,6 +195,7 @@ def test_choice_state_creation():
     with pytest.raises(TypeError):
         Choice('Choice', unknown_field='Unknown Field')
 
+
 def test_task_state_creation():
     task_state = Task('Task', resource='arn:aws:lambda:us-east-1:1234567890:function:StartLambda')
     task_state.add_retry(Retry(error_equals=['ErrorA', 'ErrorB'], interval_seconds=1, max_attempts=2, backoff_rate=2))
@@ -214,6 +228,7 @@ def test_task_state_creation():
         'End': True
     }
 
+
 def test_task_state_creation_with_dynamic_timeout():
     task_state = Task(
         'Task',
@@ -228,6 +243,7 @@ def test_task_state_creation_with_dynamic_timeout():
         'TimeoutSecondsPath': '$.timeout',
         'End': True
     }
+
 
 def test_task_state_create_fail_for_duplicated_dynamic_timeout_fields():
     with pytest.raises(ValueError):
@@ -245,6 +261,7 @@ def test_task_state_create_fail_for_duplicated_dynamic_timeout_fields():
             heartbeat_seconds=1,
             heartbeat_seconds_path='$.heartbeat',
         )
+
 
 def test_parallel_state_creation():
     parallel_state = Parallel('Parallel')
@@ -287,6 +304,7 @@ def test_parallel_state_creation():
         'End': True
     }
 
+
 def test_map_state_creation():
     map_state = Map('Map', iterator=Pass('FirstIteratorState'), items_path='$', max_concurrency=0)
     assert map_state.to_dict() == {
@@ -305,8 +323,10 @@ def test_map_state_creation():
         'End': True
     }
 
+
 def test_nested_chain_is_now_allowed():
     chain = Chain([Chain([Pass('S1')])])
+
 
 def test_catch_creation():
     catch = Catch(error_equals=['States.ALL'], next_step=Fail('End'))
@@ -314,6 +334,7 @@ def test_catch_creation():
         'ErrorEquals': ['States.ALL'],
         'Next': 'End'
     }
+
 
 def test_append_states_after_terminal_state_will_fail():
     with pytest.raises(ValueError):
@@ -372,6 +393,7 @@ def test_chaining_steps():
     assert s1.next_step == s2
     assert s2.next_step == s3
 
+
 def test_catch_fail_for_unsupported_state():
     s1 = Pass('Step - One')
 
@@ -380,7 +402,6 @@ def test_catch_fail_for_unsupported_state():
 
 
 def test_retry_fail_for_unsupported_state():
-
     c1 = Choice('My Choice')
 
     with pytest.raises(ValueError):
@@ -424,3 +445,30 @@ def test_default_paths_not_converted_to_null():
     assert '"ResultPath": null' not in task_state.to_json()
     assert '"InputPath": null' not in task_state.to_json()
     assert '"OutputPath": null' not in task_state.to_json()
+
+
+# Test if boto3 session can fetch correct aws partition info from test environment
+def test_util_get_aws_partition():
+    aws_partition = "aws"
+    aws_cn_partition = "aws-cn"
+    default_region = None
+
+    # Boto3 used either info from ~/.aws/config or AWS_DEFAULT_REGION in environment
+    # to determine current region. We will replace/create AWS_DEFAULT_REGION with regions in
+    # different aws partition to test that when regions are changed, correct partition info
+    # can be retrieved.
+    if "AWS_DEFAULT_REGION" in os.environ:
+        default_region = os.getenv('AWS_DEFAULT_REGION')
+
+    os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
+    cur_partition = utils.get_aws_partition()
+    assert cur_partition == aws_partition
+
+    os.environ['AWS_DEFAULT_REGION'] = 'cn-north-1'
+    cur_partition = utils.get_aws_partition()
+    assert cur_partition == aws_cn_partition
+
+    if default_region is None:
+        del os.environ['AWS_DEFAULT_REGION']
+    else:
+        os.environ['AWS_DEFAULT_REGION'] = default_region

@@ -21,6 +21,7 @@ import pickle
 from sagemaker import Session
 from sagemaker.amazon import pca
 from sagemaker.sklearn.processing import SKLearnProcessor
+from stepfunctions.steps.utils import get_aws_partition
 from tests.integ import DATA_DIR
 
 @pytest.fixture(scope="session")
@@ -43,11 +44,11 @@ def aws_account_id():
 
 @pytest.fixture(scope="session")
 def sfn_role_arn(aws_account_id):
-    return "arn:aws:iam::{}:role/StepFunctionsMLWorkflowExecutionFullAccess".format(aws_account_id)
+    return "arn:" + get_aws_partition() + ":iam::{}:role/StepFunctionsMLWorkflowExecutionFullAccess".format(aws_account_id)
 
 @pytest.fixture(scope="session")
 def sagemaker_role_arn(aws_account_id):
-    return "arn:aws:iam::{}:role/SageMakerRole".format(aws_account_id)
+    return "arn:" + get_aws_partition() + ":iam::{}:role/SageMakerRole".format(aws_account_id)
 
 @pytest.fixture(scope="session")
 def pca_estimator_fixture(sagemaker_role_arn):
