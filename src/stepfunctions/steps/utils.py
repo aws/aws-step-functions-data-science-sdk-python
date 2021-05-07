@@ -24,6 +24,7 @@ def tags_dict_to_kv_list(tags_dict):
 
 
 # Obtain matching aws partition name based on region
+# Retrun "aws" as default if no region detected 
 def get_aws_partition():
     partitions = boto3.session.Session().get_available_partitions()
     cur_region = boto3.session.Session().region_name
