@@ -14,7 +14,9 @@ from __future__ import absolute_import
 
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
-from stepfunctions.steps.utils import get_aws_partition
+from stepfunctions.steps.utils import resource_integration_arn_builder
+from stepfunctions.steps.integration_resources import IntegrationPattern, IntegrationServices, \
+                                                      DynamoDBApi, SnsApi, SqsApi, ElasticMapReduceApi
 
 
 class DynamoDBGetItemStep(Task):
@@ -36,7 +38,12 @@ class DynamoDBGetItemStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::dynamodb:getItem'
+
+        """
+        Example resource arn: arn:aws:states:::dynamodb:getItem
+        """
+        kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.DynamoDB,
+                                                                        DynamoDBApi.GetItem)
         super(DynamoDBGetItemStep, self).__init__(state_id, **kwargs)
 
 
@@ -60,7 +67,12 @@ class DynamoDBPutItemStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::dynamodb:putItem'
+
+        """
+        Example resource arn: arn:aws:states:::dynamodb:putItem
+        """
+        kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.DynamoDB,
+                                                                        DynamoDBApi.PutItem)
         super(DynamoDBPutItemStep, self).__init__(state_id, **kwargs)
 
 
@@ -84,7 +96,12 @@ class DynamoDBDeleteItemStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::dynamodb:deleteItem'
+
+        """
+        Example resource arn: arn:aws:states:::dynamodb:deleteItem
+        """
+        kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.DynamoDB,
+                                                                        DynamoDBApi.DeleteItem)
         super(DynamoDBDeleteItemStep, self).__init__(state_id, **kwargs)
 
 
@@ -108,7 +125,12 @@ class DynamoDBUpdateItemStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::dynamodb:updateItem'
+
+        """
+        Example resource arn: arn:aws:states:::dynamodb:updateItem
+        """
+        kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.DynamoDB,
+                                                                        DynamoDBApi.UpdateItem)
         super(DynamoDBUpdateItemStep, self).__init__(state_id, **kwargs)
 
 
@@ -134,9 +156,18 @@ class SnsPublishStep(Task):
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         if wait_for_callback:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sns:publish.waitForTaskToken'
+            """
+            Example resource arn: arn:aws:states:::sns:publish.waitForTaskToken
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SNS,
+                                                                            SnsApi.Publish,
+                                                                            IntegrationPattern.WaitForTaskToken)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sns:publish'
+            """
+            Example resource arn: arn:aws:states:::sns:publish
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SNS,
+                                                                            SnsApi.Publish)
 
         super(SnsPublishStep, self).__init__(state_id, **kwargs)
 
@@ -163,9 +194,18 @@ class SqsSendMessageStep(Task):
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         if wait_for_callback:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sqs:sendMessage.waitForTaskToken'
+            """
+            Example resource arn: arn:aws:states:::sqs:sendMessage.waitForTaskToken
+            """
+            kwargs[Field.Resource.value] =  resource_integration_arn_builder(IntegrationServices.SQS,
+                                                                             SqsApi.SendMessage,
+                                                                             IntegrationPattern.WaitForTaskToken)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sqs:sendMessage'
+            """
+            Example resource arn: arn:aws:states:::sqs:sendMessage
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SQS,
+                                                                            SqsApi.SendMessage)
 
         super(SqsSendMessageStep, self).__init__(state_id, **kwargs)
 
@@ -191,9 +231,18 @@ class EmrCreateClusterStep(Task):
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::elasticmapreduce:createCluster.sync'
+            """
+            Example resource arn: arn:aws:states:::elasticmapreduce:createCluster.sync
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce,
+                                                                            ElasticMapReduceApi.CreateCluster,
+                                                                            IntegrationPattern.WaitForCompletion)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::elasticmapreduce:createCluster'
+            """
+            Example resource arn: arn:aws:states:::elasticmapreduce:createCluster
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce,
+                                                                            ElasticMapReduceApi.CreateCluster)
 
         super(EmrCreateClusterStep, self).__init__(state_id, **kwargs)
 
@@ -219,9 +268,18 @@ class EmrTerminateClusterStep(Task):
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::elasticmapreduce:terminateCluster.sync'
+            """
+            Example resource arn: arn:aws:states:::elasticmapreduce:terminateCluster.sync
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce,
+                                                                            ElasticMapReduceApi.TerminateCluster,
+                                                                            IntegrationPattern.WaitForCompletion)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::elasticmapreduce:terminateCluster'
+            """
+            Example resource arn: arn:aws:states:::elasticmapreduce:terminateCluster
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce,
+                                                                            ElasticMapReduceApi.TerminateCluster)
 
         super(EmrTerminateClusterStep, self).__init__(state_id, **kwargs)
 
@@ -247,9 +305,18 @@ class EmrAddStepStep(Task):
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::elasticmapreduce:addStep.sync'
+            """
+            Example resource arn: arn:aws:states:::elasticmapreduce:addStep.sync
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce,
+                                                                            ElasticMapReduceApi.AddStep,
+                                                                            IntegrationPattern.WaitForCompletion)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::elasticmapreduce:addStep'
+            """
+            Example resource arn: arn:aws:states:::elasticmapreduce:addStep
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce,
+                                                                            ElasticMapReduceApi.AddStep)
 
         super(EmrAddStepStep, self).__init__(state_id, **kwargs)
 
@@ -273,7 +340,12 @@ class EmrCancelStepStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::elasticmapreduce:cancelStep'
+
+        """
+        Example resource arn: arn:aws:states:::elasticmapreduce:cancelStep
+        """
+        kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce,
+                                                                        ElasticMapReduceApi.CancelStep)
 
         super(EmrCancelStepStep, self).__init__(state_id, **kwargs)
 
@@ -297,7 +369,12 @@ class EmrSetClusterTerminationProtectionStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::elasticmapreduce:setClusterTerminationProtection'
+
+        """
+        Example resource arn: arn:aws:states:::elasticmapreduce:setClusterTerminationProtection
+        """
+        kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce,
+                                                                            ElasticMapReduceApi.SetClusterTerminationProtection)
 
         super(EmrSetClusterTerminationProtectionStep, self).__init__(state_id, **kwargs)
 
@@ -321,7 +398,12 @@ class EmrModifyInstanceFleetByNameStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::elasticmapreduce:modifyInstanceFleetByName'
+
+        """
+        Example resource arn: arn:aws:states:::elasticmapreduce:modifyInstanceFleetByName
+        """
+        kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce,
+                                                                        ElasticMapReduceApi.ModifyInstanceFleetByName)
 
         super(EmrModifyInstanceFleetByNameStep, self).__init__(state_id, **kwargs)
 
@@ -345,7 +427,11 @@ class EmrModifyInstanceGroupByNameStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::elasticmapreduce:modifyInstanceGroupByName'
+
+        """
+        Example resource arn: arn:aws:states:::elasticmapreduce:modifyInstanceGroupByName
+        """
+        kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce,
+                                                                        ElasticMapReduceApi.ModifyInstanceGroupByName)
 
         super(EmrModifyInstanceGroupByNameStep, self).__init__(state_id, **kwargs)
-

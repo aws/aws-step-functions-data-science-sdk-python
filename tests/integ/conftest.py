@@ -44,11 +44,11 @@ def aws_account_id():
 
 @pytest.fixture(scope="session")
 def sfn_role_arn(aws_account_id):
-    return "arn:" + get_aws_partition() + ":iam::{}:role/StepFunctionsMLWorkflowExecutionFullAccess".format(aws_account_id)
+    return f"arn:{get_aws_partition()}:iam::{aws_account_id}:role/StepFunctionsMLWorkflowExecutionFullAccess"
 
 @pytest.fixture(scope="session")
 def sagemaker_role_arn(aws_account_id):
-    return "arn:" + get_aws_partition() + ":iam::{}:role/SageMakerRole".format(aws_account_id)
+    return f"arn:{get_aws_partition()}:iam::{aws_account_id}:role/SageMakerRole"
 
 @pytest.fixture(scope="session")
 def pca_estimator_fixture(sagemaker_role_arn):

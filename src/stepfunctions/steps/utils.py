@@ -23,15 +23,17 @@ def tags_dict_to_kv_list(tags_dict):
     return kv_list
 
 
-# Obtain matching aws partition name based on region
-# Retrun "aws" as default if no region detected 
+"""
+Obtain matching aws partition name based on region
+Return "aws" as default if no region detected
+"""
 def get_aws_partition():
     partitions = boto3.session.Session().get_available_partitions()
     cur_region = boto3.session.Session().region_name
     cur_partition = "aws"
 
     if cur_region is None:
-        logger.warning("No region detected for the session, will use default partition: aws")
+        logger.warning("No region detected for the boto3 session. Using default partition: aws")
         return cur_partition
 
     for partition in partitions:
@@ -41,3 +43,15 @@ def get_aws_partition():
             return cur_partition
 
     return cur_partition
+
+
+"""
+ARN builder for task integration
+"""
+def resource_integration_arn_builder(service, api, integration_pattern=None):
+    arn = ""
+    if integration_pattern is None:
+        arn = f"arn:{get_aws_partition()}:states:::{service.value}:{api.value}"
+    else:
+        arn = f"arn:{get_aws_partition()}:states:::{service.value}:{api.value}.{integration_pattern.value}"
+    return arn

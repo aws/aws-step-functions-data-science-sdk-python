@@ -13,12 +13,9 @@
 from __future__ import absolute_import
 
 import pytest
-import boto3
-import os
 
 from stepfunctions.exceptions import DuplicateStatesInChain
-from stepfunctions.steps import Pass, Succeed, Fail, Wait, Choice, ChoiceRule, Parallel, Map, Task, Retry, Catch, Chain, \
-    utils
+from stepfunctions.steps import Pass, Succeed, Fail, Wait, Choice, ChoiceRule, Parallel, Map, Task, Retry, Catch, Chain
 from stepfunctions.steps.states import State, to_pascalcase
 
 
@@ -447,28 +444,4 @@ def test_default_paths_not_converted_to_null():
     assert '"OutputPath": null' not in task_state.to_json()
 
 
-# Test if boto3 session can fetch correct aws partition info from test environment
-def test_util_get_aws_partition():
-    aws_partition = "aws"
-    aws_cn_partition = "aws-cn"
-    default_region = None
 
-    # Boto3 used either info from ~/.aws/config or AWS_DEFAULT_REGION in environment
-    # to determine current region. We will replace/create AWS_DEFAULT_REGION with regions in
-    # different aws partition to test that when regions are changed, correct partition info
-    # can be retrieved.
-    if "AWS_DEFAULT_REGION" in os.environ:
-        default_region = os.getenv('AWS_DEFAULT_REGION')
-
-    os.environ['AWS_DEFAULT_REGION'] = 'us-east-1'
-    cur_partition = utils.get_aws_partition()
-    assert cur_partition == aws_partition
-
-    os.environ['AWS_DEFAULT_REGION'] = 'cn-north-1'
-    cur_partition = utils.get_aws_partition()
-    assert cur_partition == aws_cn_partition
-
-    if default_region is None:
-        del os.environ['AWS_DEFAULT_REGION']
-    else:
-        os.environ['AWS_DEFAULT_REGION'] = default_region

@@ -15,7 +15,8 @@ from __future__ import absolute_import
 from stepfunctions.inputs import ExecutionInput, StepInput
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
-from stepfunctions.steps.utils import tags_dict_to_kv_list, get_aws_partition
+from stepfunctions.steps.utils import tags_dict_to_kv_list, resource_integration_arn_builder
+from stepfunctions.steps.integration_resources import IntegrationPattern, IntegrationServices, SageMakerApi
 
 from sagemaker.workflow.airflow import training_config, transform_config, model_config, tuning_config, processing_config
 from sagemaker.model import Model, FrameworkModel
@@ -58,9 +59,18 @@ class TrainingStep(Task):
         self.job_name = job_name
 
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:createTrainingJob.sync'
+            """
+            Example resource arn: arn:aws:states:::sagemaker:createTrainingJob.sync
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                            SageMakerApi.CreateTrainingJob,
+                                                                            IntegrationPattern.WaitForCompletion)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:createTrainingJob'
+            """
+            Example resource arn: arn:aws:states:::sagemaker:createTrainingJob
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                            SageMakerApi.CreateTrainingJob)
 
         if isinstance(job_name, str):
             parameters = training_config(estimator=estimator, inputs=data, job_name=job_name, mini_batch_size=mini_batch_size)
@@ -141,9 +151,18 @@ class TransformStep(Task):
             join_source (str): The source of data to be joined to the transform output. It can be set to ‘Input’ meaning the entire input record will be joined to the inference result. You can use OutputFilter to select the useful portion before uploading to S3. (default: None). Valid values: Input, None.
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:createTransformJob.sync'
+            """
+            Example resource arn: arn:aws:states:::sagemaker:createTransformJob.sync
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                            SageMakerApi.CreateTransformJob,
+                                                                            IntegrationPattern.WaitForCompletion)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:createTransformJob'
+            """
+            Example resource arn: arn:aws:states:::sagemaker:createTransformJob
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                            SageMakerApi.CreateTransformJob)
 
         if isinstance(job_name, str):
             parameters = transform_config(
@@ -225,7 +244,12 @@ class ModelStep(Task):
             parameters['Tags'] = tags_dict_to_kv_list(tags)
 
         kwargs[Field.Parameters.value] = parameters
-        kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:createModel'
+
+        """
+        Example resource arn: arn:aws:states:::sagemaker:createModel
+        """
+        kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                        SageMakerApi.CreateModel)
 
         super(ModelStep, self).__init__(state_id, **kwargs)
 
@@ -266,7 +290,12 @@ class EndpointConfigStep(Task):
         if tags:
             parameters['Tags'] = tags_dict_to_kv_list(tags)
 
-        kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:createEndpointConfig'
+        """
+        Example resource arn: arn:aws:states:::sagemaker:createEndpointConfig
+        """
+        kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                        SageMakerApi.CreateEndpointConfig)
+
         kwargs[Field.Parameters.value] = parameters
 
         super(EndpointConfigStep, self).__init__(state_id, **kwargs)
@@ -298,9 +327,17 @@ class EndpointStep(Task):
             parameters['Tags'] = tags_dict_to_kv_list(tags)
 
         if update:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:updateEndpoint'
+            """
+            Example resource arn: arn:aws:states:::sagemaker:updateEndpoint
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                            SageMakerApi.UpdateEndpoint)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:createEndpoint'
+            """
+            Example resource arn: arn:aws:states:::sagemaker:createEndpoint
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                            SageMakerApi.CreateEndpoint)
 
         kwargs[Field.Parameters.value] = parameters
 
@@ -338,9 +375,18 @@ class TuningStep(Task):
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:createHyperParameterTuningJob.sync'
+            """
+            Example resource arn: arn:aws:states:::sagemaker:createHyperParameterTuningJob.sync
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                            SageMakerApi.CreateHyperParameterTuningJob,
+                                                                            IntegrationPattern.WaitForCompletion)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:createHyperParameterTuningJob'
+            """
+            Example resource arn: arn:aws:states:::sagemaker:createHyperParameterTuningJob
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                            SageMakerApi.CreateHyperParameterTuningJob)
 
         parameters = tuning_config(tuner=tuner, inputs=data, job_name=job_name).copy()
 
@@ -387,10 +433,19 @@ class ProcessingStep(Task):
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:createProcessingJob.sync'
+            """
+            Example resource arn: arn:aws:states:::sagemaker:createProcessingJob.sync
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                            SageMakerApi.CreateProcessingJob,
+                                                                            IntegrationPattern.WaitForCompletion)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::sagemaker:createProcessingJob'
-        
+            """
+            Example resource arn: arn:aws:states:::sagemaker:createProcessingJob
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.SageMaker,
+                                                                            SageMakerApi.CreateProcessingJob)
+
         if isinstance(job_name, str):
             parameters = processing_config(processor=processor, inputs=inputs, outputs=outputs, container_arguments=container_arguments, container_entrypoint=container_entrypoint, kms_key_id=kms_key_id, job_name=job_name)
         else:

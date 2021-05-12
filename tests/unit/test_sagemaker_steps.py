@@ -37,6 +37,7 @@ TENSORFLOW_IMAGE = '520713654638.dkr.ecr.us-east-1.amazonaws.com/sagemaker-tenso
 DEFAULT_TAGS = {'Purpose': 'unittests'}
 DEFAULT_TAGS_LIST = [{'Key': 'Purpose', 'Value': 'unittests'}]
 
+
 @pytest.fixture
 def pca_estimator():
     s3_output_location = 's3://sagemaker/models'
@@ -62,6 +63,7 @@ def pca_estimator():
     pca.sagemaker_session._default_bucket = 'sagemaker'
 
     return pca
+
 
 @pytest.fixture
 def pca_estimator_with_debug_hook():
@@ -139,6 +141,7 @@ def pca_estimator_with_falsy_debug_hook():
 
     return pca
 
+
 @pytest.fixture
 def pca_model():
     model_data = 's3://sagemaker/models/pca.tar.gz'
@@ -149,6 +152,7 @@ def pca_model():
         name='pca-model'
     )
 
+
 @pytest.fixture
 def pca_transformer(pca_model):
     return Transformer(
@@ -157,6 +161,7 @@ def pca_transformer(pca_model):
         instance_type='ml.c4.xlarge',
         output_path='s3://sagemaker/transform-output'
     )
+
 
 @pytest.fixture
 def tensorflow_estimator():
@@ -190,6 +195,7 @@ def tensorflow_estimator():
 
     return estimator
 
+
 @pytest.fixture
 def sklearn_processor():
     sagemaker_session = MagicMock()
@@ -206,7 +212,9 @@ def sklearn_processor():
 
     return processor
 
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_training_step_creation(pca_estimator):
     step = TrainingStep('Training',
         estimator=pca_estimator,
@@ -256,7 +264,9 @@ def test_training_step_creation(pca_estimator):
         'End': True
     }
 
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_training_step_creation_with_debug_hook(pca_estimator_with_debug_hook):
     step = TrainingStep('Training',
         estimator=pca_estimator_with_debug_hook,
@@ -315,7 +325,9 @@ def test_training_step_creation_with_debug_hook(pca_estimator_with_debug_hook):
         'End': True
     }
 
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_training_step_creation_with_falsy_debug_hook(pca_estimator_with_falsy_debug_hook):
     step = TrainingStep('Training',
         estimator=pca_estimator_with_falsy_debug_hook,
@@ -352,7 +364,9 @@ def test_training_step_creation_with_falsy_debug_hook(pca_estimator_with_falsy_d
         'End': True
     }
 
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_training_step_creation_with_model(pca_estimator):
     training_step = TrainingStep('Training', estimator=pca_estimator, job_name='TrainingJob')
     model_step = ModelStep('Training - Save Model', training_step.get_expected_model(model_name=training_step.output()['TrainingJobName']))
@@ -404,7 +418,9 @@ def test_training_step_creation_with_model(pca_estimator):
         'End': True
     }
 
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_training_step_creation_with_framework(tensorflow_estimator):
     step = TrainingStep('Training',
         estimator=tensorflow_estimator,
@@ -466,6 +482,8 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_transform_step_creation(pca_transformer):
     step = TransformStep('Inference',
         transformer=pca_transformer,
@@ -518,7 +536,9 @@ def test_transform_step_creation(pca_transformer):
         'End': True
     }
 
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_get_expected_model(pca_estimator):
     training_step = TrainingStep('Training', estimator=pca_estimator, job_name='TrainingJob')
     expected_model = training_step.get_expected_model()
@@ -538,7 +558,9 @@ def test_get_expected_model(pca_estimator):
         'End': True
     }
 
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_get_expected_model_with_framework_estimator(tensorflow_estimator):
     training_step = TrainingStep('Training',
         estimator=tensorflow_estimator,
@@ -569,6 +591,8 @@ def test_get_expected_model_with_framework_estimator(tensorflow_estimator):
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_model_step_creation(pca_model):
     step = ModelStep('Create model', model=pca_model, model_name='pca-model', tags=DEFAULT_TAGS)
     assert step.to_dict() == {
@@ -587,6 +611,8 @@ def test_model_step_creation(pca_model):
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_endpoint_config_step_creation(pca_model):
     data_capture_config = DataCaptureConfig(
         enable_capture=True,
@@ -629,6 +655,8 @@ def test_endpoint_config_step_creation(pca_model):
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_endpoint_step_creation(pca_model):
     step = EndpointStep('Endpoint', endpoint_name='MyEndPoint', endpoint_config_name='MyEndpointConfig', tags=DEFAULT_TAGS)
     assert step.to_dict() == {
@@ -654,6 +682,8 @@ def test_endpoint_step_creation(pca_model):
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_processing_step_creation(sklearn_processor):
     inputs = [ProcessingInput(source='dataset.csv', destination='/opt/ml/processing/input')]
     outputs = [

@@ -14,7 +14,8 @@ from __future__ import absolute_import
 
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
-from stepfunctions.steps.utils import get_aws_partition
+from stepfunctions.steps.utils import resource_integration_arn_builder
+from stepfunctions.steps.integration_resources import IntegrationPattern, IntegrationServices, LambdaApi, GlueApi, BatchApi, EcsApi
 
 
 class LambdaStep(Task):
@@ -38,10 +39,20 @@ class LambdaStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
+
         if wait_for_callback:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::lambda:invoke.waitForTaskToken'
+            """
+            Example resource arn: arn:aws:states:::lambda:invoke.waitForTaskToken
+            """
+            kwargs[Field.Resource.value] =  resource_integration_arn_builder(IntegrationServices.Lambda,
+                                                                             LambdaApi.Invoke,
+                                                                             IntegrationPattern.WaitForTaskToken)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::lambda:invoke'
+            """
+            Example resource arn: arn:aws:states:::lambda:invoke
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.Lambda, LambdaApi.Invoke)
+
 
         super(LambdaStep, self).__init__(state_id, **kwargs)
 
@@ -68,9 +79,18 @@ class GlueStartJobRunStep(Task):
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::glue:startJobRun.sync'
+            """
+            Example resource arn: arn:aws:states:::glue:startJobRun.sync
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.Glue,
+                                                                            GlueApi.StartJobRun,
+                                                                            IntegrationPattern.WaitForCompletion)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::glue:startJobRun'
+            """
+            Example resource arn: arn:aws:states:::glue:startJobRun
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.Glue,
+                                                                            GlueApi.StartJobRun)
 
         super(GlueStartJobRunStep, self).__init__(state_id, **kwargs)
 
@@ -97,9 +117,18 @@ class BatchSubmitJobStep(Task):
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::batch:submitJob.sync'
+            """
+            Example resource arn: arn:aws:states:::batch:submitJob.sync
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.Batch,
+                                                                            BatchApi.SubmitJob,
+                                                                            IntegrationPattern.WaitForCompletion)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::batch:submitJob'
+            """
+            Example resource arn: arn:aws:states:::batch:submitJob
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.Batch,
+                                                                            BatchApi.SubmitJob)
 
         super(BatchSubmitJobStep, self).__init__(state_id, **kwargs)
 
@@ -126,8 +155,17 @@ class EcsRunTaskStep(Task):
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         if wait_for_completion:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::ecs:runTask.sync'
+            """
+            Example resource arn: arn:aws:states:::ecs:runTask.sync
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ECS,
+                                                                            EcsApi.RunTask,
+                                                                            IntegrationPattern.WaitForCompletion)
         else:
-            kwargs[Field.Resource.value] = 'arn:' + get_aws_partition() + ':states:::ecs:runTask'
+            """
+            Example resource arn: arn:aws:states:::ecs:runTask
+            """
+            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ECS,
+                                                                            EcsApi.RunTask)
 
         super(EcsRunTaskStep, self).__init__(state_id, **kwargs)
