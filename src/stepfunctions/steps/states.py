@@ -221,11 +221,14 @@ class State(Block):
         if self.type in ('Succeed', 'Fail'):
             raise ValueError('Unexpected State instance `{step}`, State type `{state_type}` does not support method `next`.'.format(step=next_step, state_type=self.type))
 
-        # By design, choice states do not have the Next field. Setting default to make it chainable.
+        # By design, Choice states do not have the Next field. Their purpose is to define conditional transitions based
+        # on a set of Choice Rules. They can be viewed as an advanced Next field with multiple possible transitions.
+        # default_choice() sets the default transition to use in the case where none of the Choice Rules are met.
+        # See language spec for more info: https://states-language.net/spec.html#choice-state
         if self.type is 'Choice':
             if self.default is not None:
                 logger.warning(
-                    "Chaining Choice Step: Overwriting %s's current default_choice (%s) with %s",
+                    "Chaining Choice state: Overwriting %s's current default_choice (%s) with %s",
                     self.state_id,
                     self.default.state_id,
                     next_step.state_id

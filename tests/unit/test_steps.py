@@ -368,28 +368,35 @@ def test_chaining_steps():
     assert s2.next_step == s3
 
 
-def test_chaining_choice(caplog):
+def test_chaining_choice():
     s1_pass = Pass('Step - One')
     s2_choice = Choice('Step - Two')
     s3_pass = Pass('Step - Three')
 
-    with caplog.at_level(logging.WARNING):
-        chain1 = Chain([s1_pass, s2_choice, s3_pass])
-        assert caplog.text == ''  # No warning
+    chain1 = Chain([s1_pass, s2_choice, s3_pass])
     assert chain1.steps == [s1_pass, s2_choice, s3_pass]
     assert s1_pass.next_step == s2_choice
     assert s2_choice.default == s3_pass
     assert s2_choice.next_step is None  # Choice steps do not have next_step
     assert s3_pass.next_step is None
 
+
+def test_chaining_choice_with_default(caplog):
+    s1_pass = Pass('Step - One')
+    s2_choice = Choice('Step - Two')
+    s3_pass = Pass('Step - Three')
+
+    s2_choice.default_choice(s3_pass)
+
     # Chain s2_choice when default_choice is already set will trigger Warning
     with caplog.at_level(logging.WARNING):
         Chain([s2_choice, s1_pass])
-        log_message = (
-                "Chaining Choice Step: Overwriting %s's current default_choice (%s) with %s" %
+        expected_warning = (
+                "Chaining Choice state: Overwriting %s's current default_choice (%s) with %s" %
                 (s2_choice.state_id, s3_pass.state_id, s1_pass.state_id)
         )
-        assert log_message in caplog.text
+        assert expected_warning in caplog.text
+        assert 'WARNING' in caplog.text
     assert s2_choice.default == s1_pass
     assert s2_choice.next_step is None  # Choice steps do not have next_step
 
