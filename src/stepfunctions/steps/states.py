@@ -218,8 +218,20 @@ class State(Block):
         Returns:
             State or Chain: Next state or chain that will be transitioned to.
         """
-        if self.type in ('Choice', 'Succeed', 'Fail'):
+        if self.type in ('Succeed', 'Fail'):
             raise ValueError('Unexpected State instance `{step}`, State type `{state_type}` does not support method `next`.'.format(step=next_step, state_type=self.type))
+
+        # By design, choice states do not have the Next field. Setting default to make it chainable.
+        if self.type is 'Choice':
+            if self.default is not None:
+                logger.warning(
+                    "Chaining Choice Step: Overwriting %s's current default_choice (%s) with %s",
+                    self.state_id,
+                    self.default.state_id,
+                    next_step.state_id
+                )
+            self.default_choice(next_step)
+            return self.default
 
         self.next_step = next_step
         return self.next_step

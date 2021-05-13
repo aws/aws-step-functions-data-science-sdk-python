@@ -12,6 +12,7 @@
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
+import logging
 import pytest
 
 from stepfunctions.exceptions import DuplicateStatesInChain
@@ -328,12 +329,6 @@ def test_append_states_after_terminal_state_will_fail():
         chain.append(Succeed('Succeed'))
         chain.append(Pass('Pass2'))
 
-    with pytest.raises(ValueError):
-        chain = Chain()
-        chain.append(Pass('Pass'))
-        chain.append(Choice('Choice'))
-        chain.append(Pass('Pass2'))
-
 
 def test_chaining_steps():
     s1 = Pass('Step - One')
@@ -371,6 +366,33 @@ def test_chaining_steps():
     Chain([Chain([s1, s2]), s3])
     assert s1.next_step == s2
     assert s2.next_step == s3
+
+
+def test_chaining_choice(caplog):
+    s1_pass = Pass('Step - One')
+    s2_choice = Choice('Step - Two')
+    s3_pass = Pass('Step - Three')
+
+    with caplog.at_level(logging.WARNING):
+        chain1 = Chain([s1_pass, s2_choice, s3_pass])
+        assert caplog.text == ''  # No warning
+    assert chain1.steps == [s1_pass, s2_choice, s3_pass]
+    assert s1_pass.next_step == s2_choice
+    assert s2_choice.default == s3_pass
+    assert s2_choice.next_step is None  # Choice steps do not have next_step
+    assert s3_pass.next_step is None
+
+    # Chain s2_choice when default_choice is already set will trigger Warning
+    with caplog.at_level(logging.WARNING):
+        Chain([s2_choice, s1_pass])
+        log_message = (
+                "Chaining Choice Step: Overwriting %s's current default_choice (%s) with %s" %
+                (s2_choice.state_id, s3_pass.state_id, s1_pass.state_id)
+        )
+        assert log_message in caplog.text
+    assert s2_choice.default == s1_pass
+    assert s2_choice.next_step is None  # Choice steps do not have next_step
+
 
 def test_catch_fail_for_unsupported_state():
     s1 = Pass('Step - One')
