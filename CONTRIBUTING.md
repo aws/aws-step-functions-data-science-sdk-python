@@ -80,7 +80,7 @@ You should only worry about manually running any new integration tests that you 
 
 1. Create a new git branch:
      ```shell
-     git checkout -b my-fix-branch main
+     git checkout -b my-fix-branch
      ```
 1. Make your changes, **including unit tests** and, if appropriate, integration tests.
    1. Include unit tests when you contribute new features or make bug fixes, as they help to:
