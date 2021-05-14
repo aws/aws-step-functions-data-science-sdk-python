@@ -11,7 +11,7 @@ information to effectively respond to your bug report or contribution.
 
 * [Table of Contents](#table-of-contents)
 * [Reporting Bugs/Feature Requests](#reporting-bugsfeature-requests)
-* [Contributing via Pull Requests (PRs)](#contributing-via-pull-requests-prs) 
+* [Contributing via Pull Requests (PRs)](#contributing-via-pull-requests-prs)
   * [Pulling Down the Code](#pulling-down-the-code)
   * [Running the Unit Tests](#running-the-unit-tests)
   * [Running the Integration Tests](#running-the-integration-tests)
@@ -61,20 +61,56 @@ Before sending us a pull request, please ensure that:
 1. cd into the aws-step-functions-data-science-sdk-python folder: `cd aws-step-functions-data-science-sdk-python` or `cd /environment/aws-step-functions-data-science-sdk-python`
 1. Run the following tox command and verify that all code checks and unit tests pass: `tox tests/unit`
 
-You can also run a single test with the following command: `tox -e py36 -- -s -vv <path_to_file><file_name>::<test_function_name>`  
+You can also run a single test with the following command: `tox -e py36 -- -s -vv <path_to_file><file_name>::<test_function_name>`
   * Note that the coverage test will fail if you only run a single test, so make sure to surround the command with `export IGNORE_COVERAGE=-` and `unset IGNORE_COVERAGE`
   * Example: `export IGNORE_COVERAGE=- ; tox -e py36 -- -s -vv tests/unit/test_sagemaker_steps.py::test_training_step_creation_with_model ; unset IGNORE_COVERAGE`
 
 
 ### Running the Integration Tests
 
-Our CI system runs integration tests (the ones in the `tests/integ` directory), in parallel, for every Pull Request.  
-You should only worry about manually running any new integration tests that you write, or integration tests that test an area of code that you've modified.  
+Our CI system runs integration tests (the ones in the `tests/integ` directory), in parallel, for every Pull Request.
+You should only worry about manually running any new integration tests that you write, or integration tests that test an area of code that you've modified.
+#### Setup
 
-1. Follow the instructions at [Set Up the AWS Command Line Interface (AWS CLI)](https://docs.aws.amazon.com/polly/latest/dg/setup-aws-cli.html).
+If you haven't done so already, install tox and test dependencies:
+1. `pip install tox`
+1. `pip install .[test]`
+
+#### AWS Credentials
+Follow the instructions at [Set Up the AWS Command Line Interface (AWS CLI)](https://docs.aws.amazon.com/polly/latest/dg/setup-aws-cli.html).
+#### Create IAM Roles
+
+The tests use two IAM roles to give Step Functions and SageMaker permissions to access AWS resources in your account. Use the following commands in the root directory of this repository:
+
+```bash
+aws iam create-role \
+   --role-name StepFunctionsMLWorkflowExecutionFullAccess \
+   --assume-role-policy-document file://tests/integ/resources/StepFunctionsMLWorkflowExecutionFullAccess-TrustPolicy.json
+```
+
+```bash
+aws iam put-role-policy \
+   --role-name StepFunctionsMLWorkflowExecutionFullAccess \
+   --policy-name StepFunctionsMLWorkflowExecutionFullAccess \
+   --policy-document file://tests/integ/resources/StepFunctionsMLWorkflowExecutionFullAccess-Policy.json
+```
+
+```bash
+aws iam create-role \
+   --role-name SageMakerRole \
+   --assume-role-policy-document file://tests/integ/resources/SageMaker-TrustPolicy.json
+```
+
+```bash
+aws iam attach-role-policy \
+   --role-name SageMakerRole \
+   --policy-arn arn:aws:iam::aws:policy/AmazonSageMakerFullAccess
+```
+#### Execute the tests
 1. To run a test, specify the test file and method you want to run per the following command: `tox -e py36 -- -s -vv <path_to_file><file_name>::<test_function_name>`
    * Note that the coverage test will fail if you only run a single test, so make sure to surround the command with `export IGNORE_COVERAGE=-` and `unset IGNORE_COVERAGE`
    * Example: `export IGNORE_COVERAGE=- ; tox -e py36 -- -s -vv tests/integ/test_state_machine_definition.py::test_wait_state_machine_creation ; unset IGNORE_COVERAGE`
+1. To run all tests, run the following command: `tox tests/integ`
 
 ### Making and Testing Your Change
 
@@ -88,7 +124,7 @@ You should only worry about manually running any new integration tests that you 
       1. Guard against future breaking changes to lower the maintenance cost.
    1. Please focus on the specific change you are contributing. If you also reformat all the code, it will be hard for us to focus on your change.
 1. Run all the unit tests as per [Running the Unit Tests](#running-the-unit-tests), and verify that all checks and tests pass.
-   1. Note that this also runs tools that may be necessary for the automated build to pass (ex: code reformatting by 'black').  
+   1. Note that this also runs tools that may be necessary for the automated build to pass (ex: code reformatting by 'black').
 
 
 ### Committing Your Change
