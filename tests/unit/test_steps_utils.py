@@ -13,11 +13,18 @@
 
 # Test if boto3 session can fetch correct aws partition info from test environment
 
-from stepfunctions.steps.utils import get_aws_partition, resource_integration_arn_builder
-from stepfunctions.steps.integration_resources import IntegrationPattern, IntegrationServices, LambdaApi, SageMakerApi,\
-                                            GlueApi, EcsApi, BatchApi, DynamoDBApi, SnsApi, SqsApi, ElasticMapReduceApi
+from stepfunctions.steps.utils import get_aws_partition, get_service_integration_arn
+from stepfunctions.steps.integration_resources import IntegrationPattern
 import boto3
 from unittest.mock import patch
+from enum import Enum
+
+
+testService = "sagemaker"
+
+
+class TestApi(Enum):
+    CreateTrainingJob = "createTrainingJob"
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
@@ -33,111 +40,14 @@ def test_util_get_aws_partition_aws_cn():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_lambda_no_wait():
-    arn = resource_integration_arn_builder(IntegrationServices.Lambda, LambdaApi.Invoke)
-    assert arn == "arn:aws:states:::lambda:invoke"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_lambda_wait_token():
-    arn = resource_integration_arn_builder(IntegrationServices.Lambda, LambdaApi.Invoke,
-                                           IntegrationPattern.WaitForTaskToken)
-    assert arn == "arn:aws:states:::lambda:invoke.waitForTaskToken"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_arn_builder_sagemaker_no_wait():
-    arn = resource_integration_arn_builder(IntegrationServices.SageMaker, SageMakerApi.CreateTrainingJob)
+    arn = get_service_integration_arn(testService, TestApi.CreateTrainingJob)
     assert arn == "arn:aws:states:::sagemaker:createTrainingJob"
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_arn_builder_sagemaker_wait_completion():
-    arn = resource_integration_arn_builder(IntegrationServices.SageMaker, SageMakerApi.CreateTrainingJob,
-                                           IntegrationPattern.WaitForCompletion)
+    arn = get_service_integration_arn(testService, TestApi.CreateTrainingJob,
+                                      IntegrationPattern.WaitForCompletion)
     assert arn == "arn:aws:states:::sagemaker:createTrainingJob.sync"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_glue_no_wait():
-    arn = resource_integration_arn_builder(IntegrationServices.Glue, GlueApi.StartJobRun)
-    assert arn == "arn:aws:states:::glue:startJobRun"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_glue_wait_completion():
-    arn = resource_integration_arn_builder(IntegrationServices.Glue, GlueApi.StartJobRun,
-                                           IntegrationPattern.WaitForCompletion)
-    assert arn == "arn:aws:states:::glue:startJobRun.sync"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_ecs_no_wait():
-    arn = resource_integration_arn_builder(IntegrationServices.ECS, EcsApi.RunTask)
-    assert arn == "arn:aws:states:::ecs:runTask"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_ecs_wait_completion():
-    arn = resource_integration_arn_builder(IntegrationServices.ECS, EcsApi.RunTask,
-                                           IntegrationPattern.WaitForCompletion)
-    assert arn == "arn:aws:states:::ecs:runTask.sync"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_batch_no_wait():
-    arn = resource_integration_arn_builder(IntegrationServices.Batch, BatchApi.SubmitJob)
-    assert arn == "arn:aws:states:::batch:submitJob"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_batch_wait_completion():
-    arn = resource_integration_arn_builder(IntegrationServices.Batch, BatchApi.SubmitJob,
-                                           IntegrationPattern.WaitForCompletion)
-    assert arn == "arn:aws:states:::batch:submitJob.sync"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_dynamodb_no_wait():
-    arn = resource_integration_arn_builder(IntegrationServices.DynamoDB, DynamoDBApi.GetItem)
-    assert arn == "arn:aws:states:::dynamodb:getItem"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_sns_no_wait():
-    arn = resource_integration_arn_builder(IntegrationServices.SNS, SnsApi.Publish)
-    assert arn == "arn:aws:states:::sns:publish"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_sns_wait_token():
-    arn = resource_integration_arn_builder(IntegrationServices.SNS, SnsApi.Publish,
-                                           IntegrationPattern.WaitForTaskToken)
-    assert arn == "arn:aws:states:::sns:publish.waitForTaskToken"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_sqs_no_wait():
-    arn = resource_integration_arn_builder(IntegrationServices.SQS, SqsApi.SendMessage)
-    assert arn == "arn:aws:states:::sqs:sendMessage"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_sqs_wait_token():
-    arn = resource_integration_arn_builder(IntegrationServices.SQS, SqsApi.SendMessage,
-                                           IntegrationPattern.WaitForTaskToken)
-    assert arn == "arn:aws:states:::sqs:sendMessage.waitForTaskToken"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_elasticmapreduce_no_wait():
-    arn = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce, ElasticMapReduceApi.CreateCluster)
-    assert arn == "arn:aws:states:::elasticmapreduce:createCluster"
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_arn_builder_elasticmapreduce_wait_completion():
-    arn = resource_integration_arn_builder(IntegrationServices.ElasticMapReduce, ElasticMapReduceApi.CreateCluster,
-                                           IntegrationPattern.WaitForCompletion)
-    assert arn == "arn:aws:states:::elasticmapreduce:createCluster.sync"
 

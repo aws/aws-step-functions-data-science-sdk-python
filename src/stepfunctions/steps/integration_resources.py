@@ -15,75 +15,16 @@ from __future__ import absolute_import
 
 from enum import Enum
 
-"""
-Enum classes for task integration resource arn builder
-"""
-
 
 class IntegrationPattern(Enum):
+    """
+    Integration pattern enum classes for task integration resource arn builder
+    """
+
     WaitForTaskToken = "waitForTaskToken"
     WaitForCompletion = "sync"
+    RequestResponse = ""
 
 
-class IntegrationServices(Enum):
-    Lambda = "lambda"
-    SageMaker = "sagemaker"
-    Glue = "glue"
-    ECS = "ecs"
-    Batch = "batch"
-    DynamoDB = "dynamodb"
-    SNS = "sns"
-    SQS = "sqs"
-    ElasticMapReduce = "elasticmapreduce"
 
 
-class LambdaApi(Enum):
-    Invoke = "invoke"
-
-
-class SageMakerApi(Enum):
-    CreateTrainingJob = "createTrainingJob"
-    CreateTransformJob = "createTransformJob"
-    CreateModel = "createModel"
-    CreateEndpointConfig = "createEndpointConfig"
-    UpdateEndpoint = "updateEndpoint"
-    CreateEndpoint = "createEndpoint"
-    CreateHyperParameterTuningJob = "createHyperParameterTuningJob"
-    CreateProcessingJob = "createProcessingJob"
-
-
-class GlueApi(Enum):
-    StartJobRun = "startJobRun"
-
-
-class EcsApi(Enum):
-    RunTask = "runTask"
-
-
-class BatchApi(Enum):
-    SubmitJob = "submitJob"
-
-
-class DynamoDBApi(Enum):
-    GetItem = "getItem"
-    PutItem = "putItem"
-    DeleteItem = "deleteItem"
-    UpdateItem = "updateItem"
-
-
-class SnsApi(Enum):
-    Publish = "publish"
-
-
-class SqsApi(Enum):
-    SendMessage = "sendMessage"
-
-
-class ElasticMapReduceApi(Enum):
-    CreateCluster = "createCluster"
-    TerminateCluster = "terminateCluster"
-    AddStep = "addStep"
-    CancelStep = "cancelStep"
-    SetClusterTerminationProtection = "setClusterTerminationProtection"
-    ModifyInstanceFleetByName = "modifyInstanceFleetByName"
-    ModifyInstanceGroupByName = "modifyInstanceGroupByName"

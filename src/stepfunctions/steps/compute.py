@@ -12,10 +12,32 @@
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
+from enum import Enum
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
-from stepfunctions.steps.utils import resource_integration_arn_builder
-from stepfunctions.steps.integration_resources import IntegrationPattern, IntegrationServices, LambdaApi, GlueApi, BatchApi, EcsApi
+from stepfunctions.steps.utils import get_service_integration_arn
+from stepfunctions.steps.integration_resources import IntegrationPattern
+
+Lambda = "lambda"
+Glue = "glue"
+Ecs = "ecs"
+Batch = "batch"
+
+
+class LambdaApi(Enum):
+    Invoke = "invoke"
+
+
+class GlueApi(Enum):
+    StartJobRun = "startJobRun"
+
+
+class EcsApi(Enum):
+    RunTask = "runTask"
+
+
+class BatchApi(Enum):
+    SubmitJob = "submitJob"
 
 
 class LambdaStep(Task):
@@ -44,14 +66,16 @@ class LambdaStep(Task):
             """
             Example resource arn: arn:aws:states:::lambda:invoke.waitForTaskToken
             """
-            kwargs[Field.Resource.value] =  resource_integration_arn_builder(IntegrationServices.Lambda,
-                                                                             LambdaApi.Invoke,
-                                                                             IntegrationPattern.WaitForTaskToken)
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(Lambda,
+                                                                        LambdaApi.Invoke,
+                                                                        IntegrationPattern.WaitForTaskToken)
         else:
             """
             Example resource arn: arn:aws:states:::lambda:invoke
             """
-            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.Lambda, LambdaApi.Invoke)
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(Lambda, LambdaApi.Invoke)
 
 
         super(LambdaStep, self).__init__(state_id, **kwargs)
@@ -82,15 +106,17 @@ class GlueStartJobRunStep(Task):
             """
             Example resource arn: arn:aws:states:::glue:startJobRun.sync
             """
-            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.Glue,
-                                                                            GlueApi.StartJobRun,
-                                                                            IntegrationPattern.WaitForCompletion)
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(Glue,
+                                                                       GlueApi.StartJobRun,
+                                                                       IntegrationPattern.WaitForCompletion)
         else:
             """
             Example resource arn: arn:aws:states:::glue:startJobRun
             """
-            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.Glue,
-                                                                            GlueApi.StartJobRun)
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(Glue,
+                                                                       GlueApi.StartJobRun)
 
         super(GlueStartJobRunStep, self).__init__(state_id, **kwargs)
 
@@ -120,15 +146,17 @@ class BatchSubmitJobStep(Task):
             """
             Example resource arn: arn:aws:states:::batch:submitJob.sync
             """
-            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.Batch,
-                                                                            BatchApi.SubmitJob,
-                                                                            IntegrationPattern.WaitForCompletion)
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(Batch,
+                                                                       BatchApi.SubmitJob,
+                                                                       IntegrationPattern.WaitForCompletion)
         else:
             """
             Example resource arn: arn:aws:states:::batch:submitJob
             """
-            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.Batch,
-                                                                            BatchApi.SubmitJob)
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(Batch,
+                                                                       BatchApi.SubmitJob)
 
         super(BatchSubmitJobStep, self).__init__(state_id, **kwargs)
 
@@ -158,14 +186,16 @@ class EcsRunTaskStep(Task):
             """
             Example resource arn: arn:aws:states:::ecs:runTask.sync
             """
-            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ECS,
-                                                                            EcsApi.RunTask,
-                                                                            IntegrationPattern.WaitForCompletion)
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(Ecs,
+                                                                       EcsApi.RunTask,
+                                                                       IntegrationPattern.WaitForCompletion)
         else:
             """
             Example resource arn: arn:aws:states:::ecs:runTask
             """
-            kwargs[Field.Resource.value] = resource_integration_arn_builder(IntegrationServices.ECS,
-                                                                            EcsApi.RunTask)
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(Ecs,
+                                                                       EcsApi.RunTask)
 
         super(EcsRunTaskStep, self).__init__(state_id, **kwargs)

@@ -15,6 +15,8 @@ from __future__ import absolute_import
 import boto3
 import logging
 
+from stepfunctions.steps.integration_resources import IntegrationPattern
+
 logger = logging.getLogger('stepfunctions')
 
 
@@ -23,11 +25,13 @@ def tags_dict_to_kv_list(tags_dict):
     return kv_list
 
 
-"""
-Obtain matching aws partition name based on region
-Return "aws" as default if no region detected
-"""
 def get_aws_partition():
+
+    """
+    Returns the aws partition for the current boto3 session.
+    Defaults to 'aws' if the region could not be detected.
+    """
+
     partitions = boto3.session.Session().get_available_partitions()
     cur_region = boto3.session.Session().region_name
     cur_partition = "aws"
@@ -45,13 +49,19 @@ def get_aws_partition():
     return cur_partition
 
 
-"""
-ARN builder for task integration
-"""
-def resource_integration_arn_builder(service, api, integration_pattern=None):
+def get_service_integration_arn(service, api, integration_pattern=IntegrationPattern.RequestResponse):
+
+    """
+    ARN builder for task integration
+    Args:
+        service(str): name of the task resource service
+        api(enum): api to be integrated of the task resource service
+        integration_pattern(enum, optional): integration pattern for the task resource.
+                                            Default as request response.
+    """
     arn = ""
-    if integration_pattern is None:
-        arn = f"arn:{get_aws_partition()}:states:::{service.value}:{api.value}"
+    if integration_pattern == IntegrationPattern.RequestResponse:
+        arn = f"arn:{get_aws_partition()}:states:::{service}:{api.value}"
     else:
-        arn = f"arn:{get_aws_partition()}:states:::{service.value}:{api.value}.{integration_pattern.value}"
+        arn = f"arn:{get_aws_partition()}:states:::{service}:{api.value}.{integration_pattern.value}"
     return arn
