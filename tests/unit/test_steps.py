@@ -368,7 +368,7 @@ def test_chaining_steps():
     assert s2.next_step == s3
 
 
-def test_chaining_choice():
+def test_chaining_choice_sets_default_field():
     s1_pass = Pass('Step - One')
     s2_choice = Choice('Step - Two')
     s3_pass = Pass('Step - Three')
@@ -381,7 +381,7 @@ def test_chaining_choice():
     assert s3_pass.next_step is None
 
 
-def test_chaining_choice_with_default(caplog):
+def test_chaining_choice_with_existing_default_overrides_value(caplog):
     s1_pass = Pass('Step - One')
     s2_choice = Choice('Step - Two')
     s3_pass = Pass('Step - Three')
