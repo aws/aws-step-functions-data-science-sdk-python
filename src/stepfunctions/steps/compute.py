@@ -15,13 +15,12 @@ from __future__ import absolute_import
 from enum import Enum
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
-from stepfunctions.steps.utils import get_service_integration_arn
-from stepfunctions.steps.integration_resources import IntegrationPattern
+from stepfunctions.steps.integration_resources import IntegrationPattern, get_service_integration_arn
 
-Lambda = "lambda"
-Glue = "glue"
-Ecs = "ecs"
-Batch = "batch"
+LAMBDA_SERVICE_NAME = "lambda"
+GLUE_SERVICE_NAME = "glue"
+ECS_SERVICE_NAME = "ecs"
+BATCH_SERVICE_NAME = "batch"
 
 
 class LambdaApi(Enum):
@@ -67,15 +66,15 @@ class LambdaStep(Task):
             Example resource arn: arn:aws:states:::lambda:invoke.waitForTaskToken
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(Lambda,
-                                                                        LambdaApi.Invoke,
-                                                                        IntegrationPattern.WaitForTaskToken)
+            kwargs[Field.Resource.value] = get_service_integration_arn(LAMBDA_SERVICE_NAME,
+                                                                       LambdaApi.Invoke,
+                                                                       IntegrationPattern.WaitForTaskToken)
         else:
             """
             Example resource arn: arn:aws:states:::lambda:invoke
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(Lambda, LambdaApi.Invoke)
+            kwargs[Field.Resource.value] = get_service_integration_arn(LAMBDA_SERVICE_NAME, LambdaApi.Invoke)
 
 
         super(LambdaStep, self).__init__(state_id, **kwargs)
@@ -107,7 +106,7 @@ class GlueStartJobRunStep(Task):
             Example resource arn: arn:aws:states:::glue:startJobRun.sync
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(Glue,
+            kwargs[Field.Resource.value] = get_service_integration_arn(GLUE_SERVICE_NAME,
                                                                        GlueApi.StartJobRun,
                                                                        IntegrationPattern.WaitForCompletion)
         else:
@@ -115,7 +114,7 @@ class GlueStartJobRunStep(Task):
             Example resource arn: arn:aws:states:::glue:startJobRun
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(Glue,
+            kwargs[Field.Resource.value] = get_service_integration_arn(GLUE_SERVICE_NAME,
                                                                        GlueApi.StartJobRun)
 
         super(GlueStartJobRunStep, self).__init__(state_id, **kwargs)
@@ -147,7 +146,7 @@ class BatchSubmitJobStep(Task):
             Example resource arn: arn:aws:states:::batch:submitJob.sync
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(Batch,
+            kwargs[Field.Resource.value] = get_service_integration_arn(BATCH_SERVICE_NAME,
                                                                        BatchApi.SubmitJob,
                                                                        IntegrationPattern.WaitForCompletion)
         else:
@@ -155,7 +154,7 @@ class BatchSubmitJobStep(Task):
             Example resource arn: arn:aws:states:::batch:submitJob
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(Batch,
+            kwargs[Field.Resource.value] = get_service_integration_arn(BATCH_SERVICE_NAME,
                                                                        BatchApi.SubmitJob)
 
         super(BatchSubmitJobStep, self).__init__(state_id, **kwargs)
@@ -187,7 +186,7 @@ class EcsRunTaskStep(Task):
             Example resource arn: arn:aws:states:::ecs:runTask.sync
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(Ecs,
+            kwargs[Field.Resource.value] = get_service_integration_arn(ECS_SERVICE_NAME,
                                                                        EcsApi.RunTask,
                                                                        IntegrationPattern.WaitForCompletion)
         else:
@@ -195,7 +194,7 @@ class EcsRunTaskStep(Task):
             Example resource arn: arn:aws:states:::ecs:runTask
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(Ecs,
+            kwargs[Field.Resource.value] = get_service_integration_arn(ECS_SERVICE_NAME,
                                                                        EcsApi.RunTask)
 
         super(EcsRunTaskStep, self).__init__(state_id, **kwargs)

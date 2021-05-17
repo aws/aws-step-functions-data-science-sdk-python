@@ -13,8 +13,8 @@
 
 # Test if boto3 session can fetch correct aws partition info from test environment
 
-from stepfunctions.steps.utils import get_aws_partition, get_service_integration_arn
-from stepfunctions.steps.integration_resources import IntegrationPattern
+from stepfunctions.steps.utils import get_aws_partition
+from stepfunctions.steps.integration_resources import IntegrationPattern, get_service_integration_arn
 import boto3
 from unittest.mock import patch
 from enum import Enum

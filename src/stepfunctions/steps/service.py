@@ -15,13 +15,12 @@ from __future__ import absolute_import
 from enum import Enum
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
-from stepfunctions.steps.utils import get_service_integration_arn
-from stepfunctions.steps.integration_resources import IntegrationPattern
+from stepfunctions.steps.integration_resources import IntegrationPattern, get_service_integration_arn
 
-DynamoDB = "dynamodb"
-Sns = "sns"
-Sqs = "sqs"
-ElasticMapReduce = "elasticmapreduce"
+DYNAMODB_SERVICE_NAME = "dynamodb"
+SNS_SERVICE_NAME = "sns"
+SQS_SERVICE_NAME = "sqs"
+ELASTICMAPREDUCE_SERVICE_NAME = "elasticmapreduce"
 
 
 class DynamoDBApi(Enum):
@@ -73,7 +72,7 @@ class DynamoDBGetItemStep(Task):
         Example resource arn: arn:aws:states:::dynamodb:getItem
         """
 
-        kwargs[Field.Resource.value] = get_service_integration_arn(DynamoDB,
+        kwargs[Field.Resource.value] = get_service_integration_arn(DYNAMODB_SERVICE_NAME,
                                                                    DynamoDBApi.GetItem)
         super(DynamoDBGetItemStep, self).__init__(state_id, **kwargs)
 
@@ -103,7 +102,7 @@ class DynamoDBPutItemStep(Task):
         Example resource arn: arn:aws:states:::dynamodb:putItem
         """
 
-        kwargs[Field.Resource.value] = get_service_integration_arn(DynamoDB,
+        kwargs[Field.Resource.value] = get_service_integration_arn(DYNAMODB_SERVICE_NAME,
                                                                    DynamoDBApi.PutItem)
         super(DynamoDBPutItemStep, self).__init__(state_id, **kwargs)
 
@@ -133,7 +132,7 @@ class DynamoDBDeleteItemStep(Task):
         Example resource arn: arn:aws:states:::dynamodb:deleteItem
         """
 
-        kwargs[Field.Resource.value] = get_service_integration_arn(DynamoDB,
+        kwargs[Field.Resource.value] = get_service_integration_arn(DYNAMODB_SERVICE_NAME,
                                                                    DynamoDBApi.DeleteItem)
         super(DynamoDBDeleteItemStep, self).__init__(state_id, **kwargs)
 
@@ -163,7 +162,7 @@ class DynamoDBUpdateItemStep(Task):
         Example resource arn: arn:aws:states:::dynamodb:updateItem
         """
 
-        kwargs[Field.Resource.value] = get_service_integration_arn(DynamoDB,
+        kwargs[Field.Resource.value] = get_service_integration_arn(DYNAMODB_SERVICE_NAME,
                                                                    DynamoDBApi.UpdateItem)
         super(DynamoDBUpdateItemStep, self).__init__(state_id, **kwargs)
 
@@ -194,7 +193,7 @@ class SnsPublishStep(Task):
             Example resource arn: arn:aws:states:::sns:publish.waitForTaskToken
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(Sns,
+            kwargs[Field.Resource.value] = get_service_integration_arn(SNS_SERVICE_NAME,
                                                                        SnsApi.Publish,
                                                                        IntegrationPattern.WaitForTaskToken)
         else:
@@ -202,7 +201,7 @@ class SnsPublishStep(Task):
             Example resource arn: arn:aws:states:::sns:publish
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(Sns,
+            kwargs[Field.Resource.value] = get_service_integration_arn(SNS_SERVICE_NAME,
                                                                        SnsApi.Publish)
 
         super(SnsPublishStep, self).__init__(state_id, **kwargs)
@@ -234,7 +233,7 @@ class SqsSendMessageStep(Task):
             Example resource arn: arn:aws:states:::sqs:sendMessage.waitForTaskToken
             """
 
-            kwargs[Field.Resource.value] =  get_service_integration_arn(Sqs,
+            kwargs[Field.Resource.value] =  get_service_integration_arn(SQS_SERVICE_NAME,
                                                                         SqsApi.SendMessage,
                                                                         IntegrationPattern.WaitForTaskToken)
         else:
@@ -242,7 +241,7 @@ class SqsSendMessageStep(Task):
             Example resource arn: arn:aws:states:::sqs:sendMessage
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(Sqs,
+            kwargs[Field.Resource.value] = get_service_integration_arn(SQS_SERVICE_NAME,
                                                                        SqsApi.SendMessage)
 
         super(SqsSendMessageStep, self).__init__(state_id, **kwargs)
@@ -273,7 +272,7 @@ class EmrCreateClusterStep(Task):
             Example resource arn: arn:aws:states:::elasticmapreduce:createCluster.sync
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(ElasticMapReduce,
+            kwargs[Field.Resource.value] = get_service_integration_arn(ELASTICMAPREDUCE_SERVICE_NAME,
                                                                        ElasticMapReduceApi.CreateCluster,
                                                                        IntegrationPattern.WaitForCompletion)
         else:
@@ -281,7 +280,7 @@ class EmrCreateClusterStep(Task):
             Example resource arn: arn:aws:states:::elasticmapreduce:createCluster
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(ElasticMapReduce,
+            kwargs[Field.Resource.value] = get_service_integration_arn(ELASTICMAPREDUCE_SERVICE_NAME,
                                                                        ElasticMapReduceApi.CreateCluster)
 
         super(EmrCreateClusterStep, self).__init__(state_id, **kwargs)
@@ -312,7 +311,7 @@ class EmrTerminateClusterStep(Task):
             Example resource arn: arn:aws:states:::elasticmapreduce:terminateCluster.sync
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(ElasticMapReduce,
+            kwargs[Field.Resource.value] = get_service_integration_arn(ELASTICMAPREDUCE_SERVICE_NAME,
                                                                        ElasticMapReduceApi.TerminateCluster,
                                                                        IntegrationPattern.WaitForCompletion)
         else:
@@ -320,7 +319,7 @@ class EmrTerminateClusterStep(Task):
             Example resource arn: arn:aws:states:::elasticmapreduce:terminateCluster
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(ElasticMapReduce,
+            kwargs[Field.Resource.value] = get_service_integration_arn(ELASTICMAPREDUCE_SERVICE_NAME,
                                                                        ElasticMapReduceApi.TerminateCluster)
 
         super(EmrTerminateClusterStep, self).__init__(state_id, **kwargs)
@@ -351,7 +350,7 @@ class EmrAddStepStep(Task):
             Example resource arn: arn:aws:states:::elasticmapreduce:addStep.sync
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(ElasticMapReduce,
+            kwargs[Field.Resource.value] = get_service_integration_arn(ELASTICMAPREDUCE_SERVICE_NAME,
                                                                        ElasticMapReduceApi.AddStep,
                                                                        IntegrationPattern.WaitForCompletion)
         else:
@@ -359,7 +358,7 @@ class EmrAddStepStep(Task):
             Example resource arn: arn:aws:states:::elasticmapreduce:addStep
             """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(ElasticMapReduce,
+            kwargs[Field.Resource.value] = get_service_integration_arn(ELASTICMAPREDUCE_SERVICE_NAME,
                                                                        ElasticMapReduceApi.AddStep)
 
         super(EmrAddStepStep, self).__init__(state_id, **kwargs)
@@ -389,7 +388,7 @@ class EmrCancelStepStep(Task):
         Example resource arn: arn:aws:states:::elasticmapreduce:cancelStep
         """
 
-        kwargs[Field.Resource.value] = get_service_integration_arn(ElasticMapReduce,
+        kwargs[Field.Resource.value] = get_service_integration_arn(ELASTICMAPREDUCE_SERVICE_NAME,
                                                                    ElasticMapReduceApi.CancelStep)
 
         super(EmrCancelStepStep, self).__init__(state_id, **kwargs)
@@ -419,7 +418,7 @@ class EmrSetClusterTerminationProtectionStep(Task):
         Example resource arn: arn:aws:states:::elasticmapreduce:setClusterTerminationProtection
         """
 
-        kwargs[Field.Resource.value] = get_service_integration_arn(ElasticMapReduce,
+        kwargs[Field.Resource.value] = get_service_integration_arn(ELASTICMAPREDUCE_SERVICE_NAME,
                                                                    ElasticMapReduceApi.SetClusterTerminationProtection)
 
         super(EmrSetClusterTerminationProtectionStep, self).__init__(state_id, **kwargs)
@@ -449,7 +448,7 @@ class EmrModifyInstanceFleetByNameStep(Task):
         Example resource arn: arn:aws:states:::elasticmapreduce:modifyInstanceFleetByName
         """
 
-        kwargs[Field.Resource.value] = get_service_integration_arn(ElasticMapReduce,
+        kwargs[Field.Resource.value] = get_service_integration_arn(ELASTICMAPREDUCE_SERVICE_NAME,
                                                                    ElasticMapReduceApi.ModifyInstanceFleetByName)
 
         super(EmrModifyInstanceFleetByNameStep, self).__init__(state_id, **kwargs)
@@ -479,7 +478,7 @@ class EmrModifyInstanceGroupByNameStep(Task):
         Example resource arn: arn:aws:states:::elasticmapreduce:modifyInstanceGroupByName
         """
 
-        kwargs[Field.Resource.value] = get_service_integration_arn(ElasticMapReduce,
+        kwargs[Field.Resource.value] = get_service_integration_arn(ELASTICMAPREDUCE_SERVICE_NAME,
                                                                    ElasticMapReduceApi.ModifyInstanceGroupByName)
 
         super(EmrModifyInstanceGroupByNameStep, self).__init__(state_id, **kwargs)

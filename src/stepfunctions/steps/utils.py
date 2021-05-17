@@ -15,8 +15,6 @@ from __future__ import absolute_import
 import boto3
 import logging
 
-from stepfunctions.steps.integration_resources import IntegrationPattern
-
 logger = logging.getLogger('stepfunctions')
 
 
@@ -47,21 +45,3 @@ def get_aws_partition():
             return cur_partition
 
     return cur_partition
-
-
-def get_service_integration_arn(service, api, integration_pattern=IntegrationPattern.RequestResponse):
-
-    """
-    ARN builder for task integration
-    Args:
-        service(str): name of the task resource service
-        api(enum): api to be integrated of the task resource service
-        integration_pattern(enum, optional): integration pattern for the task resource.
-                                            Default as request response.
-    """
-    arn = ""
-    if integration_pattern == IntegrationPattern.RequestResponse:
-        arn = f"arn:{get_aws_partition()}:states:::{service}:{api.value}"
-    else:
-        arn = f"arn:{get_aws_partition()}:states:::{service}:{api.value}.{integration_pattern.value}"
-    return arn
