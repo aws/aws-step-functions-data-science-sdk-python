@@ -32,10 +32,9 @@ def get_service_integration_arn(service, api, integration_pattern=IntegrationPat
     """
     ARN builder for task integration
     Args:
-        service(str): name of the task resource service
-        api(<Service>Api): api to be integrated of the task resource service
-        integration_pattern(IntegrationPattern, optional): integration pattern for the task resource.
-                                            Default as request response.
+        service (str): The service name for the service integration
+        api (str): The api of the service integration
+        integration_pattern (IntegrationPattern, optional): The integration pattern for the task. (Default: IntegrationPattern.RequestResponse)
     """
     arn = ""
     if integration_pattern == IntegrationPattern.RequestResponse:
@@ -43,6 +42,5 @@ def get_service_integration_arn(service, api, integration_pattern=IntegrationPat
     else:
         arn = f"arn:{get_aws_partition()}:states:::{service}:{api.value}.{integration_pattern.value}"
     return arn
-
 
 
