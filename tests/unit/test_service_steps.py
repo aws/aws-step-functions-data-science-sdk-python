@@ -13,12 +13,15 @@
 from __future__ import absolute_import
 
 import pytest
+import boto3
 
+from unittest.mock import patch
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateClusterStep, EmrAddStepStep, EmrCancelStepStep, EmrSetClusterTerminationProtectionStep, EmrModifyInstanceFleetByNameStep, EmrModifyInstanceGroupByNameStep
 
 
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_sns_publish_step_creation():
     step = SnsPublishStep('Publish to SNS', parameters={
         'TopicArn': 'arn:aws:sns:us-east-1:123456789012:myTopic',
@@ -57,6 +60,7 @@ def test_sns_publish_step_creation():
     }
 
 
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_sqs_send_message_step_creation():
     step = SqsSendMessageStep('Send to SQS', parameters={
         'QueueUrl': 'https://sqs.us-east-1.amazonaws.com/123456789012/myQueue',
@@ -95,6 +99,7 @@ def test_sqs_send_message_step_creation():
     }
 
 
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_dynamodb_get_item_step_creation():
     step = DynamoDBGetItemStep('Read Message From DynamoDB', parameters={
         'TableName': 'TransferDataRecords-DDBTable-3I41R5L5EAGT',
@@ -120,6 +125,7 @@ def test_dynamodb_get_item_step_creation():
     }
 
 
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_dynamodb_put_item_step_creation():
     step = DynamoDBPutItemStep('Add Message From DynamoDB', parameters={
         'TableName': 'TransferDataRecords-DDBTable-3I41R5L5EAGT',
@@ -145,6 +151,7 @@ def test_dynamodb_put_item_step_creation():
     }
 
 
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_dynamodb_delete_item_step_creation():
     step = DynamoDBDeleteItemStep('Delete Message From DynamoDB', parameters={
         'TableName': 'TransferDataRecords-DDBTable-3I41R5L5EAGT',
@@ -170,6 +177,7 @@ def test_dynamodb_delete_item_step_creation():
     }
 
 
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_dynamodb_update_item_step_creation():
     step = DynamoDBUpdateItemStep('Update Message From DynamoDB', parameters={
         'TableName': 'TransferDataRecords-DDBTable-3I41R5L5EAGT',
@@ -203,6 +211,7 @@ def test_dynamodb_update_item_step_creation():
     }
 
 
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_create_cluster_step_creation():
     step = EmrCreateClusterStep('Create EMR cluster', parameters={
         'Name': 'MyWorkflowCluster',
@@ -372,6 +381,7 @@ def test_emr_create_cluster_step_creation():
     }
 
 
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_terminate_cluster_step_creation():
     step = EmrTerminateClusterStep('Terminate EMR cluster', parameters={
         'ClusterId': 'MyWorkflowClusterId'
@@ -399,6 +409,8 @@ def test_emr_terminate_cluster_step_creation():
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_add_step_step_creation():
     step = EmrAddStepStep('Add step to EMR cluster', parameters={
         'ClusterId': 'MyWorkflowClusterId',
@@ -498,6 +510,8 @@ def test_emr_add_step_step_creation():
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_cancel_step_step_creation():
     step = EmrCancelStepStep('Cancel step from EMR cluster', parameters={
         'ClusterId': 'MyWorkflowClusterId',
@@ -514,6 +528,8 @@ def test_emr_cancel_step_step_creation():
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_set_cluster_termination_protection_step_creation():
     step = EmrSetClusterTerminationProtectionStep('Set termination protection for EMR cluster', parameters={
         'ClusterId': 'MyWorkflowClusterId',
@@ -530,6 +546,8 @@ def test_emr_set_cluster_termination_protection_step_creation():
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_modify_instance_fleet_by_name_step_creation():
     step = EmrModifyInstanceFleetByNameStep('Modify Instance Fleet by name for EMR cluster', parameters={
         'ClusterId': 'MyWorkflowClusterId',
@@ -554,6 +572,8 @@ def test_emr_modify_instance_fleet_by_name_step_creation():
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_modify_instance_group_by_name_step_creation():
     step = EmrModifyInstanceGroupByNameStep('Modify Instance Group by name for EMR cluster', parameters={
         'ClusterId': 'MyWorkflowClusterId',
