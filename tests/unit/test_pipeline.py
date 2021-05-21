@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 import pytest
 import sagemaker
+import boto3
 
 from sagemaker.sklearn.estimator import SKLearn
 from unittest.mock import MagicMock, patch
@@ -26,6 +27,7 @@ SAGEMAKER_EXECUTION_ROLE = 'SageMakerExecutionRole'
 STEPFUNCTIONS_EXECUTION_ROLE = 'StepFunctionsExecutionRole'
 PCA_IMAGE = '382416733822.dkr.ecr.us-east-1.amazonaws.com/pca:1'
 LINEAR_LEARNER_IMAGE = '382416733822.dkr.ecr.us-east-1.amazonaws.com/linear-learner:1'
+
 
 @pytest.fixture
 def pca_estimator():
@@ -52,6 +54,7 @@ def pca_estimator():
 
     return pca
 
+
 @pytest.fixture
 def sklearn_preprocessor():
     script_path = 'sklearn_abalone_featurizer.py'
@@ -74,6 +77,7 @@ def sklearn_preprocessor():
     )
     
     return sklearn_preprocessor
+
 
 @pytest.fixture
 def linear_learner_estimator():
@@ -101,7 +105,9 @@ def linear_learner_estimator():
 
     return ll_estimator
 
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_pca_training_pipeline(pca_estimator):
     s3_inputs = {
         'train': 's3://sagemaker/pca/train'
@@ -228,7 +234,9 @@ def test_pca_training_pipeline(pca_estimator):
 
     workflow.execute.assert_called_with(name=job_name, inputs=inputs)
 
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_inference_pipeline(sklearn_preprocessor, linear_learner_estimator):
     s3_inputs = {
         'train': 's3://sagemaker-us-east-1/inference/train'
