@@ -226,12 +226,7 @@ class State(Block):
         # See language spec for more info: https://states-language.net/spec.html#choice-state
         if self.type is 'Choice':
             if self.default is not None:
-                logger.warning(
-                    "Chaining Choice state: Overwriting %s's current default_choice (%s) with %s",
-                    self.state_id,
-                    self.default.state_id,
-                    next_step.state_id
-                )
+                logger.warning(f'Chaining Choice state: Overwriting {self.state_id}\'s current default_choice ({self.default.state_id}) with {next_step.state_id}')
             self.default_choice(next_step)
             return self.default
 

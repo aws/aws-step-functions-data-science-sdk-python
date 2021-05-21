@@ -391,10 +391,7 @@ def test_chaining_choice_with_existing_default_overrides_value(caplog):
     # Chain s2_choice when default_choice is already set will trigger Warning
     with caplog.at_level(logging.WARNING):
         Chain([s2_choice, s1_pass])
-        expected_warning = (
-                "Chaining Choice state: Overwriting %s's current default_choice (%s) with %s" %
-                (s2_choice.state_id, s3_pass.state_id, s1_pass.state_id)
-        )
+        expected_warning = f'Chaining Choice state: Overwriting {s2_choice.state_id}\'s current default_choice ({s3_pass.state_id}) with {s1_pass.state_id}'
         assert expected_warning in caplog.text
         assert 'WARNING' in caplog.text
     assert s2_choice.default == s1_pass
