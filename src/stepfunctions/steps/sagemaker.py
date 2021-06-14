@@ -104,7 +104,11 @@ class TrainingStep(Task):
             parameters['TrainingJobName'] = job_name
 
         if hyperparameters is not None:
-            parameters['HyperParameters'] = hyperparameters
+            merged_hyperparameters = {}
+            if estimator.hyperparameters() is not None:
+                merged_hyperparameters.update(estimator.hyperparameters())
+            merged_hyperparameters.update(hyperparameters)
+            parameters['HyperParameters'] = merged_hyperparameters
 
         if experiment_config is not None:
             parameters['ExperimentConfig'] = experiment_config
