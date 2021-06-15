@@ -69,7 +69,7 @@ class TrainingStep(Task):
             experiment_config (dict, optional): Specify the experiment config for the training. (Default: None)
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the training job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the training job and proceed to the next step. (default: True)
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
-            output_path (Placeholder, optional): S3 location for saving the training result (model
+            output_path (str or Placeholder, optional): S3 location for saving the training result (model
                 artifacts and output files) to propagate to estimator. If not specified, results are
                 stored to a default bucket. If the bucket with the specific name
                 does not exist, the estimator creates the bucket during the
@@ -117,7 +117,7 @@ class TrainingStep(Task):
             parameters['TrainingJobName'] = job_name
 
         if output_path is not None:
-            if isinstance(output_path, (ExecutionInput, StepInput)):
+            if isinstance(output_path, (ExecutionInput, StepInput)) or isinstance(output_path, str):
                 parameters['OutputDataConfig']['S3OutputPath'] = output_path
 
         if data is not None and data_placeholder:

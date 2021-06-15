@@ -225,6 +225,7 @@ def test_training_step_creation(pca_estimator):
             'TrialName': 'pca_trial',
             'TrialComponentDisplayName': 'Training'
         },
+        output_path='s3://sagemaker-us-east-1-111111111111',
         tags=DEFAULT_TAGS,
     )
     assert step.to_dict() == {
@@ -235,7 +236,7 @@ def test_training_step_creation(pca_estimator):
                 'TrainingInputMode': 'File'
             },
             'OutputDataConfig': {
-                'S3OutputPath': 's3://sagemaker/models'
+                'S3OutputPath': 's3://sagemaker-us-east-1-111111111111'
             },
             'StoppingCondition': {
                 'MaxRuntimeInSeconds': 86400
