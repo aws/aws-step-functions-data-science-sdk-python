@@ -114,7 +114,8 @@ def test_training_step_with_placeholders(pca_estimator_fixture,
     # Build workflow definition
     execution_input = ExecutionInput(schema={
         'JobName': str,
-        'OutputPath': str
+        'OutputPath': str,
+        'Data': str
     })
 
     job_name_placeholder = execution_input['JobName']
@@ -145,12 +146,17 @@ def test_training_step_with_placeholders(pca_estimator_fixture,
             'JobName': f'TrainingJob-{job_id}'
         }
 
+        # Check placeholders in workflow definition:
         execution = workflow.execute(inputs=execution_input)
-        execution_output = execution.get_output(wait=True)
-        expected_output_data_config = {"S3OutputPath.$": "$$.Execution.Input['OutputPath']"}
-        assert workflow.definition.states[training_step_name]['Parameters']['OutputDataConfig'] == \
-               expected_output_data_config
+        expected_output_data_key_value_pair = ("S3OutputPath.$", "$$.Execution.Input['OutputPath']")
+        assert expected_output_data_key_value_pair in \
+               workflow.definition.states[training_step_name]['Parameters']['OutputDataConfig'].items()
+
+        expected_job_name_key_value_pair = ("TrainingJobName.$", "$$.Execution.Input['JobName']")
+        assert expected_job_name_key_value_pair in \
+               workflow.definition.states[training_step_name]['Parameters'].items()
         # Check workflow output
+        execution_output = execution.get_output(wait=True)
         assert execution_output.get("TrainingJobStatus") == "Completed"
 
         # Cleanup

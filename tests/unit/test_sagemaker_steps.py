@@ -26,6 +26,7 @@ from sagemaker.sklearn.processing import SKLearnProcessor
 from sagemaker.processing import ProcessingInput, ProcessingOutput
 
 from unittest.mock import MagicMock, patch
+from stepfunctions.inputs import ExecutionInput
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, ProcessingStep
 from stepfunctions.steps.sagemaker import tuning_config
 
@@ -258,6 +259,78 @@ def test_training_step_creation(pca_estimator):
                 'TrialComponentDisplayName': 'Training'
             },
             'TrainingJobName': 'TrainingJob',
+            'Tags': DEFAULT_TAGS_LIST
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
+        'End': True
+    }
+
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_training_step_creation_with_placeholders(pca_estimator):
+    execution_input = ExecutionInput(schema={
+        'Data': str,
+        'JobName': str,
+        'OutputPath': str,
+    })
+
+    step = TrainingStep('Training',
+        estimator=pca_estimator,
+        job_name= execution_input['JobName'],
+        data=execution_input['Data'],
+        output_path=execution_input['OutputPath'],
+        experiment_config={
+            'ExperimentName': 'pca_experiment',
+            'TrialName': 'pca_trial',
+            'TrialComponentDisplayName': 'Training'
+        },
+        tags=DEFAULT_TAGS,
+    )
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'AlgorithmSpecification': {
+                'TrainingImage': PCA_IMAGE,
+                'TrainingInputMode': 'File'
+            },
+            'OutputDataConfig': {
+                'S3OutputPath.$': "$$.Execution.Input['OutputPath']"
+            },
+            'StoppingCondition': {
+                'MaxRuntimeInSeconds': 86400
+            },
+            'ResourceConfig': {
+                'InstanceCount': 1,
+                'InstanceType': 'ml.c4.xlarge',
+                'VolumeSizeInGB': 30
+            },
+            'RoleArn': EXECUTION_ROLE,
+            'HyperParameters': {
+                'feature_dim': '50000',
+                'num_components': '10',
+                'subtract_mean': 'True',
+                'algorithm_mode': 'randomized',
+                'mini_batch_size': '200'
+            },
+            'InputDataConfig': [
+                {
+                    'ChannelName': 'training',
+                    'DataSource': {
+                        'S3DataSource': {
+                            'S3DataDistributionType': 'FullyReplicated',
+                            'S3DataType': 'S3Prefix',
+                            'S3Uri.$': "$$.Execution.Input['Data']"
+                        }
+                    }
+                }
+            ],
+            'ExperimentConfig': {
+                'ExperimentName': 'pca_experiment',
+                'TrialName': 'pca_trial',
+                'TrialComponentDisplayName': 'Training'
+            },
+            'TrainingJobName.$': "$$.Execution.Input['JobName']",
             'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',

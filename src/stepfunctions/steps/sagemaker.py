@@ -51,7 +51,7 @@ class TrainingStep(Task):
             job_name (str or Placeholder): Specify a training job name, this is required for the training job to run. We recommend to use :py:class:`~stepfunctions.inputs.ExecutionInput` placeholder collection to pass the value dynamically in each execution.
             data: Information about the training data. Please refer to the ``fit()`` method of the associated estimator, as this can take any of the following forms:
 
-                * (str) - The S3 location where training data is saved.
+                * (str or Placeholder) - The S3 location where training data is saved.
                 * (dict[str, str] or dict[str, sagemaker.inputs.TrainingInput]) - If using multiple
                     channels for training data, you can specify a dict mapping channel names to
                     strings or :func:`~sagemaker.inputs.TrainingInput` objects.
@@ -95,6 +95,12 @@ class TrainingStep(Task):
 
             kwargs[Field.Resource.value] = get_service_integration_arn(SAGEMAKER_SERVICE_NAME,
                                                                        SageMakerApi.CreateTrainingJob)
+        # sagemaker.workflow.airflow.training_config does not accept ExecutionInput as input, only str, dict,
+        # TrainingInput or FileSystemInput. Transform placeholder into JSONpath to be processed and included in
+        # generated Sagemaker parameters. Placeholder for uri str only:
+        data_placeholder = isinstance(data, (ExecutionInput, StepInput))
+        if data_placeholder:
+            data = data.to_jsonpath()
 
         if isinstance(job_name, str):
             parameters = training_config(estimator=estimator, inputs=data, job_name=job_name, mini_batch_size=mini_batch_size)
@@ -113,6 +119,12 @@ class TrainingStep(Task):
         if output_path is not None:
             if isinstance(output_path, (ExecutionInput, StepInput)):
                 parameters['OutputDataConfig']['S3OutputPath'] = output_path
+
+        if data is not None and data_placeholder:
+            # Replace the 'S3Uri' key with one that supports JSONpath value.
+            # Support for uri str only: The list will only contain 1 element
+            temp_data_uri = parameters['InputDataConfig'][0]['DataSource']['S3DataSource'].pop('S3Uri', None)
+            parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = temp_data_uri
 
         if hyperparameters is not None:
             parameters['HyperParameters'] = hyperparameters
