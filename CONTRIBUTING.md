@@ -96,6 +96,12 @@ aws iam put-role-policy \
 ```
 
 ```bash
+aws iam attach-role-policy \
+   --role-name StepFunctionsMLWorkflowExecutionFullAccess \
+   --policy-arn arn:aws:iam::aws:policy/CloudWatchEventsFullAccess
+```
+
+```bash
 aws iam create-role \
    --role-name SageMakerRole \
    --assume-role-policy-document file://tests/integ/resources/SageMaker-TrustPolicy.json
