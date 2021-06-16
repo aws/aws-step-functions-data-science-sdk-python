@@ -218,8 +218,17 @@ class State(Block):
         Returns:
             State or Chain: Next state or chain that will be transitioned to.
         """
-        if self.type in ('Choice', 'Succeed', 'Fail'):
+        if self.type in ('Succeed', 'Fail'):
             raise ValueError('Unexpected State instance `{step}`, State type `{state_type}` does not support method `next`.'.format(step=next_step, state_type=self.type))
+
+        # By design, Choice states do not have the Next field. When used in a chain, the subsequent step becomes the
+        # default choice that executes if none of the specified rules match.
+        # See language spec for more info: https://states-language.net/spec.html#choice-state
+        if self.type is 'Choice':
+            if self.default is not None:
+                logger.warning(f'Chaining Choice state: Overwriting {self.state_id}\'s current default_choice ({self.default.state_id}) with {next_step.state_id}')
+            self.default_choice(next_step)
+            return self.default
 
         self.next_step = next_step
         return self.next_step
@@ -402,7 +411,7 @@ class Wait(State):
 class Choice(State):
 
     """
-    Choice state adds branching logic to a state machine. The state holds a list of *rule* and *next_step* pairs. The interpreter attempts pattern-matches against the rules in list order and transitions to the state or chain specified in the *next_step* field on the first *rule* where there is an exact match between the input value and a member of the comparison-operator array.
+    Choice state adds branching logic to a state machine. The state holds a list of *rule* and *next_step* pairs. The interpreter attempts pattern-matches against the rules in list order and transitions to the state or chain specified in the *next_step* field on the first *rule* where there is an exact match between the input value and a member of the comparison-operator array. When used in a chain, the subsequent step becomes the default choice that executes if none of the specified rules match.
     """
 
     def __init__(self, state_id, **kwargs):
