@@ -72,13 +72,7 @@ class TrainingStep(Task):
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the training job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the training job and proceed to the next step. (default: True)
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
             output_data_config_path (str or Placeholder, optional): S3 location for saving the training result (model
-                artifacts and output files) to propagate to estimator (maps to sagemaker.estimator.EstimatorBase
-                output_path parameter.) If not specified, results are
-                stored to a default bucket. If the bucket with the specific name
-                does not exist, the estimator creates the bucket during the
-                :meth:`~sagemaker.estimator.EstimatorBase.fit` method execution.
-                file:// urls are used for local mode. For example: 'file://model/'
-                will save to the model folder in the current directory.
+                artifacts and output files). If specified, it overrides the `output_path` property of `estimator`.
         """
         self.estimator = estimator
         self.job_name = job_name
