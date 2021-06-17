@@ -484,7 +484,7 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def training_step_merges_hyperparameters_from_constructor_and_estimator(tensorflow_estimator):
+def test_training_step_merges_hyperparameters_from_constructor_and_estimator(tensorflow_estimator):
     step = TrainingStep('Training',
         estimator=tensorflow_estimator,
         data={'train': 's3://sagemaker/train'},
@@ -549,7 +549,7 @@ def training_step_merges_hyperparameters_from_constructor_and_estimator(tensorfl
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def training_step_uses_constructor_hyperparameters_when_duplicates_supplied_in_estimator(tensorflow_estimator):
+def test_training_step_uses_constructor_hyperparameters_when_duplicates_supplied_in_estimator(tensorflow_estimator):
     step = TrainingStep('Training',
         estimator=tensorflow_estimator,
         data={'train': 's3://sagemaker/train'},
