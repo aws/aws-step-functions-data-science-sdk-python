@@ -146,9 +146,9 @@ def test_eventbridge_put_events_step_creation():
     })
 
     assert step.to_dict() == {
-        'Type': 'Task',
-        'Resource': 'arn:aws:states:::events:putEvents.waitForTaskToken',
-        'Parameters': {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::events:putEvents.waitForTaskToken",
+        "Parameters": {
             "Entries": [
                 {
                     "Detail": {
@@ -160,7 +160,7 @@ def test_eventbridge_put_events_step_creation():
                 }
             ]
         },
-        'End': True
+        "End": True
     }
 
 
