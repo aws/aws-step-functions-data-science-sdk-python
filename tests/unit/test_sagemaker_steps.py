@@ -26,7 +26,7 @@ from sagemaker.sklearn.processing import SKLearnProcessor
 from sagemaker.processing import ProcessingInput, ProcessingOutput
 
 from unittest.mock import MagicMock, patch
-from stepfunctions.inputs import ExecutionInput
+from stepfunctions.inputs import ExecutionInput, StepInput
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, ProcessingStep
 from stepfunctions.steps.sagemaker import tuning_config
 
@@ -272,15 +272,18 @@ def test_training_step_creation(pca_estimator):
 def test_training_step_creation_with_placeholders(pca_estimator):
     execution_input = ExecutionInput(schema={
         'Data': str,
-        'JobName': str,
         'OutputPath': str,
+    })
+
+    step_input = StepInput(schema={
+        'JobName': str,
     })
 
     step = TrainingStep('Training',
         estimator=pca_estimator,
-        job_name= execution_input['JobName'],
+        job_name=step_input['JobName'],
         data=execution_input['Data'],
-        output_path=execution_input['OutputPath'],
+        output_data_config_path=execution_input['OutputPath'],
         experiment_config={
             'ExperimentName': 'pca_experiment',
             'TrialName': 'pca_trial',
@@ -331,7 +334,7 @@ def test_training_step_creation_with_placeholders(pca_estimator):
                 'TrialName': 'pca_trial',
                 'TrialComponentDisplayName': 'Training'
             },
-            'TrainingJobName.$': "$$.Execution.Input['JobName']",
+            'TrainingJobName.$': "$['JobName']",
             'Tags': DEFAULT_TAGS_LIST
         },
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',

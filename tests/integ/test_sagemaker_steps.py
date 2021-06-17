@@ -29,7 +29,7 @@ from sagemaker.parameter import IntegerParameter, CategoricalParameter
 from sagemaker.tuner import HyperparameterTuner
 from sagemaker.processing import ProcessingInput, ProcessingOutput
 
-from stepfunctions.inputs import ExecutionInput
+from stepfunctions.inputs import ExecutionInput, StepInput
 from stepfunctions.steps import Chain
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, TuningStep, ProcessingStep
 from stepfunctions.workflow import Workflow
@@ -99,57 +99,6 @@ def test_training_step(pca_estimator_fixture, record_set_fixture, sfn_client, sf
         execution_output = execution.get_output(wait=True)
 
         # Check workflow output
-        assert execution_output.get("TrainingJobStatus") == "Completed"
-
-        # Cleanup
-        state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
-        # End of Cleanup
-
-
-# TODO: Add integ test with StepInput
-def test_training_step_with_placeholders(pca_estimator_fixture,
-                                         record_set_fixture,
-                                         sfn_client,
-                                         sfn_role_arn,
-                                         sagemaker_session):
-    # Build workflow definition
-    execution_input = ExecutionInput(schema={
-        'JobName': str,
-        'OutputPath': str,
-        'Data': str
-    })
-
-    job_name_placeholder = execution_input['JobName']
-    output_path_placeholder = execution_input['OutputPath']
-    training_step_name = 'TrainingStep'
-
-    training_step = TrainingStep(training_step_name,
-                                 estimator=pca_estimator_fixture,
-                                 job_name=job_name_placeholder,
-                                 data=record_set_fixture,
-                                 mini_batch_size=200,
-                                 output_path=output_path_placeholder)
-    workflow_graph = Chain([training_step])
-
-    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
-        # Create workflow and check definition
-        workflow = create_workflow_and_check_definition(
-            workflow_graph=workflow_graph,
-            workflow_name=unique_name_from_base("integ-test-training-step-workflow"),
-            sfn_client=sfn_client,
-            sfn_role_arn=sfn_role_arn
-        )
-
-        # Execute workflow
-        job_id = generate_job_name()
-        execution_input = {
-            'OutputPath': f's3://{sagemaker_session.default_bucket()}/',
-            'JobName': f'TrainingJob-{job_id}'
-        }
-
-        # Check workflow output
-        execution = workflow.execute(inputs=execution_input)
-        execution_output = execution.get_output(wait=True)
         assert execution_output.get("TrainingJobStatus") == "Completed"
 
         # Cleanup

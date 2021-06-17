@@ -13,6 +13,8 @@
 from __future__ import absolute_import
 
 from enum import Enum
+import logging
+
 from stepfunctions.inputs import Placeholder
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
@@ -24,7 +26,7 @@ from sagemaker.model import Model, FrameworkModel
 from sagemaker.model_monitor import DataCaptureConfig
 
 SAGEMAKER_SERVICE_NAME = "sagemaker"
-
+logger = logging.getLogger('stepfunctions.sagemaker')
 
 class SageMakerApi(Enum):
     CreateTrainingJob = "createTrainingJob"
@@ -43,7 +45,7 @@ class TrainingStep(Task):
     Creates a Task State to execute a `SageMaker Training Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTrainingJob.html>`_. The TrainingStep will also create a model by default, and the model shares the same name as the training job.
     """
 
-    def __init__(self, state_id, estimator, job_name, data=None, hyperparameters=None, mini_batch_size=None, experiment_config=None, wait_for_completion=True, tags=None, output_path=None, **kwargs):
+    def __init__(self, state_id, estimator, job_name, data=None, hyperparameters=None, mini_batch_size=None, experiment_config=None, wait_for_completion=True, tags=None, output_data_config_path=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -69,8 +71,9 @@ class TrainingStep(Task):
             experiment_config (dict, optional): Specify the experiment config for the training. (Default: None)
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the training job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the training job and proceed to the next step. (default: True)
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
-            output_path (str or Placeholder, optional): S3 location for saving the training result (model
-                artifacts and output files) to propagate to estimator. If not specified, results are
+            output_data_config_path (str or Placeholder, optional): S3 location for saving the training result (model
+                artifacts and output files) to propagate to estimator (maps to sagemaker.estimator.EstimatorBase
+                output_path parameter.) If not specified, results are
                 stored to a default bucket. If the bucket with the specific name
                 does not exist, the estimator creates the bucket during the
                 :meth:`~sagemaker.estimator.EstimatorBase.fit` method execution.
@@ -95,8 +98,8 @@ class TrainingStep(Task):
 
             kwargs[Field.Resource.value] = get_service_integration_arn(SAGEMAKER_SERVICE_NAME,
                                                                        SageMakerApi.CreateTrainingJob)
-        # sagemaker.workflow.airflow.training_config does not accept Placeholder as input. Transform data placeholder
-        # to JSONpath to generate parameters.
+        # Convert `data` Placeholder to a JSONPath string because sagemaker.workflow.airflow.training_config does not
+        # accept Placeholder in the `input` argument. We will suffix the 'S3Uri' key in `parameters` with ".$" later.
         is_data_placeholder = isinstance(data, Placeholder)
         if is_data_placeholder:
             data = data.to_jsonpath()
@@ -115,14 +118,20 @@ class TrainingStep(Task):
         if isinstance(job_name, Placeholder):
             parameters['TrainingJobName'] = job_name
 
-        if output_path is not None:
-            parameters['OutputDataConfig']['S3OutputPath'] = output_path
+        if output_data_config_path is not None:
+            parameters['OutputDataConfig']['S3OutputPath'] = output_data_config_path
 
         if data is not None and is_data_placeholder:
             # Replace the 'S3Uri' key with one that supports JSONpath value.
             # Support for uri str only: The list will only contain 1 element
-            temp_data_uri = parameters['InputDataConfig'][0]['DataSource']['S3DataSource'].pop('S3Uri', None)
-            parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = temp_data_uri
+            try:
+                data_uri = parameters['InputDataConfig'][0]['DataSource']['S3DataSource'].pop('S3Uri', None)
+                parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = data_uri
+            except KeyError as error:
+                logger.warning(f"Placeholder {data} used for data, but could not locate S3Uri property to make "
+                               f"placeholder compatible.\n"
+                               f"Path used:['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri'] - "
+                               f"{error} key was not found.")
 
         if hyperparameters is not None:
             parameters['HyperParameters'] = hyperparameters
