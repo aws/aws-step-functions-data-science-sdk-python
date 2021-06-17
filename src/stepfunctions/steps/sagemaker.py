@@ -13,7 +13,7 @@
 from __future__ import absolute_import
 
 from enum import Enum
-from stepfunctions.inputs import ExecutionInput, StepInput
+from stepfunctions.inputs import Placeholder
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
 from stepfunctions.steps.utils import tags_dict_to_kv_list
@@ -95,11 +95,10 @@ class TrainingStep(Task):
 
             kwargs[Field.Resource.value] = get_service_integration_arn(SAGEMAKER_SERVICE_NAME,
                                                                        SageMakerApi.CreateTrainingJob)
-        # sagemaker.workflow.airflow.training_config does not accept ExecutionInput as input, only str, dict,
-        # TrainingInput or FileSystemInput. Transform placeholder into JSONpath to be processed and included in
-        # generated Sagemaker parameters. Placeholder for uri str only:
-        data_placeholder = isinstance(data, (ExecutionInput, StepInput))
-        if data_placeholder:
+        # sagemaker.workflow.airflow.training_config does not accept Placeholder as input. Transform data placeholder
+        # to JSONpath to generate parameters.
+        is_data_placeholder = isinstance(data, Placeholder)
+        if is_data_placeholder:
             data = data.to_jsonpath()
 
         if isinstance(job_name, str):
@@ -113,14 +112,13 @@ class TrainingStep(Task):
         if estimator.rules != None:
             parameters['DebugRuleConfigurations'] = [rule.to_debugger_rule_config_dict() for rule in estimator.rules]
 
-        if isinstance(job_name, (ExecutionInput, StepInput)):
+        if isinstance(job_name, Placeholder):
             parameters['TrainingJobName'] = job_name
 
         if output_path is not None:
-            if isinstance(output_path, (ExecutionInput, StepInput)) or isinstance(output_path, str):
-                parameters['OutputDataConfig']['S3OutputPath'] = output_path
+            parameters['OutputDataConfig']['S3OutputPath'] = output_path
 
-        if data is not None and data_placeholder:
+        if data is not None and is_data_placeholder:
             # Replace the 'S3Uri' key with one that supports JSONpath value.
             # Support for uri str only: The list will only contain 1 element
             temp_data_uri = parameters['InputDataConfig'][0]['DataSource']['S3DataSource'].pop('S3Uri', None)
@@ -232,7 +230,7 @@ class TransformStep(Task):
                 join_source=join_source
             )
 
-        if isinstance(job_name, (ExecutionInput, StepInput)):
+        if isinstance(job_name, Placeholder):
             parameters['TransformJobName'] = job_name
 
         parameters['ModelName'] = model_name
@@ -501,7 +499,7 @@ class ProcessingStep(Task):
         else:
             parameters = processing_config(processor=processor, inputs=inputs, outputs=outputs, container_arguments=container_arguments, container_entrypoint=container_entrypoint, kms_key_id=kms_key_id)
 
-        if isinstance(job_name, (ExecutionInput, StepInput)):
+        if isinstance(job_name, Placeholder):
             parameters['ProcessingJobName'] = job_name
         
         if experiment_config is not None:

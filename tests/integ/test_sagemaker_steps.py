@@ -106,6 +106,7 @@ def test_training_step(pca_estimator_fixture, record_set_fixture, sfn_client, sf
         # End of Cleanup
 
 
+# TODO: Add integ test with StepInput
 def test_training_step_with_placeholders(pca_estimator_fixture,
                                          record_set_fixture,
                                          sfn_client,
@@ -146,16 +147,8 @@ def test_training_step_with_placeholders(pca_estimator_fixture,
             'JobName': f'TrainingJob-{job_id}'
         }
 
-        # Check placeholders in workflow definition:
-        execution = workflow.execute(inputs=execution_input)
-        expected_output_data_key_value_pair = ("S3OutputPath.$", "$$.Execution.Input['OutputPath']")
-        assert expected_output_data_key_value_pair in \
-               workflow.definition.states[training_step_name]['Parameters']['OutputDataConfig'].items()
-
-        expected_job_name_key_value_pair = ("TrainingJobName.$", "$$.Execution.Input['JobName']")
-        assert expected_job_name_key_value_pair in \
-               workflow.definition.states[training_step_name]['Parameters'].items()
         # Check workflow output
+        execution = workflow.execute(inputs=execution_input)
         execution_output = execution.get_output(wait=True)
         assert execution_output.get("TrainingJobStatus") == "Completed"
 

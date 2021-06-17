@@ -17,7 +17,7 @@ import logging
 
 from stepfunctions.exceptions import DuplicateStatesInChain
 from stepfunctions.steps.fields import Field
-from stepfunctions.inputs import ExecutionInput, StepInput
+from stepfunctions.inputs import Placeholder, StepInput
 
 
 logger = logging.getLogger('stepfunctions.states')
@@ -53,7 +53,7 @@ class Block(object):
             return params
         modified_parameters = {}
         for k, v in params.items():
-            if isinstance(v, (ExecutionInput, StepInput)):
+            if isinstance(v, Placeholder):
                 modified_key = "{key}.$".format(key=k)
                 modified_parameters[modified_key] = v.to_jsonpath()
             elif isinstance(v, dict):
