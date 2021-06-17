@@ -110,7 +110,8 @@ aws iam attach-role-policy \
 1. To run a test, specify the test file and method you want to run per the following command: `tox -e py36 -- -s -vv <path_to_file><file_name>::<test_function_name>`
    * Note that the coverage test will fail if you only run a single test, so make sure to surround the command with `export IGNORE_COVERAGE=-` and `unset IGNORE_COVERAGE`
    * Example: `export IGNORE_COVERAGE=- ; tox -e py36 -- -s -vv tests/integ/test_state_machine_definition.py::test_wait_state_machine_creation ; unset IGNORE_COVERAGE`
-1. To run all tests, run the following command: `tox tests/integ`
+1. To run all integration tests, run the following command: `tox tests/integ`
+1. To run all unit tests, run the following command: `tox tests/unit`
 
 ### Making and Testing Your Change
 
