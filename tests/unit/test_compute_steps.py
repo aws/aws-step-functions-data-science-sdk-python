@@ -13,10 +13,13 @@
 from __future__ import absolute_import
 
 import pytest
+import boto3
 
+from unittest.mock import patch
 from stepfunctions.steps.compute import LambdaStep, GlueStartJobRunStep, BatchSubmitJobStep, EcsRunTaskStep
 
 
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_lambda_step_creation():
     step = LambdaStep('Echo')
 
@@ -45,6 +48,8 @@ def test_lambda_step_creation():
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_glue_start_job_run_step_creation():
     step = GlueStartJobRunStep('Glue Job', wait_for_completion=False)
 
@@ -67,6 +72,8 @@ def test_glue_start_job_run_step_creation():
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_batch_submit_job_step_creation():
     step = BatchSubmitJobStep('Batch Job', wait_for_completion=False)
 
@@ -91,6 +98,8 @@ def test_batch_submit_job_step_creation():
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_ecs_run_task_step_creation():
     step = EcsRunTaskStep('Ecs Job', wait_for_completion=False)
 

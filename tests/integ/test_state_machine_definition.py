@@ -19,7 +19,9 @@ from sagemaker.utils import unique_name_from_base
 from sagemaker.image_uris import retrieve 
 from stepfunctions import steps
 from stepfunctions.workflow import Workflow
+from stepfunctions.steps.utils import get_aws_partition
 from tests.integ.utils import state_machine_delete_wait
+
 
 @pytest.fixture(scope="module")
 def training_job_parameters(sagemaker_session, sagemaker_role_arn, record_set_fixture):
@@ -61,6 +63,7 @@ def training_job_parameters(sagemaker_session, sagemaker_role_arn, record_set_fi
     }
 
     return parameters
+
 
 def workflow_test_suite(sfn_client, workflow, asl_state_machine_definition, output_result, inputs=None):
     state_machine_arn = workflow.create()
@@ -380,7 +383,7 @@ def test_choice_state_machine_creation(sfn_client, sfn_role_arn):
 def test_task_state_machine_creation(sfn_client, sfn_role_arn, training_job_parameters):
     task_state_name = "TaskState"
     final_state_name = "FinalState"
-    resource = "arn:aws:states:::sagemaker:createTrainingJob.sync"
+    resource = f"arn:{get_aws_partition()}:states:::sagemaker:createTrainingJob.sync"
     task_state_result = "Task State Result"
     asl_state_machine_definition = { 
         "StartAt": task_state_name,
@@ -426,7 +429,7 @@ def test_catch_state_machine_creation(sfn_client, sfn_role_arn, training_job_par
     task_failed_state_name = "Task Failed End"
     all_error_state_name = "Catch All End"
     catch_state_result = "Catch Result"
-    task_resource = "arn:aws:states:::sagemaker:createTrainingJob.sync"
+    task_resource = f"arn:{get_aws_partition()}:states:::sagemaker:createTrainingJob.sync"
 
     # change the parameters to cause task state to fail
     training_job_parameters["AlgorithmSpecification"]["TrainingImage"] = "not_an_image"
@@ -482,7 +485,7 @@ def test_retry_state_machine_creation(sfn_client, sfn_role_arn, training_job_par
     interval_seconds = 1
     max_attempts = 2
     backoff_rate = 2
-    task_resource = "arn:aws:states:::sagemaker:createTrainingJob.sync"
+    task_resource = f"arn:{get_aws_partition()}:states:::sagemaker:createTrainingJob.sync"
 
     # change the parameters to cause task state to fail
     training_job_parameters["AlgorithmSpecification"]["TrainingImage"] = "not_an_image"
