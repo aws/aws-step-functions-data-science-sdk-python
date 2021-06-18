@@ -15,7 +15,6 @@ from __future__ import absolute_import
 import logging
 
 from enum import Enum
-import logging
 
 from stepfunctions.inputs import Placeholder
 from stepfunctions.steps.states import Task
