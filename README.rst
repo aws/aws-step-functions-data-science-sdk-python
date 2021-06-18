@@ -17,7 +17,7 @@ to provision and integrate the AWS services separately.
 The AWS Step Functions Data Science SDK enables you to do the following.
 
 - Easily construct and run machine learning workflows that use AWS
-  infrastructure directly in  Python
+  infrastructure directly in Python
 - Instantiate common training pipelines
 - Create standard machine learning workflows in a Jupyter notebook from
   templates
