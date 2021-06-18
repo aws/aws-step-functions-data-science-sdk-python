@@ -559,6 +559,135 @@ def test_training_step_creation_with_framework(tensorflow_estimator):
         'End': True
     }
 
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_training_step_merges_hyperparameters_from_constructor_and_estimator(tensorflow_estimator):
+    step = TrainingStep('Training',
+        estimator=tensorflow_estimator,
+        data={'train': 's3://sagemaker/train'},
+        job_name='tensorflow-job',
+        mini_batch_size=1024,
+        hyperparameters={
+            'key': 'value'
+        }
+    )
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'AlgorithmSpecification': {
+                'TrainingImage': TENSORFLOW_IMAGE,
+                'TrainingInputMode': 'File'
+            },
+            'InputDataConfig': [
+                {
+                    'DataSource': {
+                        'S3DataSource': {
+                            'S3DataDistributionType': 'FullyReplicated',
+                            'S3DataType': 'S3Prefix',
+                            'S3Uri': 's3://sagemaker/train'
+                        }
+                    },
+                    'ChannelName': 'train'
+                }
+            ],
+            'OutputDataConfig': {
+                'S3OutputPath': 's3://sagemaker/models'
+            },
+            'DebugHookConfig': {
+                'S3OutputPath': 's3://sagemaker/models/debug'
+            },
+            'StoppingCondition': {
+                'MaxRuntimeInSeconds': 86400
+            },
+            'ResourceConfig': {
+                'InstanceCount': 1,
+                'InstanceType': 'ml.p2.xlarge',
+                'VolumeSizeInGB': 30
+            },
+            'RoleArn': EXECUTION_ROLE,
+            'HyperParameters': {
+                'checkpoint_path': '"s3://sagemaker/models/sagemaker-tensorflow/checkpoints"',
+                'evaluation_steps': '100',
+                'key': 'value',
+                'sagemaker_container_log_level': '20',
+                'sagemaker_job_name': '"tensorflow-job"',
+                'sagemaker_program': '"tf_train.py"',
+                'sagemaker_region': '"us-east-1"',
+                'sagemaker_submit_directory': '"s3://sagemaker/source"',
+                'training_steps': '1000',
+            },
+            'TrainingJobName': 'tensorflow-job',
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
+        'End': True
+}
+
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_training_step_uses_constructor_hyperparameters_when_duplicates_supplied_in_estimator(tensorflow_estimator):
+    step = TrainingStep('Training',
+        estimator=tensorflow_estimator,
+        data={'train': 's3://sagemaker/train'},
+        job_name='tensorflow-job',
+        mini_batch_size=1024,
+        hyperparameters={
+            # set as 1000 in estimator
+            'training_steps': '500'
+        }
+    )
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'AlgorithmSpecification': {
+                'TrainingImage': TENSORFLOW_IMAGE,
+                'TrainingInputMode': 'File'
+            },
+            'InputDataConfig': [
+                {
+                    'DataSource': {
+                        'S3DataSource': {
+                            'S3DataDistributionType': 'FullyReplicated',
+                            'S3DataType': 'S3Prefix',
+                            'S3Uri': 's3://sagemaker/train'
+                        }
+                    },
+                    'ChannelName': 'train'
+                }
+            ],
+            'OutputDataConfig': {
+                'S3OutputPath': 's3://sagemaker/models'
+            },
+            'DebugHookConfig': {
+                'S3OutputPath': 's3://sagemaker/models/debug'
+            },
+            'StoppingCondition': {
+                'MaxRuntimeInSeconds': 86400
+            },
+            'ResourceConfig': {
+                'InstanceCount': 1,
+                'InstanceType': 'ml.p2.xlarge',
+                'VolumeSizeInGB': 30
+            },
+            'RoleArn': EXECUTION_ROLE,
+            'HyperParameters': {
+                'checkpoint_path': '"s3://sagemaker/models/sagemaker-tensorflow/checkpoints"',
+                'evaluation_steps': '100',
+                'sagemaker_container_log_level': '20',
+                'sagemaker_job_name': '"tensorflow-job"',
+                'sagemaker_program': '"tf_train.py"',
+                'sagemaker_region': '"us-east-1"',
+                'sagemaker_submit_directory': '"s3://sagemaker/source"',
+                'training_steps': '500',
+            },
+            'TrainingJobName': 'tensorflow-job',
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
+        'End': True
+    }
+
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_transform_step_creation(pca_transformer):
