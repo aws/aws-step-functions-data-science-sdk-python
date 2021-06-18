@@ -29,7 +29,6 @@ from sagemaker.parameter import IntegerParameter, CategoricalParameter
 from sagemaker.tuner import HyperparameterTuner
 from sagemaker.processing import ProcessingInput, ProcessingOutput
 
-from stepfunctions.inputs import ExecutionInput, StepInput
 from stepfunctions.steps import Chain
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, TuningStep, ProcessingStep
 from stepfunctions.workflow import Workflow

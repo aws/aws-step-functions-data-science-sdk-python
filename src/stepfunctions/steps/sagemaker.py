@@ -118,14 +118,8 @@ class TrainingStep(Task):
         if data is not None and is_data_placeholder:
             # Replace the 'S3Uri' key with one that supports JSONpath value.
             # Support for uri str only: The list will only contain 1 element
-            try:
-                data_uri = parameters['InputDataConfig'][0]['DataSource']['S3DataSource'].pop('S3Uri', None)
-                parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = data_uri
-            except KeyError as error:
-                logger.warning(f"Placeholder {data} used for data, but could not locate S3Uri property to make "
-                               f"placeholder compatible.\n"
-                               f"Path used:['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri'] - "
-                               f"{error} key was not found.")
+            data_uri = parameters['InputDataConfig'][0]['DataSource']['S3DataSource'].pop('S3Uri', None)
+            parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = data_uri
 
         if hyperparameters is not None:
             parameters['HyperParameters'] = hyperparameters
