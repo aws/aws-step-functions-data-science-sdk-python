@@ -310,13 +310,11 @@ the CloudFormation template in a different region, please make sure to update
 the region specific AWS resources (such as the Lambda ARN and Training Image)
 in the StateMachine definition.
 
-
 Contributing
 ------------
 We welcome community contributions and pull requests. See
 `CONTRIBUTING.md <https://github.com/aws/aws-step-functions-data-science-sdk-python/blob/main/CONTRIBUTING.md>`__ for
 information on how to set up a development environment, run tests and submit code.
-
 
 AWS Permissions
 ---------------
