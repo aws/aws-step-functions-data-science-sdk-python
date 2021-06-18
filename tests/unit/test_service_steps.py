@@ -16,6 +16,7 @@ import pytest
 import boto3
 
 from unittest.mock import patch
+from stepfunctions.steps.service import DataBrewStartJobRunStep
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateClusterStep, EmrAddStepStep, EmrCancelStepStep, EmrSetClusterTerminationProtectionStep, EmrModifyInstanceFleetByNameStep, EmrModifyInstanceGroupByNameStep
@@ -596,3 +597,31 @@ def test_emr_modify_instance_group_by_name_step_creation():
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_databrew_start_job_run_step_creation():
+    step = DataBrewStartJobRunStep('Start Databrew Job Run', parameters={
+        "Name": "MyWorkflowJobRun"
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::databrew:startJobRun.sync',
+        'Parameters': {
+            'Name': 'MyWorkflowJobRun'
+        },
+        'End': True
+    }
+
+    step = DataBrewStartJobRunStep('Start Databrew Job Run', wait_for_completion=False, parameters={
+        "Name": "MyWorkflowJobRun"
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::databrew:startJobRun',
+        'Parameters': {
+            'Name': 'MyWorkflowJobRun'
+        },
+        'End': True
+    }

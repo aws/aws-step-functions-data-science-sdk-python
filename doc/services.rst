@@ -8,6 +8,8 @@ This module provides classes to build steps that integrate with Amazon DynamoDB,
 
 - `Amazon DynamoDB <#amazon-dynamodb>`__
 
+- `Amazon Glue DataBrew <#amazon-glue-databrew>`__
+
 - `Amazon SNS <#amazon-sns>`__
 
 - `Amazon SQS <#amazon-sqs>`__
@@ -24,6 +26,10 @@ Amazon DynamoDB
 .. autoclass:: stepfunctions.steps.service.DynamoDBDeleteItemStep
 
 .. autoclass:: stepfunctions.steps.service.DynamoDBUpdateItemStep
+
+Amazon Glue DataBrew
+--------------------
+.. autoclass:: stepfunctions.steps.service.DataBrewStartJobRunStep
 
 Amazon SNS
 -----------
