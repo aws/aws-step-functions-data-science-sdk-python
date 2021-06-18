@@ -30,7 +30,6 @@ from sagemaker.model_monitor import DataCaptureConfig
 logger = logging.getLogger('stepfunctions.sagemaker')
 
 SAGEMAKER_SERVICE_NAME = "sagemaker"
-logger = logging.getLogger('stepfunctions.sagemaker')
 
 class SageMakerApi(Enum):
     CreateTrainingJob = "createTrainingJob"
