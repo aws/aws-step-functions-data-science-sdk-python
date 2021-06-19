@@ -19,6 +19,7 @@ from unittest.mock import patch
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateClusterStep, EmrAddStepStep, EmrCancelStepStep, EmrSetClusterTerminationProtectionStep, EmrModifyInstanceFleetByNameStep, EmrModifyInstanceGroupByNameStep
+from stepfunctions.steps.service import EventBridgePutEventsStep
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
@@ -96,6 +97,70 @@ def test_sqs_send_message_step_creation():
             }
         },
         'End': True
+    }
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eventbridge_put_events_step_creation():
+    step = EventBridgePutEventsStep('Send to EventBridge', parameters={
+        "Entries": [
+            {
+                "Detail": {
+                    "Message": "MyMessage"
+                },
+                "DetailType": "MyDetailType",
+                "EventBusName": "MyEventBus",
+                "Source": "my.source"
+            }
+        ]
+    })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": 'arn:aws:states:::events:putEvents',
+        "Parameters": {
+            "Entries": [
+                {
+                    "Detail": {
+                        "Message": "MyMessage"
+                    },
+                    "DetailType": "MyDetailType",
+                    "EventBusName": "MyEventBus",
+                    "Source": "my.source"
+                }
+            ]
+        },
+        "End": True
+    }
+
+    step = EventBridgePutEventsStep('Send to EventBridge', wait_for_callback=True, parameters={
+        "Entries": [
+            {
+                "Detail": {
+                    "Message.$": "$.MyMessage"
+                },
+                "DetailType": "MyDetailType",
+                "EventBusName": "MyEventBus",
+                "Source": "my.source"
+            }
+        ]
+    })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::events:putEvents.waitForTaskToken",
+        "Parameters": {
+            "Entries": [
+                {
+                    "Detail": {
+                        "Message.$": "$.MyMessage"
+                    },
+                    "DetailType": "MyDetailType",
+                    "EventBusName": "MyEventBus",
+                    "Source": "my.source"
+                }
+            ]
+        },
+        "End": True
     }
 
 
