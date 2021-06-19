@@ -15,7 +15,8 @@ from __future__ import absolute_import
 import logging
 
 from enum import Enum
-from stepfunctions.inputs import ExecutionInput, StepInput
+
+from stepfunctions.inputs import Placeholder
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
 from stepfunctions.steps.utils import tags_dict_to_kv_list
@@ -28,7 +29,6 @@ from sagemaker.model_monitor import DataCaptureConfig
 logger = logging.getLogger('stepfunctions.sagemaker')
 
 SAGEMAKER_SERVICE_NAME = "sagemaker"
-
 
 class SageMakerApi(Enum):
     CreateTrainingJob = "createTrainingJob"
@@ -47,7 +47,7 @@ class TrainingStep(Task):
     Creates a Task State to execute a `SageMaker Training Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTrainingJob.html>`_. The TrainingStep will also create a model by default, and the model shares the same name as the training job.
     """
 
-    def __init__(self, state_id, estimator, job_name, data=None, hyperparameters=None, mini_batch_size=None, experiment_config=None, wait_for_completion=True, tags=None, **kwargs):
+    def __init__(self, state_id, estimator, job_name, data=None, hyperparameters=None, mini_batch_size=None, experiment_config=None, wait_for_completion=True, tags=None, output_data_config_path=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -55,7 +55,7 @@ class TrainingStep(Task):
             job_name (str or Placeholder): Specify a training job name, this is required for the training job to run. We recommend to use :py:class:`~stepfunctions.inputs.ExecutionInput` placeholder collection to pass the value dynamically in each execution.
             data: Information about the training data. Please refer to the ``fit()`` method of the associated estimator, as this can take any of the following forms:
 
-                * (str) - The S3 location where training data is saved.
+                * (str or Placeholder) - The S3 location where training data is saved.
                 * (dict[str, str] or dict[str, sagemaker.inputs.TrainingInput]) - If using multiple
                     channels for training data, you can specify a dict mapping channel names to
                     strings or :func:`~sagemaker.inputs.TrainingInput` objects.
@@ -75,6 +75,8 @@ class TrainingStep(Task):
             experiment_config (dict, optional): Specify the experiment config for the training. (Default: None)
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the training job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the training job and proceed to the next step. (default: True)
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            output_data_config_path (str or Placeholder, optional): S3 location for saving the training result (model
+                artifacts and output files). If specified, it overrides the `output_path` property of `estimator`.
         """
         self.estimator = estimator
         self.job_name = job_name
@@ -94,6 +96,11 @@ class TrainingStep(Task):
 
             kwargs[Field.Resource.value] = get_service_integration_arn(SAGEMAKER_SERVICE_NAME,
                                                                        SageMakerApi.CreateTrainingJob)
+        # Convert `data` Placeholder to a JSONPath string because sagemaker.workflow.airflow.training_config does not
+        # accept Placeholder in the `input` argument. We will suffix the 'S3Uri' key in `parameters` with ".$" later.
+        is_data_placeholder = isinstance(data, Placeholder)
+        if is_data_placeholder:
+            data = data.to_jsonpath()
 
         if isinstance(job_name, str):
             parameters = training_config(estimator=estimator, inputs=data, job_name=job_name, mini_batch_size=mini_batch_size)
@@ -106,8 +113,17 @@ class TrainingStep(Task):
         if estimator.rules != None:
             parameters['DebugRuleConfigurations'] = [rule.to_debugger_rule_config_dict() for rule in estimator.rules]
 
-        if isinstance(job_name, (ExecutionInput, StepInput)):
+        if isinstance(job_name, Placeholder):
             parameters['TrainingJobName'] = job_name
+
+        if output_data_config_path is not None:
+            parameters['OutputDataConfig']['S3OutputPath'] = output_data_config_path
+
+        if data is not None and is_data_placeholder:
+            # Replace the 'S3Uri' key with one that supports JSONpath value.
+            # Support for uri str only: The list will only contain 1 element
+            data_uri = parameters['InputDataConfig'][0]['DataSource']['S3DataSource'].pop('S3Uri', None)
+            parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = data_uri
 
         if hyperparameters is not None:
             if estimator.hyperparameters() is not None:
@@ -237,7 +253,7 @@ class TransformStep(Task):
                 join_source=join_source
             )
 
-        if isinstance(job_name, (ExecutionInput, StepInput)):
+        if isinstance(job_name, Placeholder):
             parameters['TransformJobName'] = job_name
 
         parameters['ModelName'] = model_name
@@ -506,7 +522,7 @@ class ProcessingStep(Task):
         else:
             parameters = processing_config(processor=processor, inputs=inputs, outputs=outputs, container_arguments=container_arguments, container_entrypoint=container_entrypoint, kms_key_id=kms_key_id)
 
-        if isinstance(job_name, (ExecutionInput, StepInput)):
+        if isinstance(job_name, Placeholder):
             parameters['ProcessingJobName'] = job_name
         
         if experiment_config is not None:
