@@ -104,6 +104,7 @@ def test_training_step(pca_estimator_fixture, record_set_fixture, sfn_client, sf
         state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
         # End of Cleanup
 
+
 def test_model_step(trained_estimator, sfn_client, sagemaker_session, sfn_role_arn):
     # Build workflow definition
     model_name = generate_job_name()
