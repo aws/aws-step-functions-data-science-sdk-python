@@ -56,7 +56,7 @@ class ElasticMapReduceApi(Enum):
 class DataBrewStartJobRunStep(Task):
 
     """
-    Creates a Task state to run a DataBrew job. See `Manage AWS Glue DataBrew Jobs with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-databrew.html>`_ for more details.
+    Creates a Task state that starts a DataBrew job. See `Manage AWS Glue DataBrew Jobs with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-databrew.html>`_ for more details.
     """
 
     def __init__(self, state_id, wait_for_completion=True, **kwargs):
