@@ -12,6 +12,8 @@
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
+import logging
+
 from enum import Enum
 from stepfunctions.inputs import ExecutionInput, StepInput
 from stepfunctions.steps.states import Task
@@ -22,6 +24,8 @@ from stepfunctions.steps.integration_resources import IntegrationPattern, get_se
 from sagemaker.workflow.airflow import training_config, transform_config, model_config, tuning_config, processing_config
 from sagemaker.model import Model, FrameworkModel
 from sagemaker.model_monitor import DataCaptureConfig
+
+logger = logging.getLogger('stepfunctions.sagemaker')
 
 SAGEMAKER_SERVICE_NAME = "sagemaker"
 
@@ -64,7 +68,9 @@ class TrainingStep(Task):
                 * (list[sagemaker.amazon.amazon_estimator.RecordSet]) - A list of
                     :class:`sagemaker.amazon.amazon_estimator.RecordSet` objects,
                     where each instance is a different channel of training data.
-            hyperparameters (dict, optional): Specify the hyper parameters for the training. (Default: None)
+            hyperparameters (dict, optional): Parameters used for training.
+                    Hyperparameters supplied will be merged with the Hyperparameters specified in the estimator.
+                    If there are duplicate entries, the value provided through this property will be used. (Default: Hyperparameters specified in the estimator.)
             mini_batch_size (int): Specify this argument only when estimator is a built-in estimator of an Amazon algorithm. For other estimators, batch size should be specified in the estimator.
             experiment_config (dict, optional): Specify the experiment config for the training. (Default: None)
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the training job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the training job and proceed to the next step. (default: True)
@@ -104,6 +110,8 @@ class TrainingStep(Task):
             parameters['TrainingJobName'] = job_name
 
         if hyperparameters is not None:
+            if estimator.hyperparameters() is not None:
+                hyperparameters = self.__merge_hyperparameters(hyperparameters, estimator.hyperparameters())
             parameters['HyperParameters'] = hyperparameters
 
         if experiment_config is not None:
@@ -135,6 +143,26 @@ class TrainingStep(Task):
         model.model_data = self.output()["ModelArtifacts"]["S3ModelArtifacts"]
         return model
 
+    """
+    Merges the hyperparameters supplied in the TrainingStep constructor with the hyperparameters
+    specified in the estimator. If there are duplicate entries, the value provided in the constructor
+    will be used.
+    """
+
+    def __merge_hyperparameters(self, training_step_hyperparameters, estimator_hyperparameters):
+        """
+        Args:
+            training_step_hyperparameters (dict): Hyperparameters supplied in the training step constructor
+            estimator_hyperparameters (dict): Hyperparameters specified in the estimator
+        """
+        merged_hyperparameters = estimator_hyperparameters.copy()
+        for key, value in training_step_hyperparameters.items():
+            if key in merged_hyperparameters:
+                logger.info(
+                    f"hyperparameter property: <{key}> with value: <{merged_hyperparameters[key]}> provided in the"
+                    f" estimator will be overwritten with value provided in constructor: <{value}>")
+            merged_hyperparameters[key] = value
+        return merged_hyperparameters
 
 class TransformStep(Task):
 

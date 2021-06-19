@@ -17,7 +17,7 @@ to provision and integrate the AWS services separately.
 The AWS Step Functions Data Science SDK enables you to do the following.
 
 - Easily construct and run machine learning workflows that use AWS
-  infrastructure directly in  Python
+  infrastructure directly in Python
 - Instantiate common training pipelines
 - Create standard machine learning workflows in a Jupyter notebook from
   templates
@@ -27,6 +27,7 @@ Table of Contents
 - `Getting Started With Sample Jupyter Notebooks <#getting-started-with-sample-jupyter-notebooks>`__
 - `Installing the AWS Step Functions Data Science SDK <#installing-the-aws-step-functions-data-science-sdk>`__
 - `Overview of SDK <#overview-of-sdk>`__
+- `Contributing <#contributing>`__
 - `AWS Permissions <#aws-permissions>`__
 - `Licensing <#licensing>`__
 - `Verifying the Signature <#verifying-the-signature>`__
@@ -308,6 +309,12 @@ The  generated template contains only the StateMachine resource. To reuse
 the CloudFormation template in a different region, please make sure to update
 the region specific AWS resources (such as the Lambda ARN and Training Image)
 in the StateMachine definition.
+
+Contributing
+------------
+We welcome community contributions and pull requests. See
+`CONTRIBUTING.md <https://github.com/aws/aws-step-functions-data-science-sdk-python/blob/main/CONTRIBUTING.md>`__ for
+information on how to set up a development environment, run tests and submit code.
 
 AWS Permissions
 ---------------
