@@ -8,6 +8,8 @@ This module provides classes to build steps that integrate with Amazon DynamoDB,
 
 - `Amazon DynamoDB <#amazon-dynamodb>`__
 
+- `Amazon EKS <#amazon-eks>`__
+
 - `Amazon SNS <#amazon-sns>`__
 
 - `Amazon SQS <#amazon-sqs>`__
@@ -24,6 +26,20 @@ Amazon DynamoDB
 .. autoclass:: stepfunctions.steps.service.DynamoDBDeleteItemStep
 
 .. autoclass:: stepfunctions.steps.service.DynamoDBUpdateItemStep
+
+Amazon DynamoDB
+----------------
+.. autoclass:: stepfunctions.steps.service.EksCreateClusterStep
+
+.. autoclass:: stepfunctions.steps.service.EksCreateFargateProfileStep
+
+.. autoclass:: stepfunctions.steps.service.EksCreateNodeGroupStep
+
+.. autoclass:: stepfunctions.steps.service.EksDeleteClusterStep
+
+.. autoclass:: stepfunctions.steps.service.EksDeleteFargateProfileStep
+
+.. autoclass:: stepfunctions.steps.service.EksDeleteNodeGroupStep
 
 Amazon SNS
 -----------

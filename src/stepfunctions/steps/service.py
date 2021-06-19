@@ -18,6 +18,7 @@ from stepfunctions.steps.fields import Field
 from stepfunctions.steps.integration_resources import IntegrationPattern, get_service_integration_arn
 
 DYNAMODB_SERVICE_NAME = "dynamodb"
+EKS_SERVICES_NAME = "eks"
 SNS_SERVICE_NAME = "sns"
 SQS_SERVICE_NAME = "sqs"
 ELASTICMAPREDUCE_SERVICE_NAME = "elasticmapreduce"
@@ -28,6 +29,14 @@ class DynamoDBApi(Enum):
     PutItem = "putItem"
     DeleteItem = "deleteItem"
     UpdateItem = "updateItem"
+
+class EKSApi(Enum):
+    CreateCluster = "createCluster"
+    DeleteCluster = "deleteCluster"
+    CreateFargateProfile = "createFargateProfile"
+    DeleteFargateProfile = "deleteFargateProfile"
+    CreateNodegroup = "createNodegroup"
+    DeleteNodegroup = "deleteNodegroup"
 
 
 class SnsApi(Enum):
@@ -165,6 +174,240 @@ class DynamoDBUpdateItemStep(Task):
         kwargs[Field.Resource.value] = get_service_integration_arn(DYNAMODB_SERVICE_NAME,
                                                                    DynamoDBApi.UpdateItem)
         super(DynamoDBUpdateItemStep, self).__init__(state_id, **kwargs)
+
+
+class EksCreateClusterStep(Task):
+    """
+    Creates a Task state that creates an Amazon EKS cluster. Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
+            timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
+            heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+        """
+        if wait_for_completion:
+            """
+            Example resource arn: arn:aws:states:::eks:createCluster.sync
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.CreateCluster,
+                                                                       IntegrationPattern.WaitForCompletion)
+        else:
+            """
+            Example resource arn: arn:aws:states:::eks:createCluster
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.CreateCluster)
+
+        super(EksCreateClusterStep, self).__init__(state_id, **kwargs)
+
+
+class EksCreateFargateProfileStep(Task):
+    """
+    Creates a Task state that creates a Fargate profile. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
+            timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
+            heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+        """
+        if wait_for_completion:
+            """
+            Example resource arn: arn:aws:states:::eks:createFargateProfile.sync
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.CreateFargateProfile,
+                                                                       IntegrationPattern.WaitForCompletion)
+        else:
+            """
+            Example resource arn: arn:aws:states:::eks:createFargateProfile
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.CreateFargateProfile)
+
+        super(EksCreateFargateProfileStep, self).__init__(state_id, **kwargs)
+
+
+class EksDeleteFargateProfileStep(Task):
+    """
+    Creates a Task state that deletes a Fargate profile. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
+            timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
+            heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+        """
+        if wait_for_completion:
+            """
+            Example resource arn: arn:aws:states:::eks:deleteFargateProfile.sync
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.DeleteFargateProfile,
+                                                                       IntegrationPattern.WaitForCompletion)
+        else:
+            """
+            Example resource arn: arn:aws:states:::eks:deleteFargateProfile
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.DeleteFargateProfile)
+
+        super(EksDeleteFargateProfileStep, self).__init__(state_id, **kwargs)
+
+
+class EksCreateNodeGroupStep(Task):
+    """
+    Creates a Task state that creates a node group. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
+            timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
+            heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+        """
+        if wait_for_completion:
+            """
+            Example resource arn: arn:aws:states:::eks:createNodegroup.sync
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.CreateNodegroup,
+                                                                       IntegrationPattern.WaitForCompletion)
+        else:
+            """
+            Example resource arn: arn:aws:states:::eks:createNodegroup
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.CreateNodegroup)
+
+        super(EksCreateNodeGroupStep, self).__init__(state_id, **kwargs)
+
+
+class EksDeleteNodeGroupStep(Task):
+    """
+    Creates a Task state that deletes a node group. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
+            timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
+            heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+        """
+        if wait_for_completion:
+            """
+            Example resource arn: arn:aws:states:::eks:deleteNodegroup.sync
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.DeleteNodegroup,
+                                                                       IntegrationPattern.WaitForCompletion)
+        else:
+            """
+            Example resource arn: arn:aws:states:::eks:deleteNodegroup
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.DeleteNodegroup)
+
+        super(EksDeleteNodeGroupStep, self).__init__(state_id, **kwargs)
+
+
+class EksDeleteClusterStep(Task):
+    """
+    Creates a Task state that deletes an Amazon EKS cluster. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
+            timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
+            heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+        """
+        if wait_for_completion:
+            """
+            Example resource arn: arn:aws:states:::eks:deleteCluster.sync
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.DeleteCluster,
+                                                                       IntegrationPattern.WaitForCompletion)
+        else:
+            """
+            Example resource arn: arn:aws:states:::eks:deleteCluster
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                       EKSApi.DeleteCluster)
+
+        super(EksDeleteClusterStep, self).__init__(state_id, **kwargs)
 
 
 class SnsPublishStep(Task):

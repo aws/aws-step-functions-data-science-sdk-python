@@ -12,11 +12,18 @@
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
-import pytest
 import boto3
 
 from unittest.mock import patch
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
+from stepfunctions.steps.service import (
+    EksCreateClusterStep,
+    EksCreateFargateProfileStep,
+    EksCreateNodeGroupStep,
+    EksDeleteClusterStep,
+    EksDeleteFargateProfileStep,
+    EksDeleteNodeGroupStep,
+)
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateClusterStep, EmrAddStepStep, EmrCancelStepStep, EmrSetClusterTerminationProtectionStep, EmrModifyInstanceFleetByNameStep, EmrModifyInstanceGroupByNameStep
 
@@ -596,3 +603,260 @@ def test_emr_modify_instance_group_by_name_step_creation():
         'End': True
     }
 
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_create_cluster_step_creation():
+    step = EksCreateClusterStep('Create Eks cluster', parameters={
+        "Name": "MyCluster",
+        "ResourcesVpcConfig": {
+          "SubnetIds": [
+            "subnet-00000000000000000",
+            "subnet-00000000000000001"
+          ]
+        },
+        "RoleArn": "arn:aws:iam::123456789012:role/MyEKSClusterRole"
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:createCluster.sync',
+        'Parameters': {
+            "Name": "MyCluster",
+            "ResourcesVpcConfig": {
+                "SubnetIds": [
+                    "subnet-00000000000000000",
+                    "subnet-00000000000000001"
+                ]
+            },
+            "RoleArn": "arn:aws:iam::123456789012:role/MyEKSClusterRole"
+        },
+        'End': True
+    }
+
+    step = EksCreateClusterStep('Create Eks cluster', wait_for_completion=False, parameters={
+        "Name": "MyCluster",
+        "ResourcesVpcConfig": {
+          "SubnetIds": [
+            "subnet-00000000000000000",
+            "subnet-00000000000000001"
+          ]
+        },
+        "RoleArn": "arn:aws:iam::123456789012:role/MyEKSClusterRole"
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:createCluster',
+        'Parameters': {
+            "Name": "MyCluster",
+            "ResourcesVpcConfig": {
+                "SubnetIds": [
+                    "subnet-00000000000000000",
+                    "subnet-00000000000000001"
+                ]
+            },
+            "RoleArn": "arn:aws:iam::123456789012:role/MyEKSClusterRole"
+        },
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_delete_cluster_step_creation():
+    step = EksDeleteClusterStep('Delete Eks cluster', parameters={
+        "Name": "MyCluster"
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:deleteCluster.sync',
+        'Parameters': {
+            "Name": "MyCluster"
+        },
+        'End': True
+    }
+
+    step = EksDeleteClusterStep('Delete Eks cluster', wait_for_completion=False, parameters={
+        "Name": "MyCluster"
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:deleteCluster',
+        'Parameters': {
+            "Name": "MyCluster"
+        },
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_create_fargate_profile_step_creation():
+    step = EksCreateFargateProfileStep('Create Fargate profile', parameters={
+        "ClusterName": "MyCluster",
+        "FargateProfileName": "MyFargateProfile",
+        "PodExecutionRoleArn": "arn:aws:iam::123456789012:role/MyFargatePodExecutionRole",
+        "Selectors": [{
+            "Namespace": "my-namespace",
+            "Labels": {"my-label": "my-value"}
+          }]
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:createFargateProfile.sync',
+        'Parameters': {
+            "ClusterName": "MyCluster",
+            "FargateProfileName": "MyFargateProfile",
+            "PodExecutionRoleArn": "arn:aws:iam::123456789012:role/MyFargatePodExecutionRole",
+            "Selectors": [{
+                "Namespace": "my-namespace",
+                "Labels": {"my-label": "my-value"}
+            }]
+        },
+        'End': True
+    }
+
+    step = EksCreateFargateProfileStep('Create Fargate profile', wait_for_completion=False, parameters={
+        "ClusterName": "MyCluster",
+        "FargateProfileName": "MyFargateProfile",
+        "PodExecutionRoleArn": "arn:aws:iam::123456789012:role/MyFargatePodExecutionRole",
+        "Selectors": [{
+            "Namespace": "my-namespace",
+            "Labels": {"my-label": "my-value"}
+          }]
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:createFargateProfile',
+        'Parameters': {
+            "ClusterName": "MyCluster",
+            "FargateProfileName": "MyFargateProfile",
+            "PodExecutionRoleArn": "arn:aws:iam::123456789012:role/MyFargatePodExecutionRole",
+            "Selectors": [{
+                "Namespace": "my-namespace",
+                "Labels": {"my-label": "my-value"}
+            }]
+        },
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_delete_fargate_profile_step_creation():
+    step = EksDeleteFargateProfileStep('Delete Fargate profile', parameters={
+        "ClusterName": "MyCluster",
+        "FargateProfileName": "MyFargateProfile"
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:deleteFargateProfile.sync',
+        'Parameters': {
+            "ClusterName": "MyCluster",
+            "FargateProfileName": "MyFargateProfile"
+        },
+        'End': True
+    }
+
+    step = EksDeleteFargateProfileStep('Delete Fargate profile', wait_for_completion=False, parameters={
+        "ClusterName": "MyCluster",
+        "FargateProfileName": "MyFargateProfile"
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:deleteFargateProfile',
+        'Parameters': {
+            "ClusterName": "MyCluster",
+            "FargateProfileName": "MyFargateProfile"
+        },
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_create_node_group_step_creation():
+    step = EksCreateNodeGroupStep('Create Node Group', parameters={
+        "ClusterName": "MyCluster",
+        "NodegroupName": "MyNodegroup",
+        "NodeRole": "arn:aws:iam::123456789012:role/MyNodeInstanceRole",
+        "Subnets": [
+            "subnet-00000000000000000",
+            "subnet-00000000000000001"
+        ]
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:createNodegroup.sync',
+        'Parameters': {
+            "ClusterName": "MyCluster",
+            "NodegroupName": "MyNodegroup",
+            "NodeRole": "arn:aws:iam::123456789012:role/MyNodeInstanceRole",
+            "Subnets": [
+                "subnet-00000000000000000",
+                "subnet-00000000000000001"
+            ],
+        },
+        'End': True
+    }
+
+    step = EksCreateNodeGroupStep('Create Node Group', wait_for_completion=False, parameters={
+        "ClusterName": "MyCluster",
+        "NodegroupName": "MyNodegroup",
+        "NodeRole": "arn:aws:iam::123456789012:role/MyNodeInstanceRole",
+        "Subnets": [
+            "subnet-00000000000000000",
+            "subnet-00000000000000001"
+        ]
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:createNodegroup',
+        'Parameters': {
+            "ClusterName": "MyCluster",
+            "NodegroupName": "MyNodegroup",
+            "NodeRole": "arn:aws:iam::123456789012:role/MyNodeInstanceRole",
+            "Subnets": [
+                "subnet-00000000000000000",
+                "subnet-00000000000000001"
+            ],
+        },
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_delete_node_group_step_creation():
+    step = EksDeleteNodeGroupStep('Delete Node Group', parameters={
+        "ClusterName": "MyCluster",
+        "NodegroupName": "MyNodegroup"
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:deleteNodegroup.sync',
+        'Parameters': {
+            "ClusterName": "MyCluster",
+            "NodegroupName": "MyNodegroup"
+        },
+        'End': True
+    }
+
+    step = EksDeleteNodeGroupStep('Delete Node Group', wait_for_completion=False, parameters={
+        "ClusterName": "MyCluster",
+        "NodegroupName": "MyNodegroup"
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:deleteNodegroup',
+        'Parameters': {
+            "ClusterName": "MyCluster",
+            "NodegroupName": "MyNodegroup"
+        },
+        'End': True
+    }

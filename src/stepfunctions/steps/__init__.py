@@ -19,6 +19,14 @@ from stepfunctions.steps.states import Graph, FrozenGraph
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointConfigStep, EndpointStep, TuningStep, ProcessingStep
 from stepfunctions.steps.compute import LambdaStep, BatchSubmitJobStep, GlueStartJobRunStep, EcsRunTaskStep
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
+from stepfunctions.steps.service import (
+    EksCreateClusterStep,
+    EksCreateFargateProfileStep,
+    EksCreateNodeGroupStep,
+    EksDeleteClusterStep,
+    EksDeleteFargateProfileStep,
+    EksDeleteNodeGroupStep,
+)
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateClusterStep, EmrAddStepStep, EmrCancelStepStep, EmrSetClusterTerminationProtectionStep, EmrModifyInstanceFleetByNameStep, EmrModifyInstanceGroupByNameStep
 
