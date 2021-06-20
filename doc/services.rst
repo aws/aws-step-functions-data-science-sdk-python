@@ -8,11 +8,13 @@ This module provides classes to build steps that integrate with Amazon DynamoDB,
 
 - `Amazon DynamoDB <#amazon-dynamodb>`__
 
+- `Amazon EMR <#amazon-emr>`__
+
+- `Amazon EventBridge <#amazon-eventbridge>`__
+
 - `Amazon SNS <#amazon-sns>`__
 
 - `Amazon SQS <#amazon-sqs>`__
-
-- `Amazon EMR <#amazon-emr>`__
 
 
 Amazon DynamoDB
@@ -24,14 +26,6 @@ Amazon DynamoDB
 .. autoclass:: stepfunctions.steps.service.DynamoDBDeleteItemStep
 
 .. autoclass:: stepfunctions.steps.service.DynamoDBUpdateItemStep
-
-Amazon SNS
------------
-.. autoclass:: stepfunctions.steps.service.SnsPublishStep
-
-Amazon SQS
------------
-.. autoclass:: stepfunctions.steps.service.SqsSendMessageStep
 
 Amazon EMR
 -----------
@@ -48,3 +42,15 @@ Amazon EMR
 .. autoclass:: stepfunctions.steps.service.EmrModifyInstanceFleetByNameStep
 
 .. autoclass:: stepfunctions.steps.service.EmrModifyInstanceGroupByNameStep
+
+Amazon EventBridge
+-----------
+.. autoclass:: stepfunctions.steps.service.EventBridgePutEventsStep
+
+Amazon SNS
+-----------
+.. autoclass:: stepfunctions.steps.service.SnsPublishStep
+
+Amazon SQS
+-----------
+.. autoclass:: stepfunctions.steps.service.SqsSendMessageStep
