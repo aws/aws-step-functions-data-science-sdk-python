@@ -6,9 +6,9 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-# or in the "license" file accompanying this file. This file is distributed 
-# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either 
-# express or implied. See the License for the specific language governing 
+# or in the "license" file accompanying this file. This file is distributed
+# on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+# express or implied. See the License for the specific language governing
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
@@ -16,7 +16,7 @@ import pytest
 import json
 
 from sagemaker.utils import unique_name_from_base
-from sagemaker.image_uris import retrieve 
+from sagemaker.image_uris import retrieve
 from stepfunctions import steps
 from stepfunctions.workflow import Workflow
 from stepfunctions.steps.utils import get_aws_partition
@@ -25,27 +25,27 @@ from tests.integ.utils import state_machine_delete_wait
 
 @pytest.fixture(scope="module")
 def training_job_parameters(sagemaker_session, sagemaker_role_arn, record_set_fixture):
-    parameters = { 
-        "AlgorithmSpecification": { 
+    parameters = {
+        "AlgorithmSpecification": {
             "TrainingImage": retrieve(region=sagemaker_session.boto_session.region_name, framework='pca'),
             "TrainingInputMode": "File"
         },
-        "OutputDataConfig": { 
+        "OutputDataConfig": {
             "S3OutputPath": "s3://{}/".format(sagemaker_session.default_bucket())
         },
-        "StoppingCondition": { 
+        "StoppingCondition": {
             "MaxRuntimeInSeconds": 86400
         },
-        "ResourceConfig": { 
+        "ResourceConfig": {
             "InstanceCount": 1,
             "InstanceType": "ml.m5.large",
             "VolumeSizeInGB": 30
         },
         "RoleArn": sagemaker_role_arn,
-        "InputDataConfig":[ 
-        { 
-            "DataSource": { 
-                "S3DataSource": { 
+        "InputDataConfig":[
+        {
+            "DataSource": {
+                "S3DataSource": {
                     "S3DataDistributionType": "ShardedByS3Key",
                     "S3DataType": "ManifestFile",
                     "S3Uri": record_set_fixture.s3_data
@@ -54,7 +54,7 @@ def training_job_parameters(sagemaker_session, sagemaker_role_arn, record_set_fi
             "ChannelName": "train"
         }
         ],
-        "HyperParameters": { 
+        "HyperParameters": {
             "num_components": "48",
             "feature_dim": "784",
             "mini_batch_size": "200"
@@ -93,7 +93,7 @@ def test_pass_state_machine_creation(sfn_client, sfn_role_arn):
 
     definition = steps.Pass(pass_state_name, result=pass_state_result)
     workflow = Workflow(
-        'Test_Pass_Workflow',
+        unique_name_from_base('Test_Pass_Workflow'),
         definition=definition,
         role=sfn_role_arn
     )
@@ -164,7 +164,7 @@ def test_wait_state_machine_creation(sfn_client, sfn_role_arn):
     ])
 
     workflow = Workflow(
-        'Test_Wait_Workflow',
+        unique_name_from_base('Test_Wait_Workflow'),
         definition=definition,
         role=sfn_role_arn
     )
@@ -223,7 +223,7 @@ def test_parallel_state_machine_creation(sfn_client, sfn_role_arn):
     ])
 
     workflow = Workflow(
-        'Test_Parallel_Workflow',
+        unique_name_from_base('Test_Parallel_Workflow'),
         definition=definition,
         role=sfn_role_arn
     )
@@ -269,9 +269,9 @@ def test_map_state_machine_creation(sfn_client, sfn_role_arn):
     }
 
     map_state = steps.Map(
-        map_state_name, 
+        map_state_name,
         items_path=items_path,
-        iterator=steps.Pass(iterated_state_name), 
+        iterator=steps.Pass(iterated_state_name),
         max_concurrency=max_concurrency)
 
     definition = steps.Chain([
@@ -280,7 +280,7 @@ def test_map_state_machine_creation(sfn_client, sfn_role_arn):
     ])
 
     workflow = Workflow(
-        'Test_Map_Workflow',
+        unique_name_from_base('Test_Map_Workflow'),
         definition=definition,
         role=sfn_role_arn
     )
@@ -345,8 +345,8 @@ def test_choice_state_machine_creation(sfn_client, sfn_role_arn):
 
     definition.default_choice(
         steps.Fail(
-            default_state_name, 
-            error=default_error, 
+            default_state_name,
+            error=default_error,
             cause=default_cause
         )
     )
@@ -356,23 +356,23 @@ def test_choice_state_machine_creation(sfn_client, sfn_role_arn):
             value=first_choice_value
         ),
         steps.Pass(
-            first_match_name, 
+            first_match_name,
             result=first_choice_state_result
         )
     )
     definition.add_choice(
         steps.ChoiceRule.NumericEquals(
-            variable=variable, 
+            variable=variable,
             value=second_choice_value
-        ), 
+        ),
         steps.Pass(
-            second_match_name, 
+            second_match_name,
             result=second_choice_state_result
         )
     )
 
     workflow = Workflow(
-        'Test_Choice_Workflow',
+        unique_name_from_base('Test_Choice_Workflow'),
         definition=definition,
         role=sfn_role_arn
     )
@@ -385,10 +385,10 @@ def test_task_state_machine_creation(sfn_client, sfn_role_arn, training_job_para
     final_state_name = "FinalState"
     resource = f"arn:{get_aws_partition()}:states:::sagemaker:createTrainingJob.sync"
     task_state_result = "Task State Result"
-    asl_state_machine_definition = { 
+    asl_state_machine_definition = {
         "StartAt": task_state_name,
-        "States": { 
-            task_state_name: { 
+        "States": {
+            task_state_name: {
                 "Resource": resource,
                 "Parameters": training_job_parameters,
                 "Type": "Task",
@@ -410,9 +410,9 @@ def test_task_state_machine_creation(sfn_client, sfn_role_arn, training_job_para
         ),
         steps.Pass(final_state_name, result=task_state_result)
     ])
-    
+
     workflow = Workflow(
-        'Test_Task_Workflow',
+        unique_name_from_base('Test_Task_Workflow'),
         definition=definition,
         role=sfn_role_arn
     )
@@ -465,13 +465,13 @@ def test_catch_state_machine_creation(sfn_client, sfn_role_arn, training_job_par
     )
     task.add_catch(
         steps.Catch(
-            error_equals=[all_fail_error], 
+            error_equals=[all_fail_error],
             next_step=steps.Pass(all_error_state_name, result=catch_state_result)
         )
     )
 
     workflow = Workflow(
-        'Test_Catch_Workflow',
+        unique_name_from_base('Test_Catch_Workflow'),
         definition=task,
         role=sfn_role_arn
     )
@@ -518,15 +518,15 @@ def test_retry_state_machine_creation(sfn_client, sfn_role_arn, training_job_par
 
     task.add_retry(
         steps.Retry(
-            error_equals=[all_fail_error], 
-            interval_seconds=interval_seconds, 
-            max_attempts=max_attempts, 
+            error_equals=[all_fail_error],
+            interval_seconds=interval_seconds,
+            max_attempts=max_attempts,
             backoff_rate=backoff_rate
         )
     )
 
     workflow = Workflow(
-        'Test_Retry_Workflow',
+        unique_name_from_base('Test_Retry_Workflow'),
         definition=task,
         role=sfn_role_arn
     )
