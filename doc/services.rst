@@ -8,11 +8,11 @@ This module provides classes to build steps that integrate with Amazon DynamoDB,
 
 - `Amazon DynamoDB <#amazon-dynamodb>`__
 
-- `Amazon Glue DataBrew <#amazon-glue-databrew>`__
-
 - `Amazon EMR <#amazon-emr>`__
 
 - `Amazon EventBridge <#amazon-eventbridge>`__
+
+- `Amazon Glue DataBrew <#amazon-glue-databrew>`__
 
 - `Amazon SNS <#amazon-sns>`__
 
@@ -28,10 +28,6 @@ Amazon DynamoDB
 .. autoclass:: stepfunctions.steps.service.DynamoDBDeleteItemStep
 
 .. autoclass:: stepfunctions.steps.service.DynamoDBUpdateItemStep
-
-Amazon Glue DataBrew
---------------------
-.. autoclass:: stepfunctions.steps.service.DataBrewStartJobRunStep
 
 Amazon EMR
 -----------
@@ -52,6 +48,10 @@ Amazon EMR
 Amazon EventBridge
 -----------
 .. autoclass:: stepfunctions.steps.service.EventBridgePutEventsStep
+
+Amazon Glue DataBrew
+--------------------
+.. autoclass:: stepfunctions.steps.service.DataBrewStartJobRunStep
 
 Amazon SNS
 -----------
