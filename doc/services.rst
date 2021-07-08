@@ -33,14 +33,6 @@ Amazon Glue DataBrew
 --------------------
 .. autoclass:: stepfunctions.steps.service.DataBrewStartJobRunStep
 
-Amazon SNS
------------
-.. autoclass:: stepfunctions.steps.service.SnsPublishStep
-
-Amazon SQS
------------
-.. autoclass:: stepfunctions.steps.service.SqsSendMessageStep
-
 Amazon EMR
 -----------
 .. autoclass:: stepfunctions.steps.service.EmrCreateClusterStep
