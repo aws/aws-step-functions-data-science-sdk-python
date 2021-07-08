@@ -10,11 +10,13 @@ This module provides classes to build steps that integrate with Amazon DynamoDB,
 
 - `Amazon Glue DataBrew <#amazon-glue-databrew>`__
 
+- `Amazon EMR <#amazon-emr>`__
+
+- `Amazon EventBridge <#amazon-eventbridge>`__
+
 - `Amazon SNS <#amazon-sns>`__
 
 - `Amazon SQS <#amazon-sqs>`__
-
-- `Amazon EMR <#amazon-emr>`__
 
 
 Amazon DynamoDB
@@ -54,3 +56,15 @@ Amazon EMR
 .. autoclass:: stepfunctions.steps.service.EmrModifyInstanceFleetByNameStep
 
 .. autoclass:: stepfunctions.steps.service.EmrModifyInstanceGroupByNameStep
+
+Amazon EventBridge
+-----------
+.. autoclass:: stepfunctions.steps.service.EventBridgePutEventsStep
+
+Amazon SNS
+-----------
+.. autoclass:: stepfunctions.steps.service.SnsPublishStep
+
+Amazon SQS
+-----------
+.. autoclass:: stepfunctions.steps.service.SqsSendMessageStep
