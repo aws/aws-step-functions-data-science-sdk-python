@@ -19,6 +19,8 @@ information to effectively respond to your bug report or contribution.
   * [Committing Your Change](#committing-your-change)
   * [Sending a Pull Request](#sending-a-pull-request)
 * [Finding Contributions to Work On](#finding-contributions-to-work-on)
+* [Setting Up Your Development Environment](#setting-up-your-development-environment)
+  * [PyCharm](#pycharm)
 * [Code of Conduct](#code-of-conduct)
 * [Security Issue Notifications](#security-issue-notifications)
 * [Licensing](#licensing)
@@ -166,6 +168,29 @@ Please remember to:
 ## Finding Contributions to Work On
 
 Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels ((enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/aws/aws-step-functions-data-science-sdk-python/labels/help%20wanted) issues is a great place to start.
+
+
+## Setting Up Your Development Environment
+
+Setting up your IDE for debugging your tests locally will save you a lot of time.
+You might be able to `Run` and `Debug` the tests directly in your IDE with your default settings, but if it's not the case,
+follow the steps described in this section.
+
+### PyCharm
+1. Set your Default test runner to `pytest` in _Preferences → Tools → Python Integrated Tools_
+1. Go to _Preferences → Build, Execution, Deployment → Python Debugger_ and set the options with following values:
+   
+   | Option                                                      | Value                 |
+   |------------------------------------------------------------:|:----------------------|
+   | Attach subprocess automatically while debugging             | `Enabled`             |
+   | Collect run-time types information for code insight         | `Enabled`             |
+   | Gevent compatible                                           | `Disabled`            |
+   | Drop into debugger on failed tests                          | `Enabled`             |
+   | PyQt compatible                                             | `Auto`                |
+   | For Attach to Process show processes with names containing  | `python`              |
+1. Right click on a test or test file and select `Run/Debug`
+   
+    _Note: Can also be done by clicking on green arrow next to test definition_
 
 
 ## Code of Conduct
