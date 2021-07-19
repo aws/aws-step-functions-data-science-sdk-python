@@ -51,7 +51,7 @@ Amazon EventBridge
 
 AWS Glue DataBrew
 --------------------
-.. autoclass:: stepfunctions.steps.service.DataBrewStartJobRunStep
+.. autoclass:: stepfunctions.steps.service.GlueDataBrewStartJobRunStep
 
 Amazon SNS
 -----------
