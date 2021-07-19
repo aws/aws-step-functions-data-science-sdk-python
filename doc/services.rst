@@ -49,7 +49,7 @@ Amazon EventBridge
 -----------
 .. autoclass:: stepfunctions.steps.service.EventBridgePutEventsStep
 
-Amazon Glue DataBrew
+AWS Glue DataBrew
 --------------------
 .. autoclass:: stepfunctions.steps.service.DataBrewStartJobRunStep
 
