@@ -210,16 +210,6 @@ class State(Block):
         if Field.Parameters in self.allowed_fields():
             self.fields[Field.Parameters.value] = params
 
-    def update_result_selector(self, result_selector):
-        """
-        Update `result_selector` field in the state, if supported.
-
-        Args:
-            params (dict or list): The value of this field becomes the effective result of the state.
-        """
-        if Field.ResultSelector in self.allowed_fields():
-            self.fields[Field.ResultSelector.value] = result_selector
-
     def next(self, next_step):
         """
         Specify the next state or chain to transition to.

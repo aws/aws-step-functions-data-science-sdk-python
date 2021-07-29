@@ -32,6 +32,7 @@ def test_state_creation():
         input_path='$.Input',
         output_path='$.Output',
         parameters={'Key': 'Value'},
+        result_selector={'foo': 'bar'},
         result_path='$.Result'
     )
 
@@ -42,6 +43,9 @@ def test_state_creation():
         'OutputPath': '$.Output',
         'Parameters': {
             'Key': 'Value'
+        },
+        'ResultSelector': {
+            'foo': 'bar'
         },
         'ResultPath': '$.Result',
         'End': True

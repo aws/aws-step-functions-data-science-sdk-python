@@ -3,9 +3,9 @@ Placeholders
 
 Once defined, a workflow is static unless you update it explicitly. But, you can pass
 input to workflow executions. You can have dynamic values
-that you use in the **parameters** fields of the steps in your workflow. For this,
+that you use in the **parameters** or **result_selector** fields of the steps in your workflow. For this,
 the AWS Step Functions Data Science SDK provides a way to define placeholders to pass around when you
-create your workflow. There are 2 mechanisms for passing dynamic values in a workflow.
+create your workflow. There are 3 mechanisms for passing dynamic values in a workflow.
 
 The first mechanism is a global input to the workflow execution. This input is
 accessible to all the steps in the workflow. The SDK provides :py:meth:`stepfunctions.inputs.ExecutionInput`
@@ -64,10 +64,10 @@ that returns the placeholder output for that step.
       parameters={
           "FunctionName": "MakeApiCall",
           "Payload": {
-            "input": "20192312"
-            }
+              "input": "20192312"
           }
-        )
+      }
+  )
 
   lambda_state_second = LambdaStep(
         state_id="MySecondLambdaStep",
@@ -81,7 +81,24 @@ that returns the placeholder output for that step.
 
   definition = Chain([lambda_state_first, lambda_state_second])
 
+The third mechanism is a placeholder for a step's result. The result of a step can be modified
+with the **result_selector** field to replace the step's result. 
 
+.. code-block:: python
+
+  lambda_result = StepResult(
+      schema={
+          "Id": str,
+      }
+  )
+
+  lambda_state_first = LambdaStep(
+      state_id="MyFirstLambdaStep",
+      result_selector={
+          "Output": lambda_result["Id"],
+          "Status": "Success"
+      }
+  )
 
 .. autoclass:: stepfunctions.inputs.Placeholder
 
@@ -89,4 +106,7 @@ that returns the placeholder output for that step.
                 :inherited-members:
 
 .. autoclass:: stepfunctions.inputs.StepInput
+                :inherited-members:
+
+.. autoclass:: stepfunctions.inputs.StepResult
                 :inherited-members:

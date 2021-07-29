@@ -17,64 +17,64 @@ import json
 
 from stepfunctions.inputs import ExecutionInput, StepInput, StepResult
 
-def test_placeholder_creation_with_subscript_operator():
-    step_input = StepInput()
-    placeholder_variable = step_input["A"]
+@pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
+def test_placeholder_creation_with_subscript_operator(placeholder):
+    placeholder_variable = placeholder["A"]
     assert placeholder_variable.name == "A"
     assert placeholder_variable.type is None
 
-def test_placeholder_creation_with_type():
-    workflow_input = ExecutionInput()
-    placeholder_variable = workflow_input["A"]["b"].get("C", float)
+@pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
+def test_placeholder_creation_with_type(placeholder):
+    placeholder_variable = placeholder["A"]["b"].get("C", float)
     assert placeholder_variable.name == "C"
     assert placeholder_variable.type == float
 
-def test_placeholder_creation_with_int_key():
-    workflow_input = ExecutionInput()
-    placeholder_variable = workflow_input["A"][0]
+@pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
+def test_placeholder_creation_with_int_key(placeholder):
+    placeholder_variable = placeholder["A"][0]
     assert placeholder_variable.name == 0
     assert placeholder_variable.type == None
 
-def test_placeholder_creation_with_invalid_key():
-    step_input = StepInput()
+@pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
+def test_placeholder_creation_with_invalid_key(placeholder):
     with pytest.raises(ValueError):
-        step_input["A"][1.3]
+        placeholder["A"][1.3]
     with pytest.raises(ValueError):
-        step_input["A"].get(1.2, str)
+        placeholder["A"].get(1.2, str)
 
-def test_placeholder_creation_failure_with_type():
-    workflow_input = ExecutionInput()
-    placeholder_variable = workflow_input["A"]["b"].get("C", float)
+@pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
+def test_placeholder_creation_failure_with_type(placeholder):
+    placeholder_variable = placeholder["A"]["b"].get("C", float)
     with pytest.raises(ValueError):
-        workflow_input["A"]["b"].get("C", int)
+        placeholder["A"]["b"].get("C", int)
 
-def test_placeholder_path():
-    workflow_input = ExecutionInput()
-    placeholder_variable = workflow_input["A"]["b"]["C"]
+@pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
+def test_placeholder_path(placeholder):
+    placeholder_variable = placeholder["A"]["b"]["C"]
     expected_path = ["A", "b", "C"]
     assert placeholder_variable._get_path() == expected_path
 
-def test_placeholder_contains():
-    step_input = StepInput()
-    var_one = step_input["Key01"]
-    var_two = step_input["Key02"]["Key03"]
-    var_three = step_input["Key01"]["Key04"]
-    var_four = step_input["Key05"]
+@pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
+def test_placeholder_contains(placeholder):
+    var_one = placeholder["Key01"]
+    var_two = placeholder["Key02"]["Key03"]
+    var_three = placeholder["Key01"]["Key04"]
+    var_four = placeholder["Key05"]
 
-    step_input_two = StepInput()
-    var_five = step_input_two["Key07"]
+    placeholder_two = StepInput()
+    var_five = placeholder_two["Key07"]
 
-    assert step_input.contains(var_three) == True
-    assert step_input.contains(var_five) == False
-    assert step_input_two.contains(var_three) == False
+    assert placeholder.contains(var_three) == True
+    assert placeholder.contains(var_five) == False
+    assert placeholder_two.contains(var_three) == False
 
-def test_placeholder_schema_as_dict():
-    workflow_input = ExecutionInput()
-    workflow_input["A"]["b"].get("C", float)
-    workflow_input["Message"]
-    workflow_input["Key01"]["Key02"]
-    workflow_input["Key03"]
-    workflow_input["Key03"]["Key04"]
+@pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
+def test_placeholder_schema_as_dict(placeholder):
+    placeholder["A"]["b"].get("C", float)
+    placeholder["Message"]
+    placeholder["Key01"]["Key02"]
+    placeholder["Key03"]
+    placeholder["Key03"]["Key04"]
 
     expected_schema = {
         "A": {
@@ -91,14 +91,14 @@ def test_placeholder_schema_as_dict():
         }
     }
 
-    assert workflow_input.get_schema_as_dict() == expected_schema
+    assert placeholder.get_schema_as_dict() == expected_schema
 
-def test_placeholder_schema_as_json():
-    step_input = StepInput()
-    step_input["Response"].get("StatusCode", int)
-    step_input["Hello"]["World"]
-    step_input["A"]
-    step_input["Hello"]["World"].get("Test", str)
+@pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
+def test_placeholder_schema_as_json(placeholder):
+    placeholder["Response"].get("StatusCode", int)
+    placeholder["Hello"]["World"]
+    placeholder["A"]
+    placeholder["Hello"]["World"].get("Test", str)
 
     expected_schema = {
         "Response": {
@@ -112,29 +112,27 @@ def test_placeholder_schema_as_json():
         "A": "str"
     }
 
-    assert step_input.get_schema_as_json() == json.dumps(expected_schema)
+    assert placeholder.get_schema_as_json() == json.dumps(expected_schema)
 
-def test_placeholder_is_empty():
-    workflow_input = ExecutionInput()
-    placeholder_variable = workflow_input["A"]["B"]["C"]
+@pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
+def test_placeholder_is_empty(placeholder):
+    placeholder_variable = placeholder["A"]["B"]["C"]
     assert placeholder_variable._is_empty() == True
-    workflow_input["A"]["B"]["C"]["D"]
+    placeholder["A"]["B"]["C"]["D"]
     assert placeholder_variable._is_empty() == False
 
+@pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
+def test_placeholder_make_immutable(placeholder):
+    placeholder["A"]["b"].get("C", float)
+    placeholder["Message"]
+    placeholder["Key01"]["Key02"]
+    placeholder["Key03"]
+    placeholder["Key03"]["Key04"]
 
-def test_placeholder_make_immutable():
-    workflow_input = ExecutionInput()
-    workflow_input["A"]["b"].get("C", float)
-    workflow_input["Message"]
-    workflow_input["Key01"]["Key02"]
-    workflow_input["Key03"]
-    workflow_input["Key03"]["Key04"]
+    assert check_immutable(placeholder) == False
 
-    assert check_immutable(workflow_input) == False
-
-    workflow_input._make_immutable()
-    assert check_immutable(workflow_input) == True
-
+    placeholder._make_immutable()
+    assert check_immutable(placeholder) == True
 
 def test_placeholder_with_schema():
     test_schema = {
@@ -166,6 +164,11 @@ def test_workflow_input_jsonpath():
 def test_step_input_jsonpath():
     step_input = StepInput()
     placeholder_variable = step_input["A"]["b"].get(0, float)
+    assert placeholder_variable.to_jsonpath() == "$['A']['b'][0]"
+
+def test_step_result_jsonpath():
+    step_result = StepResult()
+    placeholder_variable = step_result["A"]["b"].get(0, float)
     assert placeholder_variable.to_jsonpath() == "$['A']['b'][0]"
 
 # UTILS

@@ -459,3 +459,22 @@ def test_schema_validation_for_step_result():
                 "ParamB": "SampleValueB"
             }
         )
+
+def test_schema_validation_success_for_step_result():
+    step_result = StepResult(
+        schema={
+            "Payload": {
+                "Key01": str
+            }
+        }
+    )
+
+    try:
+        test_step = Task(
+            state_id='StateOne',
+            result_selector={
+                'ParamA': step_result["Payload"]["Key01"]
+            }
+        )
+    except:
+        pytest.fail("Step should fetch step result key successfully without raising an Exception")
