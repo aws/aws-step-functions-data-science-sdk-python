@@ -665,7 +665,7 @@ def test_emr_modify_instance_group_by_name_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_databrew_start_job_run_step_creation_sync():
-    step = GlueDataBrewStartJobRunStep('Start Glue DataBrew Job Run', parameters={
+    step = GlueDataBrewStartJobRunStep('Start Glue DataBrew Job Run - Sync', parameters={
         "Name": "MyWorkflowJobRun"
     })
 
