@@ -12,7 +12,7 @@ This module provides classes to build steps that integrate with Amazon DynamoDB,
 
 - `Amazon EventBridge <#amazon-eventbridge>`__
 
-- `AWS Glue DataBrew <#amazon-glue-databrew>`__
+- `AWS Glue DataBrew <#aws-glue-databrew>`__
 
 - `Amazon SNS <#amazon-sns>`__
 
