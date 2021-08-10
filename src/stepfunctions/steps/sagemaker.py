@@ -13,10 +13,14 @@
 from __future__ import absolute_import
 
 import logging
+import operator
 
 from enum import Enum
+from functools import reduce
 
+from stepfunctions.exceptions import InvalidPathToPlaceholderParameter
 from stepfunctions.inputs import Placeholder
+from stepfunctions.steps.constants import placeholder_paths
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
 from stepfunctions.steps.utils import tags_dict_to_kv_list
@@ -25,6 +29,7 @@ from stepfunctions.steps.integration_resources import IntegrationPattern, get_se
 from sagemaker.workflow.airflow import training_config, transform_config, model_config, tuning_config, processing_config
 from sagemaker.model import Model, FrameworkModel
 from sagemaker.model_monitor import DataCaptureConfig
+from sagemaker.processing import ProcessingJob
 
 logger = logging.getLogger('stepfunctions.sagemaker')
 
@@ -41,13 +46,120 @@ class SageMakerApi(Enum):
     CreateProcessingJob = "createProcessingJob"
 
 
+class SageMakerTask(Task):
+
+    """
+    Task State causes the interpreter to execute the work identified by the state’s `resource` field.
+    """
+
+    def __init__(self, state_id, step_type, tags, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            resource (str): A URI that uniquely identifies the specific task to execute. The States language does not constrain the URI scheme nor any other part of the URI.
+            timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
+            timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
+            heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+        """
+        # TODO: carolngu treat all placeholders here - make sure work is not done twice
+        print(f"==== SageMakerTask incoming kwargs: {kwargs}")
+        self._replace_sagemaker_placeholders(step_type, kwargs)
+
+        if tags:
+            self.set_tags_config(tags, kwargs[Field.Parameters.value], step_type)
+
+        print(f"==== SageMakerTask outgoing kwargs: {kwargs}")
+        super(SageMakerTask, self).__init__(state_id, **kwargs)
+
+
+    def allowed_fields(self):
+        # TODO carolngu: Add all fields
+        sagemaker_fields = [
+            # Processing
+            Field.Role,
+            Field.ImageUri,
+            Field.InstanceCount,
+            Field.InstanceType,
+            Field.EntryPoint,
+            Field.VolumeSizeInGB,
+            Field.Env
+        ]
+
+        return super(SageMakerTask, self).allowed_fields() + sagemaker_fields
+
+
+    def _replace_sagemaker_placeholders(self, step_type, args):
+        # Fetch path from type
+        sagemaker_parameters = args[Field.Parameters.value]
+        paths = placeholder_paths.get(step_type)
+        treated_args = []
+        print(f" ARGS: {args.items()}")
+        for arg_name, value in args.items():
+            if arg_name in [Field.Parameters.value]:
+                continue
+            if arg_name in paths.keys():
+                print("=====================================")
+                print(f"** REPLACE SAGEMAKER PLACEHOLDER FOR: {arg_name}")
+                path = paths.get(arg_name)
+                # TODO - carolngu: add exception handling
+                if self._set_placeholder(sagemaker_parameters, path, value, arg_name):
+                    treated_args.append(arg_name)
+
+        SageMakerTask.remove_treated_args(treated_args, args)
+
+    @staticmethod
+    def get_value_from_path(parameters, path):
+        value_from_path = reduce(operator.getitem, path, parameters)
+        print(f"     from {value_from_path}")
+        return value_from_path
+        # return reduce(operator.getitem, path, parameters)
+
+    @staticmethod
+    def _set_placeholder(parameters, path, value, arg_name):
+        print(f"*** Setting placeholder for {arg_name}")
+        is_set = False
+        try:
+            SageMakerTask.get_value_from_path(parameters, path[:-1])[path[-1]] = value
+            is_set = True
+        except KeyError as e:
+            message = f"Invalid path {path} for {arg_name}: {e}"
+            print(message)
+            raise InvalidPathToPlaceholderParameter(message)
+        print(f"     for value: {value}, path: {path}")
+        return is_set
+
+    @staticmethod
+    def remove_treated_args(treated_args, args):
+        for treated_arg in treated_args:
+            try:
+                del args[treated_arg]
+            except KeyError as e:
+                pass
+
+    def set_tags_config(self, tags, parameters, step_type):
+        if isinstance(tags, Placeholder):
+            # Replace with placeholder
+            path = placeholder_paths.get(step_type).get(Field.Tags.value)
+            if path:
+                self._set_placeholder(parameters, path, tags, Field.Tags.value)
+        else:
+            parameters['Tags'] = tags_dict_to_kv_list(tags)
+
+
 class TrainingStep(Task):
 
     """
     Creates a Task State to execute a `SageMaker Training Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTrainingJob.html>`_. The TrainingStep will also create a model by default, and the model shares the same name as the training job.
     """
 
-    def __init__(self, state_id, estimator, job_name, data=None, hyperparameters=None, mini_batch_size=None, experiment_config=None, wait_for_completion=True, tags=None, output_data_config_path=None, **kwargs):
+    def __init__(self, state_id, estimator, job_name, data=None, hyperparameters=None, mini_batch_size=None,
+                 experiment_config=None, wait_for_completion=True, tags=None, output_data_config_path=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -103,7 +215,8 @@ class TrainingStep(Task):
             data = data.to_jsonpath()
 
         if isinstance(job_name, str):
-            parameters = training_config(estimator=estimator, inputs=data, job_name=job_name, mini_batch_size=mini_batch_size)
+            parameters = training_config(estimator=estimator, inputs=data, job_name=job_name,
+                                         mini_batch_size=mini_batch_size)
         else:
             parameters = training_config(estimator=estimator, inputs=data, mini_batch_size=mini_batch_size)
 
@@ -122,6 +235,7 @@ class TrainingStep(Task):
         if data is not None and is_data_placeholder:
             # Replace the 'S3Uri' key with one that supports JSONpath value.
             # Support for uri str only: The list will only contain 1 element
+            print(f"TrainingStep InputDataConfig: {parameters['InputDataConfig']}")
             data_uri = parameters['InputDataConfig'][0]['DataSource']['S3DataSource'].pop('S3Uri', None)
             parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = data_uri
 
@@ -139,6 +253,7 @@ class TrainingStep(Task):
         if tags:
             parameters['Tags'] = tags_dict_to_kv_list(tags)
 
+        print(f"TUNINGSTEP parameters: {parameters}")
         kwargs[Field.Parameters.value] = parameters
         super(TrainingStep, self).__init__(state_id, **kwargs)
 
@@ -180,13 +295,15 @@ class TrainingStep(Task):
             merged_hyperparameters[key] = value
         return merged_hyperparameters
 
-class TransformStep(Task):
+class TransformStep(SageMakerTask):
 
     """
     Creates a Task State to execute a `SageMaker Transform Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTransformJob.html>`_.
     """
 
-    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None, compression_type=None, split_type=None, experiment_config=None, wait_for_completion=True, tags=None, input_filter=None, output_filter=None, join_source=None, **kwargs):
+    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None,
+                 compression_type=None, split_type=None, experiment_config=None, wait_for_completion=True, tags=None,
+                 input_filter=None, output_filter=None, join_source=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -206,7 +323,7 @@ class TransformStep(Task):
             split_type (str): The record delimiter for the input object (default: 'None'). Valid values: 'None', 'Line', 'RecordIO', and 'TFRecord'.
             experiment_config (dict, optional): Specify the experiment config for the transform. (Default: None)
             wait_for_completion(bool, optional): Boolean value set to `True` if the Task state should wait for the transform job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the transform job and proceed to the next step. (default: True)
-            tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            tags (list[dict] or Placeholder optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
             input_filter (str): A JSONPath to select a portion of the input to pass to the algorithm container for inference. If you omit the field, it gets the value ‘$’, representing the entire input. For CSV data, each row is taken as a JSON array, so only index-based JSONPaths can be applied, e.g. $[0], $[1:]. CSV data should follow the RFC format. See Supported JSONPath Operators for a table of supported JSONPath operators. For more information, see the SageMaker API documentation for CreateTransformJob. Some examples: “$[1:]”, “$.features” (default: None).
             output_filter (str): A JSONPath to select a portion of the joined/original output to return as the output. For more information, see the SageMaker API documentation for CreateTransformJob. Some examples: “$[1:]”, “$.prediction” (default: None).
             join_source (str): The source of data to be joined to the transform output. It can be set to ‘Input’ meaning the entire input record will be joined to the inference result. You can use OutputFilter to select the useful portion before uploading to S3. (default: None). Valid values: Input, None.
@@ -261,14 +378,11 @@ class TransformStep(Task):
         if experiment_config is not None:
             parameters['ExperimentConfig'] = experiment_config
 
-        if tags:
-            parameters['Tags'] = tags_dict_to_kv_list(tags)
-
         kwargs[Field.Parameters.value] = parameters
-        super(TransformStep, self).__init__(state_id, **kwargs)
+        super(TransformStep, self).__init__(state_id, __class__.__name__, tags, **kwargs)
 
 
-class ModelStep(Task):
+class ModelStep(SageMakerTask):
 
     """
     Creates a Task State to `create a model in SageMaker <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateModel.html>`_.
@@ -281,7 +395,7 @@ class ModelStep(Task):
             model (sagemaker.model.Model): The SageMaker model to use in the ModelStep. If :py:class:`TrainingStep` was used to train the model and saving the model is the next step in the workflow, the output of :py:func:`TrainingStep.get_expected_model()` can be passed here.
             model_name (str or Placeholder, optional): Specify a model name, this is required for creating the model. We recommend to use :py:class:`~stepfunctions.inputs.ExecutionInput` placeholder collection to pass the value dynamically in each execution.
             instance_type (str, optional): The EC2 instance type to deploy this Model to. For example, 'ml.p2.xlarge'.
-            tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            tags (list[dict] or Placeholder optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
         """
         if isinstance(model, FrameworkModel):
             parameters = model_config(model=model, instance_type=instance_type, role=model.role, image_uri=model.image_uri)
@@ -303,9 +417,6 @@ class ModelStep(Task):
         if 'S3Operations' in parameters:
             del parameters['S3Operations']
 
-        if tags:
-            parameters['Tags'] = tags_dict_to_kv_list(tags)
-
         kwargs[Field.Parameters.value] = parameters
 
         """
@@ -314,8 +425,8 @@ class ModelStep(Task):
 
         kwargs[Field.Resource.value] = get_service_integration_arn(SAGEMAKER_SERVICE_NAME,
                                                                    SageMakerApi.CreateModel)
-
-        super(ModelStep, self).__init__(state_id, **kwargs)
+        print(f"MODELSTEP params: {parameters}")
+        super(ModelStep, self).__init__(state_id, __class__.__name__, tags, **kwargs)
 
 
 class EndpointConfigStep(Task):
@@ -473,13 +584,15 @@ class TuningStep(Task):
         super(TuningStep, self).__init__(state_id, **kwargs)
 
 
-class ProcessingStep(Task):
+class ProcessingStep(SageMakerTask):
 
     """
     Creates a Task State to execute a SageMaker Processing Job.
     """
 
-    def __init__(self, state_id, processor, job_name, inputs=None, outputs=None, experiment_config=None, container_arguments=None, container_entrypoint=None, kms_key_id=None, wait_for_completion=True, tags=None, **kwargs):
+    def __init__(self, state_id, processor, job_name, inputs=None, outputs=None, experiment_config=None,
+                 container_arguments=None, container_entrypoint=None, kms_key_id=None, wait_for_completion=True,
+                 tags=None, max_runtime_in_seconds=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -493,13 +606,14 @@ class ProcessingStep(Task):
                 :class:`~sagemaker.processing.ProcessingOutput` objects (default: None).
             experiment_config (dict, optional): Specify the experiment config for the processing. (Default: None)
             container_arguments ([str]): The arguments for a container used to run a processing job.
-            container_entrypoint ([str]): The entrypoint for a container used to run a processing job.
-            kms_key_id (str): The AWS Key Management Service (AWS KMS) key that Amazon SageMaker
+            container_entrypoint ([str] or Placeholder): The entrypoint for a container used to run a processing job.
+            kms_key_id (str or Placeholder): The AWS Key Management Service (AWS KMS) key that Amazon SageMaker
                 uses to encrypt the processing job output. KmsKeyId can be an ID of a KMS key,
                 ARN of a KMS key, alias of a KMS key, or alias of a KMS key.
                 The KmsKeyId is applied to all outputs.
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the processing job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the processing job and proceed to the next step. (default: True)
-            tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            tags (list[dict] or Placeholder optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            max_runtime_in_seconds (int or Placeholder): Specifies the maximum runtime in seconds for the processing job
         """
         if wait_for_completion:
             """
@@ -528,12 +642,11 @@ class ProcessingStep(Task):
         if experiment_config is not None:
             parameters['ExperimentConfig'] = experiment_config
         
-        if tags:
-            parameters['Tags'] = tags_dict_to_kv_list(tags)
-        
+        if max_runtime_in_seconds:
+            parameters['StoppingCondition'] = ProcessingJob.prepare_stopping_condition(max_runtime_in_seconds)
+
         if 'S3Operations' in parameters:
             del parameters['S3Operations']
-        
-        kwargs[Field.Parameters.value] = parameters
 
-        super(ProcessingStep, self).__init__(state_id, **kwargs)
+        kwargs[Field.Parameters.value] = parameters
+        super(ProcessingStep, self).__init__(state_id, __class__.__name__, tags, **kwargs)

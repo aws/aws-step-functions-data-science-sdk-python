@@ -26,7 +26,9 @@ from sagemaker.sklearn.processing import SKLearnProcessor
 from sagemaker.processing import ProcessingInput, ProcessingOutput
 
 from unittest.mock import MagicMock, patch
+from stepfunctions.exceptions import InvalidPathToPlaceholderParameter
 from stepfunctions.inputs import ExecutionInput, StepInput
+from stepfunctions.steps.fields import Field
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, ProcessingStep
 from stepfunctions.steps.sagemaker import tuning_config
 
@@ -743,6 +745,97 @@ def test_transform_step_creation(pca_transformer):
     }
 
 
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_transform_step_creation_with_placeholder(pca_transformer):
+    execution_input = ExecutionInput(schema={
+        Field.InstanceCount.value: int,
+        Field.Strategy.value: str,
+        Field.AssembleWith.value: str,
+        Field.OutputPath.value: str,
+        Field.OutputKMSKey.value: str,
+        Field.Accept.value: str,
+        Field.MaxConcurrentTransforms.value: int,
+        Field.MaxPayload.value: int,
+        Field.Tags.value: [{str: str}],
+        Field.Env.value: str,
+        Field.VolumeKMSKey.value: str,
+    })
+
+    step_input = StepInput(schema={
+        Field.InstanceType.value: str
+    })
+
+    step = TransformStep('Inference',
+        transformer=pca_transformer,
+        data='s3://sagemaker/inference',
+        job_name='transform-job',
+        model_name='pca-model',
+        experiment_config={
+            'ExperimentName': 'pca_experiment',
+            'TrialName': 'pca_trial',
+            'TrialComponentDisplayName': 'Transform'
+        },
+        tags=execution_input[Field.Tags.value],
+        join_source='Input',
+        output_filter='$[2:]',
+        input_filter='$[1:]',
+        instance_count=execution_input[Field.InstanceCount.value],
+        instance_type=step_input[Field.InstanceType.value],
+        env=execution_input[Field.Env.value],
+        volume_kms_key=execution_input[Field.VolumeKMSKey.value],
+        strategy=execution_input[Field.Strategy.value],
+        assemble_with=execution_input[Field.AssembleWith.value],
+        output_path=execution_input[Field.OutputPath.value],
+        output_kms_key=execution_input[Field.OutputKMSKey.value],
+        accept=execution_input[Field.Accept.value],
+        max_concurrent_transforms=execution_input[Field.MaxConcurrentTransforms.value],
+        max_payload=execution_input[Field.MaxConcurrentTransforms.value]
+    )
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'BatchStrategy.$': "$$.Execution.Input['strategy']",
+            'ModelName': 'pca-model',
+            'TransformInput': {
+                'DataSource': {
+                    'S3DataSource': {
+                        'S3DataType': 'S3Prefix',
+                        'S3Uri': 's3://sagemaker/inference'
+                    }
+                }
+            },
+            'TransformOutput': {
+                'Accept.$': "$$.Execution.Input['accept']",
+                'AssembleWith.$': "$$.Execution.Input['assemble_with']",
+                'KmsKeyId.$': "$$.Execution.Input['output_kms_key']",
+                'S3OutputPath.$': "$$.Execution.Input['output_path']"
+            },
+            'TransformJobName': 'transform-job',
+            'TransformResources': {
+                'InstanceCount.$': "$$.Execution.Input['instance_count']",
+                'InstanceType.$': "$['instance_type']",
+                'VolumeKmsKeyId.$': "$$.Execution.Input['volume_kms_key']"
+            },
+            'ExperimentConfig': {
+                'ExperimentName': 'pca_experiment',
+                'TrialName': 'pca_trial',
+                'TrialComponentDisplayName': 'Transform'
+            },
+            'DataProcessing': {
+                'InputFilter': '$[1:]',
+                'OutputFilter': '$[2:]',
+                'JoinSource': 'Input',
+            },
+            'Tags.$': "$$.Execution.Input['tags']",
+            'Environment.$': "$$.Execution.Input['env']",
+            'MaxConcurrentTransforms.$': "$$.Execution.Input['max_concurrent_transforms']",
+            'MaxPayloadInMB.$': "$$.Execution.Input['max_concurrent_transforms']",
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createTransformJob.sync',
+        'End': True
+    }
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_get_expected_model(pca_estimator):
@@ -812,6 +905,56 @@ def test_model_step_creation(pca_model):
                 'ModelDataUrl': pca_model.model_data
             },
             'Tags': DEFAULT_TAGS_LIST
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createModel',
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_model_step_creation_with_placeholders(pca_model):
+    execution_input = ExecutionInput(schema={
+        Field.ImageUri.value: str,
+        Field.ModelData.value: str,
+        Field.Role.value: str,
+        Field.Env.value: str,
+        Field.Name.value: str,
+        Field.VpcConfig.value: str,
+        Field.EnableNetworkIsolation.value: str,
+        Field.Tags.value: [{str: str}]
+    })
+
+    step_input = StepInput(schema={
+        Field.ImageConfig.value: str
+    })
+
+    step = ModelStep(
+        'Create model',
+        model=pca_model,
+        model_name=execution_input[Field.Name.value],
+        tags=execution_input[Field.Tags.value],
+        image_uri=execution_input[Field.ImageUri.value],
+        model_data=execution_input[Field.ModelData.value],
+        role=execution_input[Field.Role.value],
+        env=execution_input[Field.Env.value],
+        vpc_config=execution_input[Field.VpcConfig.value],
+        enable_network_isolation=execution_input[Field.EnableNetworkIsolation.value],
+        image_config=step_input[Field.ImageConfig.value]
+    )
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'EnableNetworkIsolation.$': "$$.Execution.Input['enable_network_isolation']",
+            'ExecutionRoleArn.$': "$$.Execution.Input['role']",
+            'ModelName.$': "$$.Execution.Input['name']",
+            'PrimaryContainer': {
+                'Environment.$': "$$.Execution.Input['env']",
+                'Image.$': "$$.Execution.Input['image_uri']",
+                'ImageConfig.$': "$['image_config']",
+                'ModelDataUrl.$': "$$.Execution.Input['model_data']"
+            },
+            'Tags.$': "$$.Execution.Input['tags']",
+            'VpcConfig.$': "$$.Execution.Input['vpc_config']"
         },
         'Resource': 'arn:aws:states:::sagemaker:createModel',
         'End': True
@@ -958,6 +1101,120 @@ def test_processing_step_creation(sklearn_processor):
             },
             'ProcessingJobName': 'MyProcessingJob',
             'RoleArn': EXECUTION_ROLE
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createProcessingJob.sync',
+        'End': True
+    }
+
+
+def test_processing_step_creation_with_placeholders(sklearn_processor):
+    execution_input = ExecutionInput(schema={
+        Field.ImageUri.value: str,
+        Field.InstanceCount.value: int,
+        Field.EntryPoint.value: str,
+        Field.OutputKMSKey.value: str,
+        Field.Role.value: str,
+        Field.Env.value: str,
+        Field.VolumeSizeInGB.value: int,
+        Field.VolumeKMSKey.value: str,
+        Field.MaxRuntimeInSeconds.value: int,
+        Field.Tags.value: [{str:str}]
+    })
+
+    step_input = StepInput(schema={
+        Field.InstanceType.value: str
+    })
+
+    inputs = [ProcessingInput(source='dataset.csv', destination='/opt/ml/processing/input')]
+    outputs = [
+        ProcessingOutput(source='/opt/ml/processing/output/train'),
+        ProcessingOutput(source='/opt/ml/processing/output/validation'),
+        ProcessingOutput(source='/opt/ml/processing/output/test')
+    ]
+    step = ProcessingStep(
+        'Feature Transformation',
+        sklearn_processor,
+        'MyProcessingJob',
+        container_entrypoint=execution_input[Field.EntryPoint.value],
+        kms_key_id=execution_input[Field.OutputKMSKey.value],
+        inputs=inputs,
+        outputs=outputs,
+        image_uri=execution_input[Field.ImageUri.value],
+        instance_count=execution_input[Field.InstanceCount.value],
+        instance_type=step_input[Field.InstanceType.value],
+        role=execution_input[Field.Role.value],
+        env=execution_input[Field.Env.value],
+        volume_size_in_gb=execution_input[Field.VolumeSizeInGB.value],
+        volume_kms_key=execution_input[Field.VolumeKMSKey.value],
+        max_runtime_in_seconds=execution_input[Field.MaxRuntimeInSeconds.value],
+        tags=execution_input[Field.Tags.value],
+    )
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'AppSpecification': {
+                'ContainerEntrypoint.$': "$$.Execution.Input['entrypoint']",
+                'ImageUri.$': "$$.Execution.Input['image_uri']"
+            },
+            'Environment.$': "$$.Execution.Input['env']",
+            'ProcessingInputs': [
+                {
+                    'InputName': None,
+                    'AppManaged': False,
+                    'S3Input': {
+                        'LocalPath': '/opt/ml/processing/input',
+                        'S3CompressionType': 'None',
+                        'S3DataDistributionType': 'FullyReplicated',
+                        'S3DataType': 'S3Prefix',
+                        'S3InputMode': 'File',
+                        'S3Uri': 'dataset.csv'
+                    }
+                }
+            ],
+            'ProcessingOutputConfig': {
+                'KmsKeyId.$': "$$.Execution.Input['output_kms_key']",
+                'Outputs': [
+                    {
+                        'OutputName': None,
+                        'AppManaged': False,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/train',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    },
+                    {
+                        'OutputName': None,
+                        'AppManaged': False,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/validation',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    },
+                    {
+                        'OutputName': None,
+                        'AppManaged': False,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/test',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    }
+                ]
+            },
+            'ProcessingResources': {
+                'ClusterConfig': {
+                    'InstanceCount.$': "$$.Execution.Input['instance_count']",
+                    'InstanceType.$': "$['instance_type']",
+                    'VolumeKmsKeyId.$': "$$.Execution.Input['volume_kms_key']",
+                    'VolumeSizeInGB.$': "$$.Execution.Input['volume_size_in_gb']"
+                }
+            },
+            'ProcessingJobName': 'MyProcessingJob',
+            'RoleArn.$': "$$.Execution.Input['role']",
+            'Tags.$': "$$.Execution.Input['tags']",
+            'StoppingCondition': {'MaxRuntimeInSeconds.$': "$$.Execution.Input['max_runtime_in_seconds']"},
         },
         'Resource': 'arn:aws:states:::sagemaker:createProcessingJob.sync',
         'End': True
