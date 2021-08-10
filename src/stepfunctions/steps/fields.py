@@ -59,6 +59,59 @@ class Field(Enum):
     HeartbeatSeconds     = 'heartbeat_seconds'
     HeartbeatSecondsPath = 'heartbeat_seconds_path'
 
+    # TODO: carolngu add all estimators placeholders here
+    # Sagemaker step fields
+    # Training Step: EstimatorBase
+    Data                            = 'data'
+    VolumeSize                      = 'volume_size'
+    MaxRun                          = 'max_run'
+    Subnets                         = 'subnets'
+    SecurityGroupIds                = 'security_group_ids'
+    ModelUri                        = 'model_uri'
+    ModelChannelName                = 'model_channel_name'
+    MetricDefinitions               = 'metric_definitions'
+    EncryptInterContainerTraffic    = 'encrypt_inter_container_traffic'
+    UseSpotInstances                = 'use_spot_instances'
+    MaxWait                         = 'max_wait'
+    CheckpointS3Uri                 = 'checkpoint_s3_uri'
+    CheckpointLocalPath             = 'checkpoint_local_path'
+    EnableSagemakerMetrics          = 'enable_sagemaker_metrics'
+    EnableNetworkIsolation          = 'enable_network_isolation'
+    Environment                     = 'environment'
+
+    # Transform Step: Transformer
+    Strategy                        = 'strategy'
+    AssembleWith                    = 'assemble_with'
+    Accept                          = 'accept'
+    MaxConcurrentTransforms         = 'max_concurrent_transforms'
+    MaxPayload                      = 'max_payload'
+
+    # Model Step
+    ModelData                       = 'model_data'
+    Name                            = 'name'
+    VpcConfig                       = 'vpc_config'
+    ImageConfig                     = 'image_config'
+
+    # TuningStep: Tuner
+    ObjectiveMetricName             = 'objective_metric_name '
+    HyperparameterRanges            = 'hyperparameter_ranges'
+    ObjectiveType                   = 'objective_type'
+    MaxJobs                         = 'max_jobs'
+    MaxParallelJobs                 = 'max_parallel_jobs'
+    EarlyStoppingType               = 'early_stopping_type'
+
+    # Processing Step: Processor
+    Role                = 'role'
+    ImageUri            = 'image_uri'
+    InstanceCount       = 'instance_count'
+    InstanceType        = 'instance_type'
+    EntryPoint          = 'entrypoint'
+    VolumeSizeInGB      = 'volume_size_in_gb'
+    VolumeKMSKey        = 'volume_kms_key'
+    OutputKMSKey        = 'output_kms_key'
+    MaxRuntimeInSeconds = 'max_runtime_in_seconds'
+    Env                 = 'env'
+    Tags                = 'tags'
 
     # Retry and catch fields
     ErrorEquals      = 'error_equals'

@@ -352,3 +352,64 @@ def test_processing_step(sklearn_processor_fixture, sagemaker_session, sfn_clien
         # Cleanup
         state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
         # End of Cleanup
+
+
+def test_processing_step_with_placeholders(sklearn_processor_fixture, sagemaker_session, sfn_client, sfn_role_arn):
+    region = boto3.session.Session().region_name
+    input_data = 's3://sagemaker-sample-data-{}/processing/census/census-income.csv'.format(region)
+
+    input_s3 = sagemaker_session.upload_data(
+        path=os.path.join(DATA_DIR, 'sklearn_processing'),
+        bucket=sagemaker_session.default_bucket(),
+        key_prefix='integ-test-data/sklearn_processing/code'
+    )
+
+    output_s3 = 's3://' + sagemaker_session.default_bucket() + '/integ-test-data/sklearn_processing'
+
+    inputs = [
+        ProcessingInput(source=input_data, destination='/opt/ml/processing/input', input_name='input-1'),
+        ProcessingInput(source=input_s3 + '/preprocessor.py', destination='/opt/ml/processing/input/code',
+                        input_name='code'),
+    ]
+
+    outputs = [
+        ProcessingOutput(source='/opt/ml/processing/train', destination=output_s3 + '/train_data',
+                         output_name='train_data'),
+        ProcessingOutput(source='/opt/ml/processing/test', destination=output_s3 + '/test_data',
+                         output_name='test_data'),
+    ]
+
+    job_name = generate_job_name()
+    processing_step = ProcessingStep('create_processing_job_step',
+                                     processor=sklearn_processor_fixture,
+                                     job_name=job_name,
+                                     inputs=inputs,
+                                     outputs=outputs,
+                                     container_arguments=['--train-test-split-ratio', '0.2'],
+                                     container_entrypoint=['python3', '/opt/ml/processing/input/code/preprocessor.py'],
+                                     )
+    workflow_graph = Chain([processing_step])
+
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
+        # Create workflow and check definition
+        workflow = create_workflow_and_check_definition(
+            workflow_graph=workflow_graph,
+            workflow_name=unique_name_from_base("integ-test-processing-step-workflow"),
+            sfn_client=sfn_client,
+            sfn_role_arn=sfn_role_arn
+        )
+        execution_input = {
+            'OutputPath': f's3://{sagemaker_session.default_bucket()}/',
+            'JobName': f'TrainingJob-{job_id}'
+        }
+        execution = workflow.execute(inputs=execution_input)
+        # Execute workflow
+        execution = workflow.execute()
+        execution_output = execution.get_output(wait=True)
+
+        # Check workflow output
+        assert execution_output.get("ProcessingJobStatus") == "Completed"
+
+        # Cleanup
+        state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
+        # End of Cleanup

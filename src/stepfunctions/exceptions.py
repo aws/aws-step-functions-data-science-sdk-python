@@ -23,3 +23,9 @@ class MissingRequiredParameter(Exception):
 
 class DuplicateStatesInChain(Exception):
     pass
+
+
+class InvalidPathToPlaceholderParameter(Exception):
+
+    def __init__(self, message):
+        super(InvalidPathToPlaceholderParameter, self).__init__(message)
