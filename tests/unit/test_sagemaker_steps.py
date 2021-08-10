@@ -19,18 +19,18 @@ import boto3
 from sagemaker.transformer import Transformer
 from sagemaker.model import Model
 from sagemaker.tensorflow import TensorFlow
-from sagemaker.pipeline import PipelineModel
 from sagemaker.model_monitor import DataCaptureConfig
 from sagemaker.debugger import Rule, rule_configs, DebuggerHookConfig, CollectionConfig
 from sagemaker.sklearn.processing import SKLearnProcessor
 from sagemaker.processing import ProcessingInput, ProcessingOutput
+from sagemaker.parameter import IntegerParameter, CategoricalParameter
+from sagemaker.tuner import HyperparameterTuner
 
 from unittest.mock import MagicMock, patch
-from stepfunctions.exceptions import InvalidPathToPlaceholderParameter
 from stepfunctions.inputs import ExecutionInput, StepInput
 from stepfunctions.steps.fields import Field
-from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, ProcessingStep
-from stepfunctions.steps.sagemaker import tuning_config
+from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, \
+    ProcessingStep, TuningStep
 
 from tests.unit.utils import mock_boto_api_call
 
@@ -273,8 +273,29 @@ def test_training_step_creation(pca_estimator):
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_training_step_creation_with_placeholders(pca_estimator):
     execution_input = ExecutionInput(schema={
-        'Data': str,
         'OutputPath': str,
+        Field.Role.value: str,
+        Field.InstanceCount.value: int,
+        Field.InstanceType.value: str,
+        Field.VolumeSize.value: int,
+        Field.VolumeKMSKey.value: str,
+        Field.MaxRun.value: int,
+        Field.OutputKMSKey.value: str,
+        Field.Subnets.value: [str],
+        Field.SecurityGroupIds.value: [str],
+        # Field.ModelUri.value: str,
+        Field.Data.value: str,
+        # Field.ModelChannelName.value: str,
+        Field.MetricDefinitions.value: [str],
+        Field.EncryptInterContainerTraffic.value: str,
+        Field.UseSpotInstances.value: str,
+        Field.MaxWait.value: int,
+        Field.CheckpointS3Uri.value: str,
+        Field.CheckpointLocalPath.value: str,
+        Field.EnableSagemakerMetrics.value: str,
+        Field.EnableNetworkIsolation.value: str,
+        Field.Environment.value: str,
+        Field.Tags.value: str,
     })
 
     step_input = StepInput(schema={
@@ -284,34 +305,57 @@ def test_training_step_creation_with_placeholders(pca_estimator):
     step = TrainingStep('Training',
         estimator=pca_estimator,
         job_name=step_input['JobName'],
-        data=execution_input['Data'],
+        data=execution_input[Field.Data.value],
         output_data_config_path=execution_input['OutputPath'],
         experiment_config={
             'ExperimentName': 'pca_experiment',
             'TrialName': 'pca_trial',
             'TrialComponentDisplayName': 'Training'
         },
-        tags=DEFAULT_TAGS,
+        instance_count=execution_input[Field.InstanceCount.value],
+        instance_type=execution_input[Field.InstanceType.value],
+        role=execution_input[Field.Role.value],
+        volume_size=execution_input[Field.VolumeSize.value],
+        volume_kms_key=execution_input[Field.VolumeKMSKey.value],
+        max_run=execution_input[Field.MaxRun.value],
+        output_kms_key=execution_input[Field.OutputKMSKey.value],
+        # subnets=execution_input[Field.Subnets.value],
+        # security_group_ids=execution_input[Field.Subnets.value],
+        metric_definitions=execution_input[Field.MetricDefinitions.value],
+        encrypt_inter_container_traffic=execution_input[Field.MetricDefinitions.value],
+        use_spot_instances=execution_input[Field.UseSpotInstances.value],
+        max_wait=execution_input[Field.MaxWait.value],
+        # checkpoint_s3_uri=execution_input[Field.CheckpointS3Uri.value],
+        # checkpoint_local_path=execution_input[Field.CheckpointLocalPath.value],
+        enable_sagemaker_metrics=execution_input[Field.EnableSagemakerMetrics.value],
+        enable_network_isolation=execution_input[Field.EnableNetworkIsolation.value],
+        environment=execution_input[Field.Environment.value],
+        tags=execution_input[Field.Tags.value],
     )
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
             'AlgorithmSpecification': {
+                'EnableSageMakerMetricsTimeSeries.$': "$$.Execution.Input['enable_sagemaker_metrics']",
+                'MetricDefinitions.$': "$$.Execution.Input['metric_definitions']",
                 'TrainingImage': PCA_IMAGE,
                 'TrainingInputMode': 'File'
             },
             'OutputDataConfig': {
+                'KmsKeyId.$': "$$.Execution.Input['output_kms_key']",
                 'S3OutputPath.$': "$$.Execution.Input['OutputPath']"
             },
             'StoppingCondition': {
-                'MaxRuntimeInSeconds': 86400
+                'MaxRuntimeInSeconds.$': "$$.Execution.Input['max_run']",
+                'MaxWaitTimeInSeconds.$': "$$.Execution.Input['max_wait']"
             },
             'ResourceConfig': {
-                'InstanceCount': 1,
-                'InstanceType': 'ml.c4.xlarge',
-                'VolumeSizeInGB': 30
+                'InstanceCount.$': "$$.Execution.Input['instance_count']",
+                'InstanceType.$': "$$.Execution.Input['instance_type']",
+                'VolumeKmsKeyId.$': "$$.Execution.Input['volume_kms_key']",
+                'VolumeSizeInGB.$': "$$.Execution.Input['volume_size']"
             },
-            'RoleArn': EXECUTION_ROLE,
+            'RoleArn.$': "$$.Execution.Input['role']",
             'HyperParameters': {
                 'feature_dim': '50000',
                 'num_components': '10',
@@ -326,7 +370,7 @@ def test_training_step_creation_with_placeholders(pca_estimator):
                         'S3DataSource': {
                             'S3DataDistributionType': 'FullyReplicated',
                             'S3DataType': 'S3Prefix',
-                            'S3Uri.$': "$$.Execution.Input['Data']"
+                            'S3Uri.$': "$$.Execution.Input['data']",
                         }
                     }
                 }
@@ -337,7 +381,11 @@ def test_training_step_creation_with_placeholders(pca_estimator):
                 'TrialComponentDisplayName': 'Training'
             },
             'TrainingJobName.$': "$['JobName']",
-            'Tags': DEFAULT_TAGS_LIST
+            'Tags.$': "$$.Execution.Input['tags']",
+            'EnableInterContainerTrafficEncryption.$': "$$.Execution.Input['metric_definitions']",
+            'EnableManagedSpotTraining.$': "$$.Execution.Input['use_spot_instances']",
+            'EnableNetworkIsolation.$': "$$.Execution.Input['enable_network_isolation']",
+            'Environment.$': "$$.Execution.Input['environment']",
         },
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
         'End': True
@@ -1219,3 +1267,103 @@ def test_processing_step_creation_with_placeholders(sklearn_processor):
         'Resource': 'arn:aws:states:::sagemaker:createProcessingJob.sync',
         'End': True
     }
+
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_tuning_step_creation_with_framework(tensorflow_estimator):
+    hyperparameter_ranges = {
+        "extra_center_factor": IntegerParameter(4, 10),
+        "epochs": IntegerParameter(1, 2),
+        "init_method": CategoricalParameter(["kmeans++", "random"]),
+    }
+
+    tuner = HyperparameterTuner(
+        estimator=tensorflow_estimator,
+        objective_metric_name="test:msd",
+        hyperparameter_ranges=hyperparameter_ranges,
+        objective_type="Minimize",
+        max_jobs=2,
+        max_parallel_jobs=2,
+    )
+
+    step = TuningStep('Tuning',
+        tuner=tuner,
+        data={'train': 's3://sagemaker/train'},
+        job_name='tensorflow-job',
+        tags=DEFAULT_TAGS
+    )
+
+    state_machine_definition = step.to_dict()
+    # The sagemaker_job_name is generated - expected name will be taken from the generated definition
+    generated_sagemaker_job_name = state_machine_definition['Parameters']['TrainingJobDefinition']\
+        ['StaticHyperParameters']['sagemaker_job_name']
+    expected_definition = {
+        'Type': 'Task',
+        'Parameters': {
+            'HyperParameterTuningJobConfig': {
+                'HyperParameterTuningJobObjective': {
+                    'MetricName': 'test:msd',
+                    'Type': 'Minimize'
+                },
+                'ParameterRanges': {
+                    'CategoricalParameterRanges': [
+                        {
+                            'Name': 'init_method',
+                            'Values': ['"kmeans++"', '"random"']
+                        }],
+                    'ContinuousParameterRanges': [],
+                    'IntegerParameterRanges': [
+                        {
+                            'MaxValue': '10',
+                            'MinValue': '4',
+                            'Name': 'extra_center_factor',
+                            'ScalingType': 'Auto'
+                        },
+                        {
+                            'MaxValue': '2',
+                            'MinValue': '1',
+                            'Name': 'epochs',
+                            'ScalingType': 'Auto'
+                        }
+                    ]
+                },
+                'ResourceLimits': {'MaxNumberOfTrainingJobs': 2,
+                                   'MaxParallelTrainingJobs': 2},
+                'Strategy': 'Bayesian',
+                'TrainingJobEarlyStoppingType': 'Off'
+            },
+            'HyperParameterTuningJobName': 'tensorflow-job',
+            'Tags': [{'Key': 'Purpose', 'Value': 'unittests'}],
+            'TrainingJobDefinition': {
+                'AlgorithmSpecification': {
+                    'TrainingImage': '520713654638.dkr.ecr.us-east-1.amazonaws.com/sagemaker-tensorflow:1.13-gpu-py2',
+                    'TrainingInputMode': 'File'
+                },
+                'InputDataConfig': [{'ChannelName': 'train',
+                                     'DataSource': {'S3DataSource': {
+                                         'S3DataDistributionType': 'FullyReplicated',
+                                         'S3DataType': 'S3Prefix',
+                                         'S3Uri': 's3://sagemaker/train'}}}],
+                'OutputDataConfig': {'S3OutputPath': 's3://sagemaker/models'},
+                'ResourceConfig': {'InstanceCount': 1,
+                                   'InstanceType': 'ml.p2.xlarge',
+                                   'VolumeSizeInGB': 30},
+                'RoleArn': 'execution-role',
+                'StaticHyperParameters': {
+                    'checkpoint_path': '"s3://sagemaker/models/sagemaker-tensorflow/checkpoints"',
+                    'evaluation_steps': '100',
+                    'sagemaker_container_log_level': '20',
+                    'sagemaker_estimator_class_name': '"TensorFlow"',
+                    'sagemaker_estimator_module': '"sagemaker.tensorflow.estimator"',
+                    'sagemaker_job_name': generated_sagemaker_job_name,
+                    'sagemaker_program': '"tf_train.py"',
+                    'sagemaker_region': '"us-east-1"',
+                    'sagemaker_submit_directory': '"s3://sagemaker/source"',
+                    'training_steps': '1000'},
+                'StoppingCondition': {'MaxRuntimeInSeconds': 86400}}},
+        'Resource': 'arn:aws:states:::sagemaker:createHyperParameterTuningJob.sync',
+        'End': True
+    }
+
+    assert state_machine_definition == expected_definition

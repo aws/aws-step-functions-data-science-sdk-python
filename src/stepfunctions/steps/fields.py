@@ -59,8 +59,20 @@ class Field(Enum):
     HeartbeatSeconds     = 'heartbeat_seconds'
     HeartbeatSecondsPath = 'heartbeat_seconds_path'
 
-    # TODO: carolngu add all estimators placeholders here
     # Sagemaker step fields
+    # Processing Step: Processor
+    Role                = 'role'
+    ImageUri            = 'image_uri'
+    InstanceCount       = 'instance_count'
+    InstanceType        = 'instance_type'
+    EntryPoint          = 'entrypoint'
+    VolumeSizeInGB      = 'volume_size_in_gb'
+    VolumeKMSKey        = 'volume_kms_key'
+    OutputKMSKey        = 'output_kms_key'
+    MaxRuntimeInSeconds = 'max_runtime_in_seconds'
+    Env                 = 'env'
+    Tags                = 'tags'
+
     # Training Step: EstimatorBase
     Data                            = 'data'
     VolumeSize                      = 'volume_size'
@@ -99,19 +111,6 @@ class Field(Enum):
     MaxJobs                         = 'max_jobs'
     MaxParallelJobs                 = 'max_parallel_jobs'
     EarlyStoppingType               = 'early_stopping_type'
-
-    # Processing Step: Processor
-    Role                = 'role'
-    ImageUri            = 'image_uri'
-    InstanceCount       = 'instance_count'
-    InstanceType        = 'instance_type'
-    EntryPoint          = 'entrypoint'
-    VolumeSizeInGB      = 'volume_size_in_gb'
-    VolumeKMSKey        = 'volume_kms_key'
-    OutputKMSKey        = 'output_kms_key'
-    MaxRuntimeInSeconds = 'max_runtime_in_seconds'
-    Env                 = 'env'
-    Tags                = 'tags'
 
     # Retry and catch fields
     ErrorEquals      = 'error_equals'
