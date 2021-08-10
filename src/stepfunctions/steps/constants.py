@@ -13,8 +13,7 @@
 from enum import Enum
 from stepfunctions.steps.fields import Field
 
-# TODO - carolngu: What to do when you have lists? (see trainingStep data example)
-# This dict contains keys that map to
+# Path to SageMaker placeholder parameters
 placeholder_paths = {
     # Paths taken from https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateProcessingJob.html
     'ProcessingStep': {
@@ -72,27 +71,24 @@ placeholder_paths = {
     },
     # Paths taken from https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateTrainingJob.html
     'TrainingStep': {
+        Field.Role.value: ['RoleArn'],
         Field.InstanceCount.value: ['ResourceConfig', 'InstanceCount'],
         Field.InstanceType.value: ['ResourceConfig', 'InstanceType'],
         Field.VolumeSize.value: ['ResourceConfig', 'VolumeSizeInGB'],
         Field.VolumeKMSKey.value: ['ResourceConfig', 'VolumeKmsKeyId'],
         Field.MaxRun.value: ['StoppingCondition', 'MaxRuntimeInSeconds'],
-        Field.OutputKMSKey: ['OutputDataConfig', 'KmsKeyId'],
-        Field.Subnets.value: ['VpcConfig', 'Subnets'],  # No VpcConfig
+        Field.OutputKMSKey.value: ['OutputDataConfig', 'KmsKeyId'],
+        Field.Subnets.value: ['VpcConfig', 'Subnets'],
         Field.SecurityGroupIds.value: ['VpcConfig', 'SecurityGroupIds'],
-        # InputDataConfig is an array of Channel objects - we would need to treat them differently
-        # TODO - carolngu: if InputDataConfig, parse to find correct one - do we add new one?
-        # Field.ModelUri.value: ['InputDataConfig', 0, 'DataSource', 'S3DataSource', 'S3Uri']
-        # Field.Data.value: ['InputDataConfig',0 , 'DataSource', 'S3DataSource', 'S3Uri']
-        # Field.ModelChannelName.value: ['InputDataConfig', 0, 'ChannelName'],
         Field.MetricDefinitions.value: ['AlgorithmSpecification', 'MetricDefinitions'],
         Field.EncryptInterContainerTraffic.value: ['EnableInterContainerTrafficEncryption'],
         Field.UseSpotInstances.value: ['EnableManagedSpotTraining'],
         Field.MaxWait.value: ['StoppingCondition', 'MaxWaitTimeInSeconds'],
-        Field.CheckpointS3Uri.value: ['CheckpointConfig', 'S3Uri'],  # No CheckpointConfig
+        Field.CheckpointS3Uri.value: ['CheckpointConfig', 'S3Uri'],
         Field.CheckpointLocalPath.value: ['CheckpointConfig', 'LocalPath'],
         Field.EnableSagemakerMetrics.value: ['AlgorithmSpecification', 'EnableSageMakerMetricsTimeSeries'],
         Field.EnableNetworkIsolation.value: ['EnableNetworkIsolation'],
-        Field.Environment.value: ['Environment']
+        Field.Environment.value: ['Environment'],
+        Field.Tags.value: ['Tags'],
     }
 }

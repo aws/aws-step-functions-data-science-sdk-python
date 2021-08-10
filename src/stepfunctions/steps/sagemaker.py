@@ -67,28 +67,66 @@ class SageMakerTask(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        # TODO: carolngu treat all placeholders here - make sure work is not done twice
-        print(f"==== SageMakerTask incoming kwargs: {kwargs}")
         self._replace_sagemaker_placeholders(step_type, kwargs)
-
         if tags:
             self.set_tags_config(tags, kwargs[Field.Parameters.value], step_type)
 
-        print(f"==== SageMakerTask outgoing kwargs: {kwargs}")
         super(SageMakerTask, self).__init__(state_id, **kwargs)
 
 
     def allowed_fields(self):
-        # TODO carolngu: Add all fields
         sagemaker_fields = [
-            # Processing
+            # ProcessingStep: Processor
             Field.Role,
             Field.ImageUri,
             Field.InstanceCount,
             Field.InstanceType,
             Field.EntryPoint,
             Field.VolumeSizeInGB,
-            Field.Env
+            Field.VolumeKMSKey,
+            Field.OutputKMSKey,
+            Field.MaxRuntimeInSeconds,
+            Field.Env,
+            Field.Tags,
+
+            # TrainingStep: EstimatorBase
+            Field.Data,
+            Field.VolumeSize,
+            Field.MaxRun,
+            Field.Subnets,
+            Field.SecurityGroupIds,
+            Field.ModelUri,
+            Field.ModelChannelName,
+            Field.MetricDefinitions,
+            Field.EncryptInterContainerTraffic,
+            Field.UseSpotInstances,
+            Field.MaxWait,
+            Field.CheckpointS3Uri,
+            Field.CheckpointLocalPath,
+            Field.EnableSagemakerMetrics,
+            Field.EnableNetworkIsolation,
+            Field.Environment,
+
+            # Transform Step: Transformer
+            Field.Strategy,
+            Field.AssembleWith,
+            Field.Accept,
+            Field.MaxConcurrentTransforms,
+            Field.MaxPayload,
+
+            # ModelStep
+            Field.ModelData,
+            Field.Name,
+            Field.VpcConfig,
+            Field.ImageConfig,
+
+            # TuningStep: Tuner
+            Field.ObjectiveMetricName,
+            Field.HyperparameterRanges,
+            Field.ObjectiveType,
+            Field.MaxJobs,
+            Field.MaxParallelJobs,
+            Field.EarlyStoppingType,
         ]
 
         return super(SageMakerTask, self).allowed_fields() + sagemaker_fields
@@ -99,15 +137,12 @@ class SageMakerTask(Task):
         sagemaker_parameters = args[Field.Parameters.value]
         paths = placeholder_paths.get(step_type)
         treated_args = []
-        print(f" ARGS: {args.items()}")
+
         for arg_name, value in args.items():
             if arg_name in [Field.Parameters.value]:
                 continue
             if arg_name in paths.keys():
-                print("=====================================")
-                print(f"** REPLACE SAGEMAKER PLACEHOLDER FOR: {arg_name}")
                 path = paths.get(arg_name)
-                # TODO - carolngu: add exception handling
                 if self._set_placeholder(sagemaker_parameters, path, value, arg_name):
                     treated_args.append(arg_name)
 
@@ -116,22 +151,18 @@ class SageMakerTask(Task):
     @staticmethod
     def get_value_from_path(parameters, path):
         value_from_path = reduce(operator.getitem, path, parameters)
-        print(f"     from {value_from_path}")
         return value_from_path
         # return reduce(operator.getitem, path, parameters)
 
     @staticmethod
     def _set_placeholder(parameters, path, value, arg_name):
-        print(f"*** Setting placeholder for {arg_name}")
         is_set = False
         try:
             SageMakerTask.get_value_from_path(parameters, path[:-1])[path[-1]] = value
             is_set = True
         except KeyError as e:
             message = f"Invalid path {path} for {arg_name}: {e}"
-            print(message)
             raise InvalidPathToPlaceholderParameter(message)
-        print(f"     for value: {value}, path: {path}")
         return is_set
 
     @staticmethod
@@ -152,7 +183,7 @@ class SageMakerTask(Task):
             parameters['Tags'] = tags_dict_to_kv_list(tags)
 
 
-class TrainingStep(Task):
+class TrainingStep(SageMakerTask):
 
     """
     Creates a Task State to execute a `SageMaker Training Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTrainingJob.html>`_. The TrainingStep will also create a model by default, and the model shares the same name as the training job.
@@ -186,7 +217,7 @@ class TrainingStep(Task):
             mini_batch_size (int): Specify this argument only when estimator is a built-in estimator of an Amazon algorithm. For other estimators, batch size should be specified in the estimator.
             experiment_config (dict, optional): Specify the experiment config for the training. (Default: None)
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the training job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the training job and proceed to the next step. (default: True)
-            tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            tags (list[dict] or Placeholder, optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
             output_data_config_path (str or Placeholder, optional): S3 location for saving the training result (model
                 artifacts and output files). If specified, it overrides the `output_path` property of `estimator`.
         """
@@ -235,7 +266,6 @@ class TrainingStep(Task):
         if data is not None and is_data_placeholder:
             # Replace the 'S3Uri' key with one that supports JSONpath value.
             # Support for uri str only: The list will only contain 1 element
-            print(f"TrainingStep InputDataConfig: {parameters['InputDataConfig']}")
             data_uri = parameters['InputDataConfig'][0]['DataSource']['S3DataSource'].pop('S3Uri', None)
             parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = data_uri
 
@@ -250,12 +280,8 @@ class TrainingStep(Task):
         if 'S3Operations' in parameters:
             del parameters['S3Operations']
 
-        if tags:
-            parameters['Tags'] = tags_dict_to_kv_list(tags)
-
-        print(f"TUNINGSTEP parameters: {parameters}")
         kwargs[Field.Parameters.value] = parameters
-        super(TrainingStep, self).__init__(state_id, **kwargs)
+        super(TrainingStep, self).__init__(state_id, __class__.__name__, tags, **kwargs)
 
     def get_expected_model(self, model_name=None):
         """
@@ -425,7 +451,6 @@ class ModelStep(SageMakerTask):
 
         kwargs[Field.Resource.value] = get_service_integration_arn(SAGEMAKER_SERVICE_NAME,
                                                                    SageMakerApi.CreateModel)
-        print(f"MODELSTEP params: {parameters}")
         super(ModelStep, self).__init__(state_id, __class__.__name__, tags, **kwargs)
 
 
