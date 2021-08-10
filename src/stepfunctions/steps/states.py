@@ -621,10 +621,7 @@ class Task(State):
             Field.HeartbeatSecondsPath,
             Field.Resource,
             Field.Retry,
-            Field.Catch,
-
-            # Processing
-            Field.ImageUri
+            Field.Catch
         ]
 
 
