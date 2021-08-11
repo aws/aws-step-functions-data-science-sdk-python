@@ -21,13 +21,13 @@ def test_workflow_input_placeholder():
 
     workflow_input = ExecutionInput()
     test_step = Pass(
-        state_id='StateOne',
+        state_id="StateOne",
         parameters={
-            'ParamA': 'SampleValueA',
-            'ParamB': workflow_input,
-            'ParamC': workflow_input['Key01'],
-            'ParamD': workflow_input['Key02']['Key03'],
-            'ParamE': workflow_input['Key01']['Key03'],
+            "ParamA": "SampleValueA",
+            "ParamB": workflow_input,
+            "ParamC": workflow_input["Key01"],
+            "ParamD": workflow_input["Key02"]["Key03"],
+            "ParamE": workflow_input["Key01"]["Key03"],
         }
     )
 
@@ -48,14 +48,14 @@ def test_workflow_input_placeholder():
 def test_step_input_placeholder():
 
     test_step_01 = Pass(
-        state_id='StateOne'
+        state_id="StateOne"
     )
 
     test_step_02 = Pass(
-        state_id='StateTwo',
+        state_id="StateTwo",
         parameters={
-            'ParamA': test_step_01.output(),
-            'ParamB': test_step_01.output()["Response"]["Key02"],
+            "ParamA": test_step_01.output(),
+            "ParamB": test_step_01.output()["Response"]["Key02"],
             "ParamC": "SampleValueC"
         }
     )
@@ -77,26 +77,26 @@ def test_workflow_with_placeholders():
     workflow_input = ExecutionInput()
 
     test_step_01 = Pass(
-        state_id='StateOne',
+        state_id="StateOne",
         parameters={
-            'ParamA': workflow_input['Key02']['Key03'],
-            'ParamD': workflow_input['Key01']['Key03'],
+            "ParamA": workflow_input["Key02"]["Key03"],
+            "ParamD": workflow_input["Key01"]["Key03"],
         }
     )
 
     test_step_02 = Pass(
-        state_id='StateTwo',
+        state_id="StateTwo",
         parameters={
-            'ParamC': workflow_input["Key05"],
+            "ParamC": workflow_input["Key05"],
             "ParamB": "SampleValueB",
             "ParamE": test_step_01.output()["Response"]["Key04"]
         }
     )
 
     test_step_03 = Pass(
-        state_id='StateThree',
+        state_id="StateThree",
         parameters={
-            'ParamG': "SampleValueG",
+            "ParamG": "SampleValueG",
             "ParamF": workflow_input["Key06"],
             "ParamH": "SampleValueH"
         }
@@ -144,26 +144,26 @@ def test_step_input_order_validation():
     workflow_input = ExecutionInput()
 
     test_step_01 = Pass(
-        state_id='StateOne',
+        state_id="StateOne",
         parameters={
-            'ParamA': workflow_input['Key02']['Key03'],
-            'ParamD': workflow_input['Key01']['Key03'],
+            "ParamA": workflow_input["Key02"]["Key03"],
+            "ParamD": workflow_input["Key01"]["Key03"],
         }
     )
 
     test_step_02 = Pass(
-        state_id='StateTwo',
+        state_id="StateTwo",
         parameters={
-            'ParamC': workflow_input["Key05"],
+            "ParamC": workflow_input["Key05"],
             "ParamB": "SampleValueB",
             "ParamE": test_step_01.output()["Response"]["Key04"]
         }
     )
 
     test_step_03 = Pass(
-        state_id='StateThree',
+        state_id="StateThree",
         parameters={
-            'ParamG': "SampleValueG",
+            "ParamG": "SampleValueG",
             "ParamF": workflow_input["Key06"],
             "ParamH": "SampleValueH"
         }
@@ -179,17 +179,17 @@ def test_map_state_with_placeholders():
     step_result = StepResult()
 
     map_state = Map(
-        state_id='MapState01',
+        state_id="MapState01",
         result_selector={
-            'foo': step_result['foo'],
-            'bar': step_result['bar1']['bar2']
+            "foo": step_result["foo"],
+            "bar": step_result["bar1"]["bar2"]
         }
     )
     iterator_state = Pass(
-        'TrainIterator',
+        "TrainIterator",
         parameters={
-            'ParamA': map_state.output()['X']["Y"],
-            'ParamB': workflow_input["Key01"]["Key02"]["Key03"]
+            "ParamA": map_state.output()["X"]["Y"],
+            "ParamB": workflow_input["Key01"]["Key02"]["Key03"]
     })
 
     map_state.attach_iterator(iterator_state)
@@ -230,32 +230,32 @@ def test_parallel_state_with_placeholders():
     step_result = StepResult()
 
     parallel_state = Parallel(
-        state_id='ParallelState01',
+        state_id="ParallelState01",
         result_selector={
-            'foo': step_result['foo'],
-            'bar': step_result['bar1']['bar2']
+            "foo": step_result["foo"],
+            "bar": step_result["bar1"]["bar2"]
         }
     )
 
     branch_A = Pass(
-        'Branch_A',
+        "Branch_A",
         parameters={
-            'ParamA': parallel_state.output()['A']["B"],
-            'ParamB': workflow_input["Key01"]
+            "ParamA": parallel_state.output()["A"]["B"],
+            "ParamB": workflow_input["Key01"]
     })
 
     branch_B = Pass(
-        'Branch_B',
+        "Branch_B",
         parameters={
-            'ParamA': "TestValue",
-            'ParamB': parallel_state.output()["Response"]["Key"]["State"]
+            "ParamA": "TestValue",
+            "ParamB": parallel_state.output()["Response"]["Key"]["State"]
     })
 
     branch_C = Pass(
-        'Branch_C',
+        "Branch_C",
         parameters={
-            'ParamA': parallel_state.output()['A']["B"].get("C", float),
-            'ParamB': "HelloWorld"
+            "ParamA": parallel_state.output()["A"]["B"].get("C", float),
+            "ParamB": "HelloWorld"
     })
 
     parallel_state.add_branch(branch_A)
@@ -325,13 +325,13 @@ def test_parallel_state_with_placeholders():
 
 def test_choice_state_with_placeholders():
 
-    first_state = Task('FirstState', resource='arn:aws:lambda:us-east-1:1234567890:function:FirstState')
-    retry = Chain([Pass('Retry'), Pass('Cleanup'), first_state])
+    first_state = Task("FirstState", resource="arn:aws:lambda:us-east-1:1234567890:function:FirstState")
+    retry = Chain([Pass("Retry"), Pass("Cleanup"), first_state])
 
-    choice_state = Choice('Is Completed?')
+    choice_state = Choice("Is Completed?")
     choice_state.add_choice(
         ChoiceRule.BooleanEquals(choice_state.output()["Completed"], True),
-        Succeed('Complete')
+        Succeed("Complete")
     )
     choice_state.add_choice(
         ChoiceRule.BooleanEquals(choice_state.output()["Completed"], False),
@@ -384,7 +384,7 @@ def test_choice_state_with_placeholders():
 def test_schema_validation_for_step_input():
 
     test_step_01 = Pass(
-        state_id='StateOne',
+        state_id="StateOne",
         output_schema={
             "Response": {
                 "Key01": str
@@ -394,18 +394,18 @@ def test_schema_validation_for_step_input():
 
     with pytest.raises(ValueError):
         test_step_02 = Pass(
-            state_id='StateTwo',
+            state_id="StateTwo",
             parameters={
-                'ParamA': test_step_01.output()["Response"]["Key02"],
+                "ParamA": test_step_01.output()["Response"]["Key02"],
                 "ParamB": "SampleValueB"
             }
         )
 
     with pytest.raises(ValueError):
         test_step_03 = Pass(
-            state_id='StateTwo',
+            state_id="StateTwo",
             parameters={
-                'ParamA': test_step_01.output()["Response"].get("Key01", float),
+                "ParamA": test_step_01.output()["Response"].get("Key01", float),
                 "ParamB": "SampleValueB"
             }
         )
@@ -414,9 +414,9 @@ def test_step_result_placeholder():
     step_result = StepResult()
 
     test_step_01 = Task(
-        state_id='StateOne',
+        state_id="StateOne",
         result_selector={
-            'ParamA': step_result["foo"],
+            "ParamA": step_result["foo"],
             "ParamC": "SampleValueC"
         }
     )
@@ -444,18 +444,18 @@ def test_schema_validation_for_step_result():
 
     with pytest.raises(ValueError):
         test_step_01 = Task(
-            state_id='StateOne',
+            state_id="StateOne",
             result_selector={
-                'ParamA': step_result["Payload"]["Key02"],
+                "ParamA": step_result["Payload"]["Key02"],
                 "ParamB": "SampleValueB"
             }
         )
 
     with pytest.raises(ValueError):
         test_step_02 = Task(
-            state_id='StateOne',
+            state_id="StateOne",
             parameters={
-                'ParamA': step_result["Payload"].get("Key01", float),
+                "ParamA": step_result["Payload"].get("Key01", float),
                 "ParamB": "SampleValueB"
             }
         )
@@ -471,9 +471,9 @@ def test_schema_validation_success_for_step_result():
 
     try:
         test_step = Task(
-            state_id='StateOne',
+            state_id="StateOne",
             result_selector={
-                'ParamA': step_result["Payload"]["Key01"]
+                "ParamA": step_result["Payload"]["Key01"]
             }
         )
     except:
