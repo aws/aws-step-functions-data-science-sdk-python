@@ -580,6 +580,10 @@ class ProcessingStep(SageMakerTask):
 
     """
     Creates a Task State to execute a SageMaker Processing Job.
+
+    The following properties can be passed down as kwargs to the sagemaker.processing.Processor to be used dynamically
+    in the processing job (compatible with Placeholders): role, image_uri, instance_count, instance_type,
+    volume_size_in_gb, volume_kms_key, output_kms_key
     """
 
     def __init__(self, state_id, processor, job_name, inputs=None, outputs=None, experiment_config=None,
