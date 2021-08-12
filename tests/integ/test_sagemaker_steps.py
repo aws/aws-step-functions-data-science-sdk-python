@@ -29,7 +29,9 @@ from sagemaker.parameter import IntegerParameter, CategoricalParameter
 from sagemaker.tuner import HyperparameterTuner
 from sagemaker.processing import ProcessingInput, ProcessingOutput
 
+from stepfunctions.inputs import ExecutionInput
 from stepfunctions.steps import Chain
+from stepfunctions.steps.fields import Field
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, TuningStep, ProcessingStep
 from stepfunctions.workflow import Workflow
 
@@ -344,6 +346,88 @@ def test_processing_step(sklearn_processor_fixture, sagemaker_session, sfn_clien
         
         # Execute workflow
         execution = workflow.execute()
+        execution_output = execution.get_output(wait=True)
+
+        # Check workflow output
+        assert execution_output.get("ProcessingJobStatus") == "Completed"
+
+        # Cleanup
+        state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
+        # End of Cleanup
+
+
+def test_processing_step_with_placeholders(sklearn_processor_fixture, sagemaker_session, sfn_client, sfn_role_arn,
+                                           sagemaker_role_arn):
+    region = boto3.session.Session().region_name
+    input_data = 's3://sagemaker-sample-data-{}/processing/census/census-income.csv'.format(region)
+
+    input_s3 = sagemaker_session.upload_data(
+        path=os.path.join(DATA_DIR, 'sklearn_processing'),
+        bucket=sagemaker_session.default_bucket(),
+        key_prefix='integ-test-data/sklearn_processing/code'
+    )
+
+    output_s3 = 's3://' + sagemaker_session.default_bucket() + '/integ-test-data/sklearn_processing'
+
+    inputs = [
+        ProcessingInput(source=input_data, destination='/opt/ml/processing/input', input_name='input-1'),
+        ProcessingInput(source=input_s3 + '/preprocessor.py', destination='/opt/ml/processing/input/code',
+                        input_name='code'),
+    ]
+
+    outputs = [
+        ProcessingOutput(source='/opt/ml/processing/train', destination=output_s3 + '/train_data',
+                         output_name='train_data'),
+        ProcessingOutput(source='/opt/ml/processing/test', destination=output_s3 + '/test_data',
+                         output_name='test_data'),
+    ]
+
+    # Build workflow definition
+    execution_input = ExecutionInput(schema={
+        Field.ImageUri.value: str,
+        Field.InstanceCount.value: int,
+        Field.Entrypoint.value: str,
+        Field.Role.value: str,
+        Field.VolumeSizeInGB.value: int,
+        Field.MaxRuntimeInSeconds.value: int
+    })
+
+    job_name = generate_job_name()
+    processing_step = ProcessingStep('create_processing_job_step',
+                                     processor=sklearn_processor_fixture,
+                                     job_name=job_name,
+                                     inputs=inputs,
+                                     outputs=outputs,
+                                     container_arguments=['--train-test-split-ratio', '0.2'],
+                                     container_entrypoint=execution_input[Field.Entrypoint.value],
+                                     image_uri=execution_input[Field.ImageUri.value],
+                                     instance_count=execution_input[Field.InstanceCount.value],
+                                     role=execution_input[Field.Role.value],
+                                     volume_size_in_gb=execution_input[Field.VolumeSizeInGB.value],
+                                     max_runtime_in_seconds=execution_input[Field.MaxRuntimeInSeconds.value]
+                                     )
+    workflow_graph = Chain([processing_step])
+
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
+        # Create workflow and check definition
+        workflow = create_workflow_and_check_definition(
+            workflow_graph=workflow_graph,
+            workflow_name=unique_name_from_base("integ-test-processing-step-workflow"),
+            sfn_client=sfn_client,
+            sfn_role_arn=sfn_role_arn
+        )
+
+        execution_input = {
+            Field.ImageUri.value: '683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.20.0-cpu-py3',
+            Field.InstanceCount.value: 1,
+            Field.Entrypoint.value: ['python3', '/opt/ml/processing/input/code/preprocessor.py'],
+            Field.Role.value: sagemaker_role_arn,
+            Field.VolumeSizeInGB.value: 30,
+            Field.MaxRuntimeInSeconds.value: 500
+        }
+
+        # Execute workflow
+        execution = workflow.execute(inputs=execution_input)
         execution_output = execution.get_output(wait=True)
 
         # Check workflow output
