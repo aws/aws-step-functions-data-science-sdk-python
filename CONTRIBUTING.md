@@ -190,14 +190,15 @@ follow the steps described in this section.
 1. If you are using `PyCharm Professional Edition`, go to _Preferences → Build, Execution, Deployment → Python Debugger_ and set the options with following values:
    
    | Option                                                      | Value                 |
-   |------------------------------------------------------------:|:----------------------|
+   |:------------------------------------------------------------ |:----------------------|
    | Attach subprocess automatically while debugging             | `Enabled`             |
    | Collect run-time types information for code insight         | `Enabled`             |
    | Gevent compatible                                           | `Disabled`            |
    | Drop into debugger on failed tests                          | `Enabled`             |
    | PyQt compatible                                             | `Auto`                |
    | For Attach to Process show processes with names containing  | `python`              |
-   This will allow you to break into all subprocesses of the process being debugged and preserve functions types while debugging.
+   
+    This will allow you to break into all subprocesses of the process being debugged and preserve functions types while debugging.
 1. Debug tests in PyCharm as per [Running Unit Tests and Debugging in PyCharm](#running-unit-tests-and-debugging-in-pycharm)
 
 _Note: This setup was tested and confirmed to work with
