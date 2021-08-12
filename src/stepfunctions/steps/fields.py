@@ -59,10 +59,23 @@ class Field(Enum):
     HeartbeatSeconds     = 'heartbeat_seconds'
     HeartbeatSecondsPath = 'heartbeat_seconds_path'
 
-
     # Retry and catch fields
     ErrorEquals      = 'error_equals'
     IntervalSeconds  = 'interval_seconds'
     MaxAttempts      = 'max_attempts'
     BackoffRate      = 'backoff_rate'
     NextStep         = 'next_step'
+
+    # Sagemaker step fields
+    # Processing Step: Processor
+    Role                = 'role'
+    ImageUri            = 'image_uri'
+    InstanceCount       = 'instance_count'
+    InstanceType        = 'instance_type'
+    Entrypoint          = 'entrypoint'
+    VolumeSizeInGB      = 'volume_size_in_gb'
+    VolumeKMSKey        = 'volume_kms_key'
+    OutputKMSKey        = 'output_kms_key'
+    MaxRuntimeInSeconds = 'max_runtime_in_seconds'
+    Env                 = 'env'
+    Tags                = 'tags'
