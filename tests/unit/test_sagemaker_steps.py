@@ -968,21 +968,46 @@ def test_processing_step_creation(sklearn_processor):
 
 def test_processing_step_creation_with_placeholders(sklearn_processor):
     execution_input = ExecutionInput(schema={
-        Field.ImageUri.value: str,
-        Field.InstanceCount.value: int,
-        Field.Entrypoint.value: str,
-        Field.OutputKMSKey.value: str,
-        Field.Role.value: str,
-        Field.Env.value: str,
-        Field.VolumeSizeInGB.value: int,
-        Field.VolumeKMSKey.value: str,
-        Field.MaxRuntimeInSeconds.value: int,
-        Field.Tags.value: [{str: str}]
+        'image_uri': str,
+        'instance_count': int,
+        'entrypoint': str,
+        'output_kms_key': str,
+        'role': str,
+        'env': str,
+        'volume_size_in_gb': int,
+        'volume_kms_key': str,
+        'max_runtime_in_seconds': int,
+        'tags': [{str: str}],
+        'container_arguments': [str]
     })
 
     step_input = StepInput(schema={
-        Field.InstanceType.value: str
+        'instance_type': str
     })
+
+    parameters = {
+        'AppSpecification': {
+            'ContainerEntrypoint': execution_input['entrypoint'],
+            'ImageUri': execution_input['image_uri']
+        },
+        'Environment': execution_input['env'],
+        'ProcessingOutputConfig': {
+            'KmsKeyId': execution_input['output_kms_key']
+        },
+        'ProcessingResources': {
+            'ClusterConfig': {
+                'InstanceCount': execution_input['instance_count'],
+                'InstanceType': step_input['instance_type'],
+                'VolumeKmsKeyId': execution_input['volume_kms_key'],
+                'VolumeSizeInGB': execution_input['volume_size_in_gb']
+            }
+        },
+        'RoleArn': execution_input['role'],
+        'StoppingCondition': {
+            'MaxRuntimeInSeconds': execution_input['max_runtime_in_seconds']
+        },
+        'Tags': execution_input['tags']
+    }
 
     inputs = [ProcessingInput(source='dataset.csv', destination='/opt/ml/processing/input')]
     outputs = [
@@ -994,24 +1019,18 @@ def test_processing_step_creation_with_placeholders(sklearn_processor):
         'Feature Transformation',
         sklearn_processor,
         'MyProcessingJob',
-        container_entrypoint=execution_input[Field.Entrypoint.value],
-        kms_key_id=execution_input[Field.OutputKMSKey.value],
+        container_entrypoint=execution_input['entrypoint'],
+        container_arguments=execution_input['container_arguments'],
+        kms_key_id=execution_input['output_kms_key'],
         inputs=inputs,
         outputs=outputs,
-        image_uri=execution_input[Field.ImageUri.value],
-        instance_count=execution_input[Field.InstanceCount.value],
-        instance_type=step_input[Field.InstanceType.value],
-        role=execution_input[Field.Role.value],
-        env=execution_input[Field.Env.value],
-        volume_size_in_gb=execution_input[Field.VolumeSizeInGB.value],
-        volume_kms_key=execution_input[Field.VolumeKMSKey.value],
-        max_runtime_in_seconds=execution_input[Field.MaxRuntimeInSeconds.value],
-        tags=execution_input[Field.Tags.value],
+        parameters=parameters
     )
     assert step.to_dict() == {
         'Type': 'Task',
         'Parameters': {
             'AppSpecification': {
+                'ContainerArguments.$': "$$.Execution.Input['container_arguments']",
                 'ContainerEntrypoint.$': "$$.Execution.Input['entrypoint']",
                 'ImageUri.$': "$$.Execution.Input['image_uri']"
             },
