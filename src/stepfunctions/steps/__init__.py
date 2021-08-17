@@ -21,12 +21,14 @@ from stepfunctions.steps.compute import LambdaStep, BatchSubmitJobStep, GlueStar
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
 
 from stepfunctions.steps.service import (
+    EksCallStep,
     EksCreateClusterStep,
     EksCreateFargateProfileStep,
     EksCreateNodeGroupStep,
     EksDeleteClusterStep,
     EksDeleteFargateProfileStep,
-    EksDeleteNodeGroupStep,
+    EksDeleteNodegroupStep,
+    EksRunJobStep,
 )
 from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateClusterStep, EmrAddStepStep, EmrCancelStepStep, EmrSetClusterTerminationProtectionStep, EmrModifyInstanceFleetByNameStep, EmrModifyInstanceGroupByNameStep
 from stepfunctions.steps.service import EventBridgePutEventsStep

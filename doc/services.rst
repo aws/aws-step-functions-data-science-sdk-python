@@ -34,6 +34,8 @@ Amazon DynamoDB
 
 Amazon EKS
 ----------
+.. autoclass:: stepfunctions.steps.service.EksCallStep
+
 .. autoclass:: stepfunctions.steps.service.EksCreateClusterStep
 
 .. autoclass:: stepfunctions.steps.service.EksCreateFargateProfileStep
@@ -44,7 +46,10 @@ Amazon EKS
 
 .. autoclass:: stepfunctions.steps.service.EksDeleteFargateProfileStep
 
-.. autoclass:: stepfunctions.steps.service.EksDeleteNodeGroupStep
+.. autoclass:: stepfunctions.steps.service.EksDeleteNodegroupStep
+
+.. autoclass:: stepfunctions.steps.service.EksRunJobStep
+
 
 Amazon EMR
 -----------

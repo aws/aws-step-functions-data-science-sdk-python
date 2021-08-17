@@ -17,12 +17,14 @@ import boto3
 from unittest.mock import patch
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
 from stepfunctions.steps.service import (
+    EksCallStep,
     EksCreateClusterStep,
     EksCreateFargateProfileStep,
     EksCreateNodeGroupStep,
     EksDeleteClusterStep,
     EksDeleteFargateProfileStep,
-    EksDeleteNodeGroupStep,
+    EksDeleteNodegroupStep,
+    EksRunJobStep,
 )
 from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateClusterStep, EmrAddStepStep, EmrCancelStepStep, EmrSetClusterTerminationProtectionStep, EmrModifyInstanceFleetByNameStep, EmrModifyInstanceGroupByNameStep
 from stepfunctions.steps.service import EventBridgePutEventsStep
@@ -942,7 +944,7 @@ def test_eks_create_node_group_step_creation_sync():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_node_group_step_creation():
-    step = EksDeleteNodeGroupStep("Delete Node Group", wait_for_completion=False, parameters={
+    step = EksDeleteNodegroupStep("Delete Node Group", wait_for_completion=False, parameters={
         'ClusterName': 'MyCluster',
         'NodegroupName': 'MyNodegroup'
     })
@@ -960,7 +962,7 @@ def test_eks_delete_node_group_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_node_group_step_creation_sync():
-    step = EksDeleteNodeGroupStep("Delete Node Group sync", parameters={
+    step = EksDeleteNodegroupStep("Delete Node Group sync", parameters={
         'ClusterName': 'MyCluster',
         'NodegroupName': 'MyNodegroup'
     })
@@ -974,3 +976,222 @@ def test_eks_delete_node_group_step_creation_sync():
         },
         'End': True
     }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_run_job_step_creation():
+    step = EksRunJobStep("Run Job", wait_for_completion=False, parameters={
+        'ClusterName': 'MyCluster',
+        'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
+        'Endpoint': 'https://AKIAIOSFODNN7EXAMPLE.yl4.us-east-1.eks.amazonaws.com',
+        'LogOptions': {
+            'RetrieveLogs': True
+        },
+        'Job': {
+            'apiVersion': 'batch/v1',
+            'kind': 'Job',
+            'metadata': {
+                'name': 'example-job'
+            },
+            'spec': {
+                'backoffLimit': 0,
+                'template': {
+                    'metadata': {
+                        'name': 'example-job'
+                    },
+                    'spec': {
+                        'containers': [
+                            {
+                                'name': 'pi-2000',
+                                'image': 'perl',
+                                'command': ['perl'],
+                                'args': [
+                                    '-Mbignum=bpi',
+                                    '-wle',
+                                    'print bpi(2000)'
+                                ]
+                            }
+                        ],
+                        'restartPolicy': 'Never'
+                    }
+                }
+            }
+        }
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:runJob',
+        'Parameters': {
+            'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
+            'ClusterName': 'MyCluster',
+            'Endpoint': 'https://AKIAIOSFODNN7EXAMPLE.yl4.us-east-1.eks.amazonaws.com',
+            'Job': {
+                'apiVersion': 'batch/v1',
+                'kind': 'Job',
+                'metadata': {'name': 'example-job'},
+                'spec': {
+                    'backoffLimit': 0,
+                    'template': {
+                        'metadata': {'name': 'example-job'},
+                        'spec': {
+                            'containers': [{
+                                'args': ['-Mbignum=bpi',
+                                         '-wle',
+                                         'print '
+                                         'bpi(2000)'],
+                                'command': ['perl'],
+                                'image': 'perl',
+                                'name': 'pi-2000'}],
+                            'restartPolicy': 'Never'}
+                    }
+                }
+            },
+            'LogOptions': {'RetrieveLogs': True}
+        },
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_run_job_step_creation_sync():
+    step = EksRunJobStep("Run Job sync", parameters={
+        'ClusterName': 'MyCluster',
+        'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
+        'Endpoint': 'https://AKIAIOSFODNN7EXAMPLE.yl4.us-east-1.eks.amazonaws.com',
+        'LogOptions': {
+            'RetrieveLogs': True
+        },
+        'Job': {
+            'apiVersion': 'batch/v1',
+            'kind': 'Job',
+            'metadata': {
+                'name': 'example-job'
+            },
+            'spec': {
+                'backoffLimit': 0,
+                'template': {
+                    'metadata': {
+                        'name': 'example-job'
+                    },
+                    'spec': {
+                        'containers': [
+                            {
+                                'name': 'pi-2000',
+                                'image': 'perl',
+                                'command': ['perl'],
+                                'args': [
+                                    '-Mbignum=bpi',
+                                    '-wle',
+                                    'print bpi(2000)'
+                                ]
+                            }
+                        ],
+                        'restartPolicy': 'Never'
+                    }
+                }
+            }
+        }
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:runJob.sync',
+        'Parameters': {
+            'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
+            'ClusterName': 'MyCluster',
+            'Endpoint': 'https://AKIAIOSFODNN7EXAMPLE.yl4.us-east-1.eks.amazonaws.com',
+            'Job': {
+                'apiVersion': 'batch/v1',
+                'kind': 'Job',
+                'metadata': {'name': 'example-job'},
+                'spec': {
+                    'backoffLimit': 0,
+                    'template': {
+                        'metadata': {'name': 'example-job'},
+                        'spec': {
+                            'containers': [{
+                                'args': ['-Mbignum=bpi',
+                                         '-wle',
+                                         'print '
+                                         'bpi(2000)'],
+                                'command': ['perl'],
+                                'image': 'perl',
+                                'name': 'pi-2000'}],
+                            'restartPolicy': 'Never'}
+                    }
+                }
+            },
+            'LogOptions': {'RetrieveLogs': True}
+        },
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_call_step_creation():
+    step = EksCallStep("Call", wait_for_completion=False, parameters={
+        'ClusterName': 'MyCluster',
+        'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
+        'Endpoint': 'https://444455556666.yl4.us-east-1.eks.amazonaws.com',
+        'Method': 'GET',
+        'Path': '/api/v1/namespaces/default/pods',
+        'QueryParameters': {
+            'labelSelector': [
+                'job-name=example-job'
+            ]
+        }
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:call',
+        'Parameters': {
+            'ClusterName': 'MyCluster',
+            'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
+            'Endpoint': 'https://444455556666.yl4.us-east-1.eks.amazonaws.com',
+            'Method': 'GET',
+            'Path': '/api/v1/namespaces/default/pods',
+            'QueryParameters': {
+                'labelSelector': [
+                    'job-name=example-job'
+                ]
+            }
+        },
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_call_step_creation_sync():
+    step = EksCallStep("Call sync", parameters={
+        'ClusterName': 'MyCluster',
+        'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
+        'Endpoint': 'https://444455556666.yl4.us-east-1.eks.amazonaws.com',
+        'Method': 'GET',
+        'Path': '/api/v1/namespaces/default/pods',
+        'QueryParameters': {
+            'labelSelector': [
+                'job-name=example-job'
+            ]
+        }
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:call.sync',
+        'Parameters': {
+            'ClusterName': 'MyCluster',
+            'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
+            'Endpoint': 'https://444455556666.yl4.us-east-1.eks.amazonaws.com',
+            'Method': 'GET',
+            'Path': '/api/v1/namespaces/default/pods',
+            'QueryParameters': {
+                'labelSelector': [
+                    'job-name=example-job'
+                ]
+            }
+        },
+        'End': True
+    }
+
