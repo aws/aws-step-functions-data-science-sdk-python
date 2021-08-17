@@ -58,7 +58,7 @@ def merge_dicts(first, second, first_name, second_name):
             if key in first:
                 if isinstance(first[key], dict) and isinstance(second[key], dict):
                     merge_dicts(first[key], second[key], first_name, second_name)
-                elif first[key] is value:
+                elif first[key] == value:
                     pass
                 else:
                     logger.info(
