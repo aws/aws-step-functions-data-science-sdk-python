@@ -31,7 +31,6 @@ from sagemaker.processing import ProcessingInput, ProcessingOutput
 
 from stepfunctions.inputs import ExecutionInput
 from stepfunctions.steps import Chain
-from stepfunctions.steps.fields import Field
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, TuningStep, ProcessingStep
 from stepfunctions.workflow import Workflow
 
@@ -384,13 +383,31 @@ def test_processing_step_with_placeholders(sklearn_processor_fixture, sagemaker_
 
     # Build workflow definition
     execution_input = ExecutionInput(schema={
-        Field.ImageUri.value: str,
-        Field.InstanceCount.value: int,
-        Field.Entrypoint.value: str,
-        Field.Role.value: str,
-        Field.VolumeSizeInGB.value: int,
-        Field.MaxRuntimeInSeconds.value: int
+        'image_uri': str,
+        'instance_count': int,
+        'entrypoint': str,
+        'role': str,
+        'volume_size_in_gb': int,
+        'max_runtime_in_seconds': int,
+        'container_arguments': [str],
     })
+
+    parameters = {
+        'AppSpecification': {
+            'ContainerEntrypoint': execution_input['entrypoint'],
+            'ImageUri': execution_input['image_uri']
+        },
+        'ProcessingResources': {
+            'ClusterConfig': {
+                'InstanceCount': execution_input['instance_count'],
+                'VolumeSizeInGB': execution_input['volume_size_in_gb']
+            }
+        },
+        'RoleArn': execution_input['role'],
+        'StoppingCondition': {
+            'MaxRuntimeInSeconds': execution_input['max_runtime_in_seconds']
+        }
+    }
 
     job_name = generate_job_name()
     processing_step = ProcessingStep('create_processing_job_step',
@@ -398,13 +415,9 @@ def test_processing_step_with_placeholders(sklearn_processor_fixture, sagemaker_
                                      job_name=job_name,
                                      inputs=inputs,
                                      outputs=outputs,
-                                     container_arguments=['--train-test-split-ratio', '0.2'],
-                                     container_entrypoint=execution_input[Field.Entrypoint.value],
-                                     image_uri=execution_input[Field.ImageUri.value],
-                                     instance_count=execution_input[Field.InstanceCount.value],
-                                     role=execution_input[Field.Role.value],
-                                     volume_size_in_gb=execution_input[Field.VolumeSizeInGB.value],
-                                     max_runtime_in_seconds=execution_input[Field.MaxRuntimeInSeconds.value]
+                                     container_arguments=execution_input['container_arguments'],
+                                     container_entrypoint=execution_input['entrypoint'],
+                                     parameters=parameters
                                      )
     workflow_graph = Chain([processing_step])
 
@@ -418,12 +431,13 @@ def test_processing_step_with_placeholders(sklearn_processor_fixture, sagemaker_
         )
 
         execution_input = {
-            Field.ImageUri.value: '683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.20.0-cpu-py3',
-            Field.InstanceCount.value: 1,
-            Field.Entrypoint.value: ['python3', '/opt/ml/processing/input/code/preprocessor.py'],
-            Field.Role.value: sagemaker_role_arn,
-            Field.VolumeSizeInGB.value: 30,
-            Field.MaxRuntimeInSeconds.value: 500
+            'image_uri': '683313688378.dkr.ecr.us-east-1.amazonaws.com/sagemaker-scikit-learn:0.20.0-cpu-py3',
+            'instance_count': 1,
+            'entrypoint': ['python3', '/opt/ml/processing/input/code/preprocessor.py'],
+            'role': sagemaker_role_arn,
+            'volume_size_in_gb': 30,
+            'max_runtime_in_seconds': 500,
+            'container_arguments': ['--train-test-split-ratio', '0.2']
         }
 
         # Execute workflow

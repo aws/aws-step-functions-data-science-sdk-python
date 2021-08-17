@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 import boto3
 import logging
+from stepfunctions.inputs import Placeholder
 
 logger = logging.getLogger('stepfunctions')
 
@@ -45,3 +46,24 @@ def get_aws_partition():
             return cur_partition
 
     return cur_partition
+
+
+def merge_dicts(first, second, first_name, second_name):
+    """
+    Merges first and second dictionaries into the first one.
+    Values in the first dict are updated with the values of the second one.
+    """
+    if all(isinstance(d, dict) for d in [first, second]):
+        for key, value in second.items():
+            if key in first:
+                if isinstance(first[key], dict) and isinstance(second[key], dict):
+                    merge_dicts(first[key], second[key], first_name, second_name)
+                elif first[key] is value:
+                    pass
+                else:
+                    logger.info(
+                        f"{first_name} property: <{key}> with value: <{first[key]}>"
+                        f" will be overwritten with value provided in {second_name} : <{value}>")
+                    first[key] = second[key]
+            else:
+                first[key] = second[key]
