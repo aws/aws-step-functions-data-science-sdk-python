@@ -28,7 +28,6 @@ from stepfunctions.steps.service import (
     EksDeleteFargateProfileStep,
     EksDeleteNodeGroupStep,
 )
-from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateClusterStep, EmrAddStepStep, EmrCancelStepStep, EmrSetClusterTerminationProtectionStep, EmrModifyInstanceFleetByNameStep, EmrModifyInstanceGroupByNameStep
 from stepfunctions.steps.service import EventBridgePutEventsStep
 from stepfunctions.steps.service import GlueDataBrewStartJobRunStep
