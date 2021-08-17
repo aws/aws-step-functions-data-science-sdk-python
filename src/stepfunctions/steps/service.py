@@ -19,9 +19,12 @@ from stepfunctions.steps.integration_resources import IntegrationPattern, get_se
 
 DYNAMODB_SERVICE_NAME = "dynamodb"
 EKS_SERVICES_NAME = "eks"
+ELASTICMAPREDUCE_SERVICE_NAME = "elasticmapreduce"
+EVENTBRIDGE_SERVICE_NAME = "events"
+GLUE_DATABREW_SERVICE_NAME = "databrew"
 SNS_SERVICE_NAME = "sns"
 SQS_SERVICE_NAME = "sqs"
-ELASTICMAPREDUCE_SERVICE_NAME = "elasticmapreduce"
+
 
 
 class DynamoDBApi(Enum):
@@ -39,14 +42,6 @@ class EKSApi(Enum):
     DeleteNodegroup = "deleteNodegroup"
 
 
-class SnsApi(Enum):
-    Publish = "publish"
-
-
-class SqsApi(Enum):
-    SendMessage = "sendMessage"
-
-
 class ElasticMapReduceApi(Enum):
     CreateCluster = "createCluster"
     TerminateCluster = "terminateCluster"
@@ -55,6 +50,22 @@ class ElasticMapReduceApi(Enum):
     SetClusterTerminationProtection = "setClusterTerminationProtection"
     ModifyInstanceFleetByName = "modifyInstanceFleetByName"
     ModifyInstanceGroupByName = "modifyInstanceGroupByName"
+
+
+class EventBridgeApi(Enum):
+    PutEvents = "putEvents"
+
+
+class GlueDataBrewApi(Enum):
+    StartJobRun = "startJobRun"
+
+
+class SnsApi(Enum):
+    Publish = "publish"
+
+
+class SqsApi(Enum):
+    SendMessage = "sendMessage"
 
 
 class DynamoDBGetItemStep(Task):
@@ -84,6 +95,46 @@ class DynamoDBGetItemStep(Task):
         kwargs[Field.Resource.value] = get_service_integration_arn(DYNAMODB_SERVICE_NAME,
                                                                    DynamoDBApi.GetItem)
         super(DynamoDBGetItemStep, self).__init__(state_id, **kwargs)
+
+
+class EventBridgePutEventsStep(Task):
+
+    """
+    Creates a Task to send custom events to Amazon EventBridge. See`Call EventBridge with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eventbridge.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_callback=False, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
+            timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
+            heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+        """
+
+        if wait_for_callback:
+            """
+            Example resource arn: arn:aws:states:::events:putEvents.waitForTaskToken
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EVENTBRIDGE_SERVICE_NAME,
+                                                                       EventBridgeApi.PutEvents,
+                                                                       IntegrationPattern.WaitForTaskToken)
+        else:
+            """
+            Example resource arn: arn:aws:states:::events:putEvents
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(EVENTBRIDGE_SERVICE_NAME,
+                                                                       EventBridgeApi.PutEvents)
+
+        super(EventBridgePutEventsStep, self).__init__(state_id, **kwargs)
 
 
 class DynamoDBPutItemStep(Task):
@@ -408,6 +459,46 @@ class EksDeleteClusterStep(Task):
                                                                        EKSApi.DeleteCluster)
 
         super(EksDeleteClusterStep, self).__init__(state_id, **kwargs)
+
+
+class GlueDataBrewStartJobRunStep(Task):
+
+    """
+    Creates a Task state that starts a DataBrew job. See `Manage AWS Glue DataBrew Jobs with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-databrew.html>`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
+            timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
+            heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+        """
+        if wait_for_completion:
+            """
+            Example resource arn: arn:aws:states:::databrew:startJobRun.sync
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(GLUE_DATABREW_SERVICE_NAME,
+                                                                       GlueDataBrewApi.StartJobRun,
+                                                                       IntegrationPattern.WaitForCompletion)
+        else:
+            """
+            Example resource arn: arn:aws:states:::databrew:startJobRun
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(GLUE_DATABREW_SERVICE_NAME,
+                                                                       GlueDataBrewApi.StartJobRun)
+
+        super(GlueDataBrewStartJobRunStep, self).__init__(state_id, **kwargs)
 
 
 class SnsPublishStep(Task):

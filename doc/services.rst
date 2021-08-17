@@ -10,11 +10,15 @@ This module provides classes to build steps that integrate with Amazon DynamoDB,
 
 - `Amazon EKS <#amazon-eks>`__
 
+- `Amazon EMR <#amazon-emr>`__
+
+- `Amazon EventBridge <#amazon-eventbridge>`__
+
+- `AWS Glue DataBrew <#aws-glue-databrew>`__
+
 - `Amazon SNS <#amazon-sns>`__
 
 - `Amazon SQS <#amazon-sqs>`__
-
-- `Amazon EMR <#amazon-emr>`__
 
 
 Amazon DynamoDB
@@ -27,8 +31,9 @@ Amazon DynamoDB
 
 .. autoclass:: stepfunctions.steps.service.DynamoDBUpdateItemStep
 
-Amazon DynamoDB
-----------------
+
+Amazon EKS
+----------
 .. autoclass:: stepfunctions.steps.service.EksCreateClusterStep
 
 .. autoclass:: stepfunctions.steps.service.EksCreateFargateProfileStep
@@ -40,14 +45,6 @@ Amazon DynamoDB
 .. autoclass:: stepfunctions.steps.service.EksDeleteFargateProfileStep
 
 .. autoclass:: stepfunctions.steps.service.EksDeleteNodeGroupStep
-
-Amazon SNS
------------
-.. autoclass:: stepfunctions.steps.service.SnsPublishStep
-
-Amazon SQS
------------
-.. autoclass:: stepfunctions.steps.service.SqsSendMessageStep
 
 Amazon EMR
 -----------
@@ -64,3 +61,19 @@ Amazon EMR
 .. autoclass:: stepfunctions.steps.service.EmrModifyInstanceFleetByNameStep
 
 .. autoclass:: stepfunctions.steps.service.EmrModifyInstanceGroupByNameStep
+
+Amazon EventBridge
+-----------
+.. autoclass:: stepfunctions.steps.service.EventBridgePutEventsStep
+
+AWS Glue DataBrew
+--------------------
+.. autoclass:: stepfunctions.steps.service.GlueDataBrewStartJobRunStep
+
+Amazon SNS
+-----------
+.. autoclass:: stepfunctions.steps.service.SnsPublishStep
+
+Amazon SQS
+-----------
+.. autoclass:: stepfunctions.steps.service.SqsSendMessageStep
