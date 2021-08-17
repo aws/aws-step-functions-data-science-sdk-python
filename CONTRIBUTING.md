@@ -14,11 +14,15 @@ information to effectively respond to your bug report or contribution.
 * [Contributing via Pull Requests (PRs)](#contributing-via-pull-requests-prs)
   * [Pulling Down the Code](#pulling-down-the-code)
   * [Running the Unit Tests](#running-the-unit-tests)
+    * [Running Unit Tests and Debugging in PyCharm](#running-unit-tests-and-debugging-in-pycharm)
   * [Running the Integration Tests](#running-the-integration-tests)
   * [Making and Testing Your Change](#making-and-testing-your-change)
   * [Committing Your Change](#committing-your-change)
   * [Sending a Pull Request](#sending-a-pull-request)
 * [Finding Contributions to Work On](#finding-contributions-to-work-on)
+* [Setting Up Your Development Environment](#setting-up-your-development-environment)
+  * [Setting Up Your Environment for Debugging](#setting-up-your-environment-for-debugging)
+    * [PyCharm](#pycharm)
 * [Code of Conduct](#code-of-conduct)
 * [Security Issue Notifications](#security-issue-notifications)
 * [Licensing](#licensing)
@@ -65,6 +69,11 @@ You can also run a single test with the following command: `tox -e py36 -- -s -v
   * Note that the coverage test will fail if you only run a single test, so make sure to surround the command with `export IGNORE_COVERAGE=-` and `unset IGNORE_COVERAGE`
   * Example: `export IGNORE_COVERAGE=- ; tox -e py36 -- -s -vv tests/unit/test_sagemaker_steps.py::test_training_step_creation_with_model ; unset IGNORE_COVERAGE`
 
+#### Running Unit Tests and Debugging in PyCharm
+You can also run the unit tests with the following options:
+* Right click on a test file in the Project tree and select `Run/Debug 'pytest' for ...`
+* Right click on the test definition and select `Run/Debug 'pytest' for ...`
+* Click on the green arrow next to test definition
 
 ### Running the Integration Tests
 
@@ -167,6 +176,33 @@ Please remember to:
 
 Looking at the existing issues is a great way to find something to contribute on. As our projects, by default, use the default GitHub issue labels ((enhancement/bug/duplicate/help wanted/invalid/question/wontfix), looking at any ['help wanted'](https://github.com/aws/aws-step-functions-data-science-sdk-python/labels/help%20wanted) issues is a great place to start.
 
+
+## Setting Up Your Development Environment
+
+### Setting Up Your Environment for Debugging
+
+Setting up your IDE for debugging tests locally will save you a lot of time.
+You might be able to `Run` and `Debug` the tests directly in your IDE with your default settings, but if it's not the case,
+follow the steps described in this section.
+
+#### PyCharm
+1. Set your Default test runner to `pytest` in _Preferences → Tools → Python Integrated Tools_
+1. If you are using `PyCharm Professional Edition`, go to _Preferences → Build, Execution, Deployment → Python Debugger_ and set the options with following values:
+   
+   | Option                                                      | Value                 |
+   |:------------------------------------------------------------ |:----------------------|
+   | Attach subprocess automatically while debugging             | `Enabled`             |
+   | Collect run-time types information for code insight         | `Enabled`             |
+   | Gevent compatible                                           | `Disabled`            |
+   | Drop into debugger on failed tests                          | `Enabled`             |
+   | PyQt compatible                                             | `Auto`                |
+   | For Attach to Process show processes with names containing  | `python`              |
+   
+    This will allow you to break into all subprocesses of the process being debugged and preserve functions types while debugging.
+1. Debug tests in PyCharm as per [Running Unit Tests and Debugging in PyCharm](#running-unit-tests-and-debugging-in-pycharm)
+
+_Note: This setup was tested and confirmed to work with
+`PyCharm 2020.3.5 (Professional Edition)` and `PyCharm 2021.1.1 (Professional Edition)`_
 
 ## Code of Conduct
 
