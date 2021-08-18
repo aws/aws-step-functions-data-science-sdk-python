@@ -48,22 +48,28 @@ def get_aws_partition():
     return cur_partition
 
 
-def merge_dicts(first, second, first_name, second_name):
+def merge_dicts(target, source, target_name, source_name):
     """
-    Merges first and second dictionaries into the first one.
-    Values in the first dict are updated with the values of the second one.
+    Merges source dictionary into the target dictionary.
+    Values in the target dict are updated with the values of the source dict.
+    Args:
+        target (dict): Base dictionary into which source is merged
+        source (dict): Dictionary used to update target. If the same key is present in both dictionaries, source's value
+             will overwrite target's value for the corresponding key
+        target_name (str): Name of target dictionary used for logging purposes
+        source_name (str): Name of source dictionary used for logging purposes
     """
-    if all(isinstance(d, dict) for d in [first, second]):
-        for key, value in second.items():
-            if key in first:
-                if isinstance(first[key], dict) and isinstance(second[key], dict):
-                    merge_dicts(first[key], second[key], first_name, second_name)
-                elif first[key] == value:
+    if isinstance(target, dict) and isinstance(source, dict):
+        for key, value in source.items():
+            if key in target:
+                if isinstance(target[key], dict) and isinstance(source[key], dict):
+                    merge_dicts(target[key], source[key], target_name, source_name)
+                elif target[key] == value:
                     pass
                 else:
                     logger.info(
-                        f"{first_name} property: <{key}> with value: <{first[key]}>"
-                        f" will be overwritten with value provided in {second_name} : <{value}>")
-                    first[key] = second[key]
+                        f"{target_name} property: <{key}> with value: <{target[key]}>"
+                        f" will be overwritten with value provided in {source_name} : <{value}>")
+                    target[key] = source[key]
             else:
-                first[key] = second[key]
+                target[key] = source[key]
