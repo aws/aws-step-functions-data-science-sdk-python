@@ -542,8 +542,7 @@ class ProcessingStep(Task):
 
         if Field.Parameters.value in kwargs and isinstance(kwargs[Field.Parameters.value], dict):
             # Update processing_parameters with input parameters
-            merge_dicts(processing_parameters, kwargs[Field.Parameters.value], "Processing Parameters",
-                        "Input Parameters")
+            merge_dicts(processing_parameters, kwargs[Field.Parameters.value])
 
         kwargs[Field.Parameters.value] = processing_parameters
         super(ProcessingStep, self).__init__(state_id, **kwargs)

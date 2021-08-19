@@ -53,8 +53,36 @@ def test_arn_builder_sagemaker_wait_completion():
 
 
 def test_merge_dicts():
-    d1 = {'a': {'aa': 1, 'bb': 2, 'cc': 3}, 'b': 1}
-    d2 = {'a': {'bb': {'aaa': 1, 'bbb': 2}}, 'b': 2, 'c': 3}
+    d1 = {
+        'a': {
+            'aa': 1,
+            'bb': 2,
+            'cc': 3
+        },
+        'b': 1
+    }
 
-    merge_dicts(d1, d2, 'd1', 'd2')
-    assert d1 == {'a': {'aa': 1, 'bb': {'aaa': 1, 'bbb': 2}, 'cc': 3}, 'b': 2, 'c': 3}
+    d2 = {
+        'a': {
+            'bb': {
+                'aaa': 1,
+                'bbb': 2
+            }
+        },
+        'b': 2,
+        'c': 3
+    }
+
+    merge_dicts(d1, d2)
+    assert d1 == {
+        'a': {
+            'aa': 1,
+            'bb': {
+                'aaa': 1,
+                'bbb': 2
+            },
+            'cc': 3
+        },
+        'b': 2,
+        'c': 3
+    }

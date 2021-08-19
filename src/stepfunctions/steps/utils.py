@@ -48,7 +48,7 @@ def get_aws_partition():
     return cur_partition
 
 
-def merge_dicts(target, source, target_name, source_name):
+def merge_dicts(target, source):
     """
     Merges source dictionary into the target dictionary.
     Values in the target dict are updated with the values of the source dict.
@@ -56,20 +56,18 @@ def merge_dicts(target, source, target_name, source_name):
         target (dict): Base dictionary into which source is merged
         source (dict): Dictionary used to update target. If the same key is present in both dictionaries, source's value
              will overwrite target's value for the corresponding key
-        target_name (str): Name of target dictionary used for logging purposes
-        source_name (str): Name of source dictionary used for logging purposes
     """
     if isinstance(target, dict) and isinstance(source, dict):
         for key, value in source.items():
             if key in target:
                 if isinstance(target[key], dict) and isinstance(source[key], dict):
-                    merge_dicts(target[key], source[key], target_name, source_name)
+                    merge_dicts(target[key], source[key])
                 elif target[key] == value:
                     pass
                 else:
                     logger.info(
-                        f"{target_name} property: <{key}> with value: <{target[key]}>"
-                        f" will be overwritten with value provided in {source_name} : <{value}>")
+                        f"Property: <{key}> with value: <{target[key]}>"
+                        f" will be overwritten with provided value: <{value}>")
                     target[key] = source[key]
             else:
                 target[key] = source[key]
