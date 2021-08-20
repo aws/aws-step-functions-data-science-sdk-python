@@ -358,7 +358,7 @@ def test_processing_step(sklearn_processor_fixture, sagemaker_session, sfn_clien
 def test_processing_step_with_placeholders(sklearn_processor_fixture, sagemaker_session, sfn_client, sfn_role_arn,
                                            sagemaker_role_arn):
     region = boto3.session.Session().region_name
-    input_data = 's3://sagemaker-sample-data-{}/processing/census/census-income.csv'.format(region)
+    input_data = f"s3://sagemaker-sample-data-{region}/processing/census/census-income.csv"
 
     input_s3 = sagemaker_session.upload_data(
         path=os.path.join(DATA_DIR, 'sklearn_processing'),
@@ -366,7 +366,7 @@ def test_processing_step_with_placeholders(sklearn_processor_fixture, sagemaker_
         key_prefix='integ-test-data/sklearn_processing/code'
     )
 
-    output_s3 = 's3://' + sagemaker_session.default_bucket() + '/integ-test-data/sklearn_processing'
+    output_s3 = f"s3://{sagemaker_session.default_bucket()}/integ-test-data/sklearn_processing"
 
     inputs = [
         ProcessingInput(source=input_data, destination='/opt/ml/processing/input', input_name='input-1'),
@@ -422,7 +422,6 @@ def test_processing_step_with_placeholders(sklearn_processor_fixture, sagemaker_
     workflow_graph = Chain([processing_step])
 
     with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
-        # Create workflow and check definition
         workflow = create_workflow_and_check_definition(
             workflow_graph=workflow_graph,
             workflow_name=unique_name_from_base("integ-test-processing-step-workflow"),
@@ -449,4 +448,3 @@ def test_processing_step_with_placeholders(sklearn_processor_fixture, sagemaker_
 
         # Cleanup
         state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
-        # End of Cleanup

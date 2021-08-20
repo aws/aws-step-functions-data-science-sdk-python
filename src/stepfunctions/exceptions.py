@@ -23,4 +23,3 @@ class MissingRequiredParameter(Exception):
 
 class DuplicateStatesInChain(Exception):
     pass
-
