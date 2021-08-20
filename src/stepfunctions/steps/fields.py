@@ -59,7 +59,6 @@ class Field(Enum):
     HeartbeatSeconds     = 'heartbeat_seconds'
     HeartbeatSecondsPath = 'heartbeat_seconds_path'
 
-
     # Retry and catch fields
     ErrorEquals      = 'error_equals'
     IntervalSeconds  = 'interval_seconds'

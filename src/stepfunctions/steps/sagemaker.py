@@ -19,7 +19,7 @@ from enum import Enum
 from stepfunctions.inputs import Placeholder
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
-from stepfunctions.steps.utils import tags_dict_to_kv_list
+from stepfunctions.steps.utils import merge_dicts, tags_dict_to_kv_list
 from stepfunctions.steps.integration_resources import IntegrationPattern, get_service_integration_arn
 
 from sagemaker.workflow.airflow import training_config, transform_config, model_config, tuning_config, processing_config
@@ -29,6 +29,7 @@ from sagemaker.model_monitor import DataCaptureConfig
 logger = logging.getLogger('stepfunctions.sagemaker')
 
 SAGEMAKER_SERVICE_NAME = "sagemaker"
+
 
 class SageMakerApi(Enum):
     CreateTrainingJob = "createTrainingJob"
@@ -479,7 +480,9 @@ class ProcessingStep(Task):
     Creates a Task State to execute a SageMaker Processing Job.
     """
 
-    def __init__(self, state_id, processor, job_name, inputs=None, outputs=None, experiment_config=None, container_arguments=None, container_entrypoint=None, kms_key_id=None, wait_for_completion=True, tags=None, **kwargs):
+    def __init__(self, state_id, processor, job_name, inputs=None, outputs=None, experiment_config=None,
+                 container_arguments=None, container_entrypoint=None, kms_key_id=None, wait_for_completion=True,
+                 tags=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -491,15 +494,18 @@ class ProcessingStep(Task):
             outputs (list[:class:`~sagemaker.processing.ProcessingOutput`]): Outputs for
                 the processing job. These can be specified as either path strings or
                 :class:`~sagemaker.processing.ProcessingOutput` objects (default: None).
-            experiment_config (dict, optional): Specify the experiment config for the processing. (Default: None)
-            container_arguments ([str]): The arguments for a container used to run a processing job.
-            container_entrypoint ([str]): The entrypoint for a container used to run a processing job.
-            kms_key_id (str): The AWS Key Management Service (AWS KMS) key that Amazon SageMaker
+            experiment_config (dict or Placeholder, optional): Specify the experiment config for the processing. (Default: None)
+            container_arguments ([str] or Placeholder): The arguments for a container used to run a processing job.
+            container_entrypoint ([str] or Placeholder): The entrypoint for a container used to run a processing job.
+            kms_key_id (str or Placeholder): The AWS Key Management Service (AWS KMS) key that Amazon SageMaker
                 uses to encrypt the processing job output. KmsKeyId can be an ID of a KMS key,
                 ARN of a KMS key, alias of a KMS key, or alias of a KMS key.
                 The KmsKeyId is applied to all outputs.
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the processing job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the processing job and proceed to the next step. (default: True)
-            tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            tags (list[dict] or Placeholder, optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            parameters(dict, optional): The value of this field is merged with other arguments to become the request payload for SageMaker `CreateProcessingJob<https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateProcessingJob.html>`_. 
+                You can use `parameters` to override the value provided by other arguments and specify any field's value dynamically using `Placeholders<https://aws-step-functions-data-science-sdk.readthedocs.io/en/stable/placeholders.html?highlight=placeholder#stepfunctions.inputs.Placeholder>`_.
+
         """
         if wait_for_completion:
             """
@@ -518,22 +524,25 @@ class ProcessingStep(Task):
                                                                        SageMakerApi.CreateProcessingJob)
 
         if isinstance(job_name, str):
-            parameters = processing_config(processor=processor, inputs=inputs, outputs=outputs, container_arguments=container_arguments, container_entrypoint=container_entrypoint, kms_key_id=kms_key_id, job_name=job_name)
+            processing_parameters = processing_config(processor=processor, inputs=inputs, outputs=outputs, container_arguments=container_arguments, container_entrypoint=container_entrypoint, kms_key_id=kms_key_id, job_name=job_name)
         else:
-            parameters = processing_config(processor=processor, inputs=inputs, outputs=outputs, container_arguments=container_arguments, container_entrypoint=container_entrypoint, kms_key_id=kms_key_id)
+            processing_parameters = processing_config(processor=processor, inputs=inputs, outputs=outputs, container_arguments=container_arguments, container_entrypoint=container_entrypoint, kms_key_id=kms_key_id)
 
         if isinstance(job_name, Placeholder):
-            parameters['ProcessingJobName'] = job_name
+            processing_parameters['ProcessingJobName'] = job_name
         
         if experiment_config is not None:
-            parameters['ExperimentConfig'] = experiment_config
-        
-        if tags:
-            parameters['Tags'] = tags_dict_to_kv_list(tags)
-        
-        if 'S3Operations' in parameters:
-            del parameters['S3Operations']
-        
-        kwargs[Field.Parameters.value] = parameters
+            processing_parameters['ExperimentConfig'] = experiment_config
 
+        if tags:
+            processing_parameters['Tags'] = tags if isinstance(tags, Placeholder) else tags_dict_to_kv_list(tags)
+
+        if 'S3Operations' in processing_parameters:
+            del processing_parameters['S3Operations']
+
+        if Field.Parameters.value in kwargs and isinstance(kwargs[Field.Parameters.value], dict):
+            # Update processing_parameters with input parameters
+            merge_dicts(processing_parameters, kwargs[Field.Parameters.value])
+
+        kwargs[Field.Parameters.value] = processing_parameters
         super(ProcessingStep, self).__init__(state_id, **kwargs)
