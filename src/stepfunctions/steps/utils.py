@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 import boto3
 import logging
+from stepfunctions.inputs import Placeholder
 
 logger = logging.getLogger('stepfunctions')
 
@@ -45,3 +46,28 @@ def get_aws_partition():
             return cur_partition
 
     return cur_partition
+
+
+def merge_dicts(target, source):
+    """
+    Merges source dictionary into the target dictionary.
+    Values in the target dict are updated with the values of the source dict.
+    Args:
+        target (dict): Base dictionary into which source is merged
+        source (dict): Dictionary used to update target. If the same key is present in both dictionaries, source's value
+             will overwrite target's value for the corresponding key
+    """
+    if isinstance(target, dict) and isinstance(source, dict):
+        for key, value in source.items():
+            if key in target:
+                if isinstance(target[key], dict) and isinstance(source[key], dict):
+                    merge_dicts(target[key], source[key])
+                elif target[key] == value:
+                    pass
+                else:
+                    logger.info(
+                        f"Property: <{key}> with value: <{target[key]}>"
+                        f" will be overwritten with provided value: <{value}>")
+                    target[key] = source[key]
+            else:
+                target[key] = source[key]
