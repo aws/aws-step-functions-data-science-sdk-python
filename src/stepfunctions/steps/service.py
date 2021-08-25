@@ -270,7 +270,7 @@ class EksCreateClusterStep(Task):
 
 class EksCreateFargateProfileStep(Task):
     """
-    Creates a Task state that creates a Fargate profile. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
+    Creates a Task state that creates an AWS Fargate profile for your Amazon EKS cluster. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
     def __init__(self, state_id, wait_for_completion=True, **kwargs):
@@ -309,7 +309,7 @@ class EksCreateFargateProfileStep(Task):
 
 class EksDeleteFargateProfileStep(Task):
     """
-    Creates a Task state that deletes a Fargate profile. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
+    Creates a Task state that deletes an AWS Fargate profile. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
     def __init__(self, state_id, wait_for_completion=True, **kwargs):
@@ -348,7 +348,7 @@ class EksDeleteFargateProfileStep(Task):
 
 class EksCreateNodeGroupStep(Task):
     """
-    Creates a Task state that creates a node group. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
+    Creates a Task state that creates a node group for an Amazon EKS cluster. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
     def __init__(self, state_id, wait_for_completion=True, **kwargs):
@@ -387,7 +387,7 @@ class EksCreateNodeGroupStep(Task):
 
 class EksDeleteNodegroupStep(Task):
     """
-    Creates a Task state that deletes a node group. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
+    Creates a Task state that deletes an Amazon EKS node group for a cluster. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
     def __init__(self, state_id, wait_for_completion=True, **kwargs):
