@@ -984,9 +984,6 @@ def test_eks_run_job_step_creation():
         'ClusterName': 'MyCluster',
         'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
         'Endpoint': 'https://AKIAIOSFODNN7EXAMPLE.yl4.us-east-1.eks.amazonaws.com',
-        'LogOptions': {
-            'RetrieveLogs': True
-        },
         'Job': {
             'apiVersion': 'batch/v1',
             'kind': 'Job',
@@ -1046,8 +1043,7 @@ def test_eks_run_job_step_creation():
                             'restartPolicy': 'Never'}
                     }
                 }
-            },
-            'LogOptions': {'RetrieveLogs': True}
+            }
         },
         'End': True
     }
@@ -1101,6 +1097,9 @@ def test_eks_run_job_step_creation_sync():
             'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
             'ClusterName': 'MyCluster',
             'Endpoint': 'https://AKIAIOSFODNN7EXAMPLE.yl4.us-east-1.eks.amazonaws.com',
+            'LogOptions': {
+                'RetrieveLogs': True
+            },
             'Job': {
                 'apiVersion': 'batch/v1',
                 'kind': 'Job',
@@ -1121,8 +1120,7 @@ def test_eks_run_job_step_creation_sync():
                             'restartPolicy': 'Never'}
                     }
                 }
-            },
-            'LogOptions': {'RetrieveLogs': True}
+            }
         },
         'End': True
     }
@@ -1130,7 +1128,7 @@ def test_eks_run_job_step_creation_sync():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_call_step_creation():
-    step = EksCallStep("Call", wait_for_completion=False, parameters={
+    step = EksCallStep("Call", parameters={
         'ClusterName': 'MyCluster',
         'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
         'Endpoint': 'https://444455556666.yl4.us-east-1.eks.amazonaws.com',
@@ -1160,38 +1158,3 @@ def test_eks_call_step_creation():
         },
         'End': True
     }
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_eks_call_step_creation_sync():
-    step = EksCallStep("Call sync", parameters={
-        'ClusterName': 'MyCluster',
-        'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
-        'Endpoint': 'https://444455556666.yl4.us-east-1.eks.amazonaws.com',
-        'Method': 'GET',
-        'Path': '/api/v1/namespaces/default/pods',
-        'QueryParameters': {
-            'labelSelector': [
-                'job-name=example-job'
-            ]
-        }
-    })
-
-    assert step.to_dict() == {
-        'Type': 'Task',
-        'Resource': 'arn:aws:states:::eks:call.sync',
-        'Parameters': {
-            'ClusterName': 'MyCluster',
-            'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
-            'Endpoint': 'https://444455556666.yl4.us-east-1.eks.amazonaws.com',
-            'Method': 'GET',
-            'Path': '/api/v1/namespaces/default/pods',
-            'QueryParameters': {
-                'labelSelector': [
-                    'job-name=example-job'
-                ]
-            }
-        },
-        'End': True
-    }
-

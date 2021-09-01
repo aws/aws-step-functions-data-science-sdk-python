@@ -507,7 +507,7 @@ class EksCallStep(Task):
     Creates a Task state that allows you to use the Kubernetes API to read and write Kubernetes resource objects via a Kubernetes API endpoint. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
@@ -520,23 +520,14 @@ class EksCallStep(Task):
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
         """
-        if wait_for_completion:
-            """
-            Example resource arn: arn:aws:states:::eks:createCluster.sync
-            """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.Call,
-                                                                       IntegrationPattern.WaitForCompletion)
-        else:
-            """
-            Example resource arn: arn:aws:states:::eks:createCluster
-            """
+        """
+        Example resource arn: arn:aws:states:::eks:createCluster
+        """
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.Call)
+        kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                   EksApi.Call)
 
         super(EksCallStep, self).__init__(state_id, **kwargs)
 
