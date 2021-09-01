@@ -175,6 +175,93 @@ def test_transform_step(trained_estimator, sfn_client, sfn_role_arn):
         state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
         # End of Cleanup
 
+def test_transform_step_with_placeholder(trained_estimator, sfn_client, sfn_role_arn):
+    # Create transformer from previously created estimator
+    job_name = generate_job_name()
+    pca_transformer = trained_estimator.transformer(instance_count=INSTANCE_COUNT, instance_type=INSTANCE_TYPE)
+
+    # Create a model step to save the model
+    model_step = ModelStep('create_model_step', model=trained_estimator.create_model(), model_name=job_name)
+
+    # Upload data for transformation to S3
+    data_path = os.path.join(DATA_DIR, "one_p_mnist")
+    transform_input_path = os.path.join(data_path, "transform_input.csv")
+    transform_input_key_prefix = "integ-test-data/one_p_mnist/transform"
+    transform_input = pca_transformer.sagemaker_session.upload_data(
+        path=transform_input_path, key_prefix=transform_input_key_prefix
+    )
+
+    execution_input = ExecutionInput(schema={
+        'data': str,
+        'content_type': str,
+        'split_type': str,
+        'job_name': str,
+        'model_name': str,
+        'instance_count': int,
+        'instance_type': str,
+        'strategy': str,
+        'max_concurrent_transforms': int,
+        'max_payload': int,
+    })
+
+    parameters = {
+            'BatchStrategy': execution_input['strategy'],
+            'TransformInput': {
+                'SplitType': execution_input['split_type'],
+            },
+            'TransformResources': {
+                'InstanceCount': execution_input['instance_count'],
+                'InstanceType': execution_input['instance_type'],
+            },
+            'MaxConcurrentTransforms': execution_input['max_concurrent_transforms'],
+            'MaxPayloadInMB': execution_input['max_payload']
+        }
+
+    # Build workflow definition
+    transform_step = TransformStep(
+        'create_transform_job_step',
+        pca_transformer,
+        job_name=execution_input['job_name'],
+        model_name=execution_input['model_name'],
+        data=execution_input['data'],
+        content_type=execution_input['content_type'],
+        parameters=parameters
+    )
+    workflow_graph = Chain([model_step, transform_step])
+
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
+        # Create workflow and check definition
+        workflow = create_workflow_and_check_definition(
+            workflow_graph=workflow_graph,
+            workflow_name=unique_name_from_base("integ-test-transform-step-workflow"),
+            sfn_client=sfn_client,
+            sfn_role_arn=sfn_role_arn
+        )
+
+        execution_input = {
+            'job_name': job_name,
+            'model_name': job_name,
+            'data': transform_input,
+            'content_type': "text/csv",
+            'instance_count': 1,
+            'instance_type': "ml.m5.large",
+            'split_type': 'Line',
+            'strategy': 'SingleRecord',
+            'max_concurrent_transforms': 2,
+            'max_payload': 5
+        }
+
+        # Execute workflow
+        execution = workflow.execute(inputs=execution_input)
+        execution_output = execution.get_output(wait=True)
+
+        # Check workflow output
+        assert execution_output.get("TransformJobStatus") == "Completed"
+
+        # Cleanup
+        state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
+
+
 def test_endpoint_config_step(trained_estimator, sfn_client, sagemaker_session, sfn_role_arn):
     # Setup: Create model for trained estimator in SageMaker
     model = trained_estimator.create_model()
