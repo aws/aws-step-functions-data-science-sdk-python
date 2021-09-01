@@ -485,7 +485,7 @@ class EksRunJobStep(Task):
         """
         if wait_for_completion:
             """
-            Example resource arn: arn:aws:states:::eks:createCluster.sync
+            Example resource arn: arn:aws:states:::eks:runJob.sync
             """
 
             kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
@@ -493,7 +493,7 @@ class EksRunJobStep(Task):
                                                                        IntegrationPattern.WaitForCompletion)
         else:
             """
-            Example resource arn: arn:aws:states:::eks:createCluster
+            Example resource arn: arn:aws:states:::eks:runJob
             """
 
             kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
@@ -523,7 +523,7 @@ class EksCallStep(Task):
         """
 
         """
-        Example resource arn: arn:aws:states:::eks:createCluster
+        Example resource arn: arn:aws:states:::eks:call
         """
 
         kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
