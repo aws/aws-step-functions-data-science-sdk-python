@@ -791,7 +791,7 @@ def test_transform_step_creation_with_placeholder(pca_transformer):
             'Tags': execution_input['tags'],
             'Environment': execution_input['env'],
             'MaxConcurrentTransforms': execution_input['max_concurrent_transforms'],
-            'MaxPayloadInMB': execution_input['max_concurrent_transforms']
+            'MaxPayloadInMB': execution_input['max_payload']
         }
 
     step = TransformStep('Inference',
@@ -856,7 +856,7 @@ def test_transform_step_creation_with_placeholder(pca_transformer):
             'Tags.$': "$$.Execution.Input['tags']",
             'Environment.$': "$$.Execution.Input['env']",
             'MaxConcurrentTransforms.$': "$$.Execution.Input['max_concurrent_transforms']",
-            'MaxPayloadInMB.$': "$$.Execution.Input['max_concurrent_transforms']",
+            'MaxPayloadInMB.$': "$$.Execution.Input['max_payload']",
         },
         'Resource': 'arn:aws:states:::sagemaker:createTransformJob.sync',
         'End': True
