@@ -8,6 +8,8 @@ This module provides classes to build steps that integrate with Amazon DynamoDB,
 
 - `Amazon DynamoDB <#amazon-dynamodb>`__
 
+- `Amazon EKS <#amazon-eks>`__
+
 - `Amazon EMR <#amazon-emr>`__
 
 - `Amazon EventBridge <#amazon-eventbridge>`__
@@ -28,6 +30,26 @@ Amazon DynamoDB
 .. autoclass:: stepfunctions.steps.service.DynamoDBDeleteItemStep
 
 .. autoclass:: stepfunctions.steps.service.DynamoDBUpdateItemStep
+
+
+Amazon EKS
+----------
+.. autoclass:: stepfunctions.steps.service.EksCallStep
+
+.. autoclass:: stepfunctions.steps.service.EksCreateClusterStep
+
+.. autoclass:: stepfunctions.steps.service.EksCreateFargateProfileStep
+
+.. autoclass:: stepfunctions.steps.service.EksCreateNodeGroupStep
+
+.. autoclass:: stepfunctions.steps.service.EksDeleteClusterStep
+
+.. autoclass:: stepfunctions.steps.service.EksDeleteFargateProfileStep
+
+.. autoclass:: stepfunctions.steps.service.EksDeleteNodegroupStep
+
+.. autoclass:: stepfunctions.steps.service.EksRunJobStep
+
 
 Amazon EMR
 -----------
