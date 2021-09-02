@@ -275,6 +275,7 @@ def test_training_step_creation_with_placeholders(pca_estimator):
     execution_input = ExecutionInput(schema={
         'Data': str,
         'OutputPath': str,
+        'HyperParameters': str
     })
 
     step_input = StepInput(schema={
@@ -292,6 +293,7 @@ def test_training_step_creation_with_placeholders(pca_estimator):
             'TrialComponentDisplayName': 'Training'
         },
         tags=DEFAULT_TAGS,
+        hyperparameters=execution_input['HyperParameters']
     )
     assert step.to_dict() == {
         'Type': 'Task',
@@ -312,13 +314,7 @@ def test_training_step_creation_with_placeholders(pca_estimator):
                 'VolumeSizeInGB': 30
             },
             'RoleArn': EXECUTION_ROLE,
-            'HyperParameters': {
-                'feature_dim': '50000',
-                'num_components': '10',
-                'subtract_mean': 'True',
-                'algorithm_mode': 'randomized',
-                'mini_batch_size': '200'
-            },
+            'HyperParameters.$': "$$.Execution.Input['HyperParameters']",
             'InputDataConfig': [
                 {
                     'ChannelName': 'training',

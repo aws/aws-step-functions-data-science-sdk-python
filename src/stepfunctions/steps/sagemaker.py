@@ -127,8 +127,9 @@ class TrainingStep(Task):
             parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = data_uri
 
         if hyperparameters is not None:
-            if estimator.hyperparameters() is not None:
-                hyperparameters = self.__merge_hyperparameters(hyperparameters, estimator.hyperparameters())
+            if not isinstance(hyperparameters, Placeholder):
+                if estimator.hyperparameters() is not None:
+                    hyperparameters = self.__merge_hyperparameters(hyperparameters, estimator.hyperparameters())
             parameters['HyperParameters'] = hyperparameters
 
         if experiment_config is not None:
@@ -173,12 +174,7 @@ class TrainingStep(Task):
             estimator_hyperparameters (dict): Hyperparameters specified in the estimator
         """
         merged_hyperparameters = estimator_hyperparameters.copy()
-        for key, value in training_step_hyperparameters.items():
-            if key in merged_hyperparameters:
-                logger.info(
-                    f"hyperparameter property: <{key}> with value: <{merged_hyperparameters[key]}> provided in the"
-                    f" estimator will be overwritten with value provided in constructor: <{value}>")
-            merged_hyperparameters[key] = value
+        merge_dicts(merged_hyperparameters, training_step_hyperparameters)
         return merged_hyperparameters
 
 class TransformStep(Task):
