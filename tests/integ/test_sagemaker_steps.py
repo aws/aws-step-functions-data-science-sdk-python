@@ -199,9 +199,7 @@ def test_transform_step_with_placeholder(trained_estimator, sfn_client, sfn_role
         'model_name': str,
         'instance_count': int,
         'instance_type': str,
-        'strategy': str,
-        'max_concurrent_transforms': int,
-        'max_payload': int,
+        'strategy': str
     })
 
     parameters = {
@@ -212,9 +210,7 @@ def test_transform_step_with_placeholder(trained_estimator, sfn_client, sfn_role
             'TransformResources': {
                 'InstanceCount': execution_input['instance_count'],
                 'InstanceType': execution_input['instance_type'],
-            },
-            'MaxConcurrentTransforms': execution_input['max_concurrent_transforms'],
-            'MaxPayloadInMB': execution_input['max_payload']
+            }
         }
 
     # Build workflow definition
@@ -246,9 +242,7 @@ def test_transform_step_with_placeholder(trained_estimator, sfn_client, sfn_role
             'instance_count': INSTANCE_COUNT,
             'instance_type': INSTANCE_TYPE,
             'split_type': 'Line',
-            'strategy': 'SingleRecord',
-            'max_concurrent_transforms': 1,
-            'max_payload': 5
+            'strategy': 'SingleRecord'
         }
 
         # Execute workflow
