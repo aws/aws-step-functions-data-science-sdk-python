@@ -214,6 +214,69 @@ def test_map_state_with_placeholders():
     result = Graph(workflow_definition).to_dict()
     assert result == expected_repr
 
+
+def test_map_state_with_placeholders():
+    workflow_input = ExecutionInput(schema={
+        'comment': str,
+        'input_path': str,
+        'output_path': str,
+        'result_path': str,
+        'items_path': str,
+        'max_concurrency': int,
+        'ParamB': str
+    })
+
+    map_state = Map(
+        'MapState01',
+        comment=workflow_input['input_path'],
+        input_path=workflow_input['input_path'],
+        output_path=workflow_input['output_path'],
+        result_path=workflow_input['result_path'],
+        items_path=workflow_input['result_path'],
+        max_concurrency=workflow_input['max_concurrency']
+    )
+    iterator_state = Pass(
+        'TrainIterator',
+        parameters={
+            'ParamA': map_state.output()['X']["Y"],
+            'ParamB': workflow_input['ParamB']
+    })
+
+    map_state.attach_iterator(iterator_state)
+    workflow_definition = Chain([map_state])
+
+    expected_repr = {
+        "StartAt": "MapState01",
+        "States": {
+            "MapState01": {
+                "Type": "Map",
+                "End": True,
+                "Comment.$": "$$.Execution.Input['input_path']",
+                "InputPath.$": "$$.Execution.Input['input_path']",
+                "ItemsPath.$": "$$.Execution.Input['result_path']",
+                "Iterator": {
+                    "StartAt": "TrainIterator",
+                    "States": {
+                        "TrainIterator": {
+                            "Parameters": {
+                                "ParamA.$": "$['X']['Y']",
+                                "ParamB.$": "$$.Execution.Input['ParamB']"
+                            },
+                            "Type": "Pass",
+                            "End": True
+                        }
+                    }
+                },
+                "MaxConcurrency.$": "$$.Execution.Input['max_concurrency']",
+                "OutputPath.$": "$$.Execution.Input['output_path']",
+                "ResultPath.$": "$$.Execution.Input['result_path']",
+            }
+        }
+    }
+
+    result = Graph(workflow_definition).to_dict()
+    assert result == expected_repr
+
 def test_parallel_state_with_placeholders():
     workflow_input = ExecutionInput()
 
