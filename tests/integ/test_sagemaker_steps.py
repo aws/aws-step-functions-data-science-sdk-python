@@ -243,11 +243,11 @@ def test_transform_step_with_placeholder(trained_estimator, sfn_client, sfn_role
             'model_name': job_name,
             'data': transform_input,
             'content_type': "text/csv",
-            'instance_count': 1,
-            'instance_type': "ml.m5.large",
+            'instance_count': INSTANCE_COUNT,
+            'instance_type': INSTANCE_TYPE,
             'split_type': 'Line',
             'strategy': 'SingleRecord',
-            'max_concurrent_transforms': 2,
+            'max_concurrent_transforms': 1,
             'max_payload': 5
         }
 
