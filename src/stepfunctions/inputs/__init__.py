@@ -12,4 +12,4 @@
 # permissions and limitations under the License.
 from __future__ import absolute_import
 
-from stepfunctions.inputs.placeholders import Placeholder, ExecutionInput, StepInput
+from stepfunctions.inputs.placeholders import Placeholder, ExecutionInput, MapItemIndex, MapItemValue, StepInput

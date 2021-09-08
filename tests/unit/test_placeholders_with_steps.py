@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import pytest
 
 from stepfunctions.steps import Pass, Succeed, Fail, Wait, Choice, ChoiceRule, Parallel, Map, Task, Retry, Catch, Chain, Graph
-from stepfunctions.inputs import ExecutionInput, StepInput
+from stepfunctions.inputs import ExecutionInput, MapItemValue, MapItemIndex
 
 def test_workflow_input_placeholder():
 
@@ -216,31 +216,27 @@ def test_map_state_with_placeholders():
 
 
 def test_map_state_with_placeholders():
-    workflow_input = ExecutionInput(schema={
-        'comment': str,
-        'input_path': str,
-        'output_path': str,
-        'result_path': str,
-        'items_path': str,
-        'max_concurrency': int,
-        'ParamB': str
+    map_item_value = MapItemValue(schema={
+        'name': str,
+        'age': str
     })
+
+    map_item_index = MapItemIndex()
 
     map_state = Map(
         'MapState01',
-        comment=workflow_input['input_path'],
-        input_path=workflow_input['input_path'],
-        output_path=workflow_input['output_path'],
-        result_path=workflow_input['result_path'],
-        items_path=workflow_input['result_path'],
-        max_concurrency=workflow_input['max_concurrency']
+        parameters={
+            "MapIndex": map_item_index,
+            "Name": map_item_value['name'],
+            "Age": map_item_value['age']
+        }
     )
     iterator_state = Pass(
         'TrainIterator',
         parameters={
-            'ParamA': map_state.output()['X']["Y"],
-            'ParamB': workflow_input['ParamB']
-    })
+            'ParamA': map_state.output()['X']["Y"]
+        }
+    )
 
     map_state.attach_iterator(iterator_state)
     workflow_definition = Chain([map_state])
@@ -251,31 +247,30 @@ def test_map_state_with_placeholders():
             "MapState01": {
                 "Type": "Map",
                 "End": True,
-                "Comment.$": "$$.Execution.Input['input_path']",
-                "InputPath.$": "$$.Execution.Input['input_path']",
-                "ItemsPath.$": "$$.Execution.Input['result_path']",
                 "Iterator": {
                     "StartAt": "TrainIterator",
                     "States": {
                         "TrainIterator": {
                             "Parameters": {
-                                "ParamA.$": "$['X']['Y']",
-                                "ParamB.$": "$$.Execution.Input['ParamB']"
+                                "ParamA.$": "$['X']['Y']"
                             },
                             "Type": "Pass",
                             "End": True
                         }
                     }
                 },
-                "MaxConcurrency.$": "$$.Execution.Input['max_concurrency']",
-                "OutputPath.$": "$$.Execution.Input['output_path']",
-                "ResultPath.$": "$$.Execution.Input['result_path']",
+                "Parameters": {
+                    "Age.$": "$$.Map.Item.Value['age']",
+                    "MapIndex.$": "$$.Map.Item.Index",
+                    "Name.$": "$$.Map.Item.Value['name']"
+                },
             }
         }
     }
 
     result = Graph(workflow_definition).to_dict()
     assert result == expected_repr
+
 
 def test_parallel_state_with_placeholders():
     workflow_input = ExecutionInput()
