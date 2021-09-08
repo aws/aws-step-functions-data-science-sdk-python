@@ -15,6 +15,8 @@ from __future__ import absolute_import
 import boto3
 
 from unittest.mock import patch
+
+from stepfunctions.inputs import StepResult
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
 from stepfunctions.steps.service import (
     EksCallStep,
@@ -32,9 +34,15 @@ from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import GlueDataBrewStartJobRunStep
 
 
+STEP_RESULT = StepResult()
+RESULT_SELECTOR = {
+    "OutputA":  STEP_RESULT['A']
+}
+
+
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_sns_publish_step_creation():
-    step = SnsPublishStep('Publish to SNS', parameters={
+    step = SnsPublishStep('Publish to SNS', result_selector=RESULT_SELECTOR, parameters={
         'TopicArn': 'arn:aws:sns:us-east-1:123456789012:myTopic',
         'Message': 'message',
     })
@@ -46,6 +54,7 @@ def test_sns_publish_step_creation():
             'TopicArn': 'arn:aws:sns:us-east-1:123456789012:myTopic',
             'Message': 'message',
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
@@ -73,7 +82,7 @@ def test_sns_publish_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_sqs_send_message_step_creation():
-    step = SqsSendMessageStep('Send to SQS', parameters={
+    step = SqsSendMessageStep('Send to SQS', result_selector=RESULT_SELECTOR, parameters={
         'QueueUrl': 'https://sqs.us-east-1.amazonaws.com/123456789012/myQueue',
         'MessageBody': 'Hello'
     })
@@ -85,6 +94,7 @@ def test_sqs_send_message_step_creation():
             'QueueUrl': 'https://sqs.us-east-1.amazonaws.com/123456789012/myQueue',
             'MessageBody': 'Hello'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
@@ -111,7 +121,7 @@ def test_sqs_send_message_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eventbridge_put_events_step_creation():
-    step = EventBridgePutEventsStep('Send to EventBridge', parameters={
+    step = EventBridgePutEventsStep('Send to EventBridge', result_selector=RESULT_SELECTOR, parameters={
         "Entries": [
             {
                 "Detail": {
@@ -139,6 +149,7 @@ def test_eventbridge_put_events_step_creation():
                 }
             ]
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         "End": True
     }
 
@@ -176,7 +187,7 @@ def test_eventbridge_put_events_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_dynamodb_get_item_step_creation():
-    step = DynamoDBGetItemStep('Read Message From DynamoDB', parameters={
+    step = DynamoDBGetItemStep('Read Message From DynamoDB', result_selector=RESULT_SELECTOR, parameters={
         'TableName': 'TransferDataRecords-DDBTable-3I41R5L5EAGT',
         'Key': {
             'MessageId': {
@@ -196,13 +207,14 @@ def test_dynamodb_get_item_step_creation():
                 }
             }
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_dynamodb_put_item_step_creation():
-    step = DynamoDBPutItemStep('Add Message From DynamoDB', parameters={
+    step = DynamoDBPutItemStep('Add Message From DynamoDB', result_selector=RESULT_SELECTOR, parameters={
         'TableName': 'TransferDataRecords-DDBTable-3I41R5L5EAGT',
         'Item': {
             'MessageId': {
@@ -222,13 +234,14 @@ def test_dynamodb_put_item_step_creation():
                 }
             }
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_dynamodb_delete_item_step_creation():
-    step = DynamoDBDeleteItemStep('Delete Message From DynamoDB', parameters={
+    step = DynamoDBDeleteItemStep('Delete Message From DynamoDB', result_selector=RESULT_SELECTOR, parameters={
         'TableName': 'TransferDataRecords-DDBTable-3I41R5L5EAGT',
         'Key': {
             'MessageId': {
@@ -248,13 +261,14 @@ def test_dynamodb_delete_item_step_creation():
                 }
             }
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_dynamodb_update_item_step_creation():
-    step = DynamoDBUpdateItemStep('Update Message From DynamoDB', parameters={
+    step = DynamoDBUpdateItemStep('Update Message From DynamoDB', result_selector=RESULT_SELECTOR, parameters={
         'TableName': 'TransferDataRecords-DDBTable-3I41R5L5EAGT',
         'Key': {
             'RecordId': {
@@ -282,13 +296,14 @@ def test_dynamodb_update_item_step_creation():
                 ':val1': { 'S': '2' }
             }
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_create_cluster_step_creation():
-    step = EmrCreateClusterStep('Create EMR cluster', parameters={
+    step = EmrCreateClusterStep('Create EMR cluster', result_selector=RESULT_SELECTOR, parameters={
         'Name': 'MyWorkflowCluster',
         'VisibleToAllUsers': True,
         'ReleaseLabel': 'emr-5.28.0',
@@ -368,6 +383,7 @@ def test_emr_create_cluster_step_creation():
                 ]
             }
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
@@ -458,7 +474,7 @@ def test_emr_create_cluster_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_terminate_cluster_step_creation():
-    step = EmrTerminateClusterStep('Terminate EMR cluster', parameters={
+    step = EmrTerminateClusterStep('Terminate EMR cluster', result_selector=RESULT_SELECTOR, parameters={
         'ClusterId': 'MyWorkflowClusterId'
     })
 
@@ -468,6 +484,7 @@ def test_emr_terminate_cluster_step_creation():
         'Parameters': {
             'ClusterId': 'MyWorkflowClusterId',
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
@@ -487,7 +504,7 @@ def test_emr_terminate_cluster_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_add_step_step_creation():
-    step = EmrAddStepStep('Add step to EMR cluster', parameters={
+    step = EmrAddStepStep('Add step to EMR cluster', result_selector=RESULT_SELECTOR, parameters={
         'ClusterId': 'MyWorkflowClusterId',
         'Step': {
             'Name': 'The first step',
@@ -533,6 +550,7 @@ def test_emr_add_step_step_creation():
                 }
             }
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
@@ -588,7 +606,7 @@ def test_emr_add_step_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_cancel_step_step_creation():
-    step = EmrCancelStepStep('Cancel step from EMR cluster', parameters={
+    step = EmrCancelStepStep('Cancel step from EMR cluster', result_selector=RESULT_SELECTOR, parameters={
         'ClusterId': 'MyWorkflowClusterId',
         'StepId': 'MyWorkflowStepId'
     })
@@ -600,16 +618,20 @@ def test_emr_cancel_step_step_creation():
             'ClusterId': 'MyWorkflowClusterId',
             'StepId': 'MyWorkflowStepId'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_set_cluster_termination_protection_step_creation():
-    step = EmrSetClusterTerminationProtectionStep('Set termination protection for EMR cluster', parameters={
-        'ClusterId': 'MyWorkflowClusterId',
-        'TerminationProtected': True
-    })
+    step = EmrSetClusterTerminationProtectionStep(
+        'Set termination protection for EMR cluster',
+        result_selector=RESULT_SELECTOR,
+        parameters={
+            'ClusterId': 'MyWorkflowClusterId',
+            'TerminationProtected': True
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -618,20 +640,24 @@ def test_emr_set_cluster_termination_protection_step_creation():
             'ClusterId': 'MyWorkflowClusterId',
             'TerminationProtected': True
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_modify_instance_fleet_by_name_step_creation():
-    step = EmrModifyInstanceFleetByNameStep('Modify Instance Fleet by name for EMR cluster', parameters={
-        'ClusterId': 'MyWorkflowClusterId',
-        'InstanceFleetName': 'MyCoreFleet',
-        'InstanceFleet': {
-            'TargetOnDemandCapacity': 8,
-            'TargetSpotCapacity': 0
-        }
-    })
+    step = EmrModifyInstanceFleetByNameStep(
+        'Modify Instance Fleet by name for EMR cluster',
+        result_selector=RESULT_SELECTOR,
+        parameters={
+            'ClusterId': 'MyWorkflowClusterId',
+            'InstanceFleetName': 'MyCoreFleet',
+            'InstanceFleet': {
+                'TargetOnDemandCapacity': 8,
+                'TargetSpotCapacity': 0
+            }
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -644,19 +670,23 @@ def test_emr_modify_instance_fleet_by_name_step_creation():
                 'TargetSpotCapacity': 0
             }
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_emr_modify_instance_group_by_name_step_creation():
-    step = EmrModifyInstanceGroupByNameStep('Modify Instance Group by name for EMR cluster', parameters={
-        'ClusterId': 'MyWorkflowClusterId',
-        'InstanceGroupName': 'MyCoreGroup',
-        'InstanceGroup': {
-            'InstanceCount': 8
-        }
-    })
+    step = EmrModifyInstanceGroupByNameStep(
+        'Modify Instance Group by name for EMR cluster',
+        result_selector=RESULT_SELECTOR,
+        parameters={
+            'ClusterId': 'MyWorkflowClusterId',
+            'InstanceGroupName': 'MyCoreGroup',
+            'InstanceGroup': {
+                'InstanceCount': 8
+            }
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -668,15 +698,19 @@ def test_emr_modify_instance_group_by_name_step_creation():
                 'InstanceCount': 8
             }
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_databrew_start_job_run_step_creation_sync():
-    step = GlueDataBrewStartJobRunStep('Start Glue DataBrew Job Run - Sync', parameters={
-        "Name": "MyWorkflowJobRun"
-    })
+    step = GlueDataBrewStartJobRunStep(
+        'Start Glue DataBrew Job Run - Sync',
+        result_selector=RESULT_SELECTOR,
+        parameters={
+            "Name": "MyWorkflowJobRun"
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -684,15 +718,20 @@ def test_databrew_start_job_run_step_creation_sync():
         'Parameters': {
             'Name': 'MyWorkflowJobRun'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_databrew_start_job_run_step_creation():
-    step = GlueDataBrewStartJobRunStep('Start Glue DataBrew Job Run', wait_for_completion=False, parameters={
-        "Name": "MyWorkflowJobRun"
-    })
+    step = GlueDataBrewStartJobRunStep(
+        'Start Glue DataBrew Job Run',
+        result_selector=RESULT_SELECTOR,
+        wait_for_completion=False,
+        parameters={
+            "Name": "MyWorkflowJobRun"
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -700,22 +739,27 @@ def test_databrew_start_job_run_step_creation():
         'Parameters': {
             'Name': 'MyWorkflowJobRun'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_cluster_step_creation():
-    step = EksCreateClusterStep("Create Eks cluster", wait_for_completion=False, parameters={
-        'Name': 'MyCluster',
-        'ResourcesVpcConfig': {
-          'SubnetIds': [
-            'subnet-00000000000000000',
-            'subnet-00000000000000001'
-          ]
-        },
-        'RoleArn': 'arn:aws:iam::123456789012:role/MyEKSClusterRole'
-    })
+    step = EksCreateClusterStep(
+        "Create Eks cluster",
+        result_selector=RESULT_SELECTOR,
+        wait_for_completion=False,
+        parameters={
+            'Name': 'MyCluster',
+            'ResourcesVpcConfig': {
+                'SubnetIds': [
+                    'subnet-00000000000000000',
+                    'subnet-00000000000000001'
+                ]
+            },
+            'RoleArn': 'arn:aws:iam::123456789012:role/MyEKSClusterRole'
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -730,13 +774,14 @@ def test_eks_create_cluster_step_creation():
             },
             'RoleArn': 'arn:aws:iam::123456789012:role/MyEKSClusterRole'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_cluster_step_creation_sync():
-    step = EksCreateClusterStep("Create Eks cluster sync", parameters={
+    step = EksCreateClusterStep("Create Eks cluster sync", result_selector=RESULT_SELECTOR, parameters={
         'Name': 'MyCluster',
         'ResourcesVpcConfig': {
           'SubnetIds': [
@@ -760,15 +805,20 @@ def test_eks_create_cluster_step_creation_sync():
             },
             'RoleArn': 'arn:aws:iam::123456789012:role/MyEKSClusterRole'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_cluster_step_creation():
-    step = EksDeleteClusterStep("Delete Eks cluster", wait_for_completion=False, parameters={
-        'Name': 'MyCluster'
-    })
+    step = EksDeleteClusterStep(
+        "Delete Eks cluster",
+        result_selector=RESULT_SELECTOR,
+        wait_for_completion=False,
+        parameters={
+            'Name': 'MyCluster'
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -776,15 +826,19 @@ def test_eks_delete_cluster_step_creation():
         'Parameters': {
             'Name': 'MyCluster'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_cluster_step_creation_sync():
-    step = EksDeleteClusterStep("Delete Eks cluster sync", parameters={
-        'Name': 'MyCluster'
-    })
+    step = EksDeleteClusterStep(
+        "Delete Eks cluster sync",
+        result_selector=RESULT_SELECTOR,
+        parameters={
+            'Name': 'MyCluster'
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -792,21 +846,26 @@ def test_eks_delete_cluster_step_creation_sync():
         'Parameters': {
             'Name': 'MyCluster'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_fargate_profile_step_creation():
-    step = EksCreateFargateProfileStep("Create Fargate profile", wait_for_completion=False, parameters={
-        'ClusterName': 'MyCluster',
-        'FargateProfileName': 'MyFargateProfile',
-        'PodExecutionRoleArn': 'arn:aws:iam::123456789012:role/MyFargatePodExecutionRole',
-        'Selectors': [{
-            'Namespace': 'my-namespace',
-            'Labels': {'my-label': 'my-value'}
-          }]
-    })
+    step = EksCreateFargateProfileStep(
+        "Create Fargate profile",
+        result_selector=RESULT_SELECTOR,
+        wait_for_completion=False,
+        parameters={
+            'ClusterName': 'MyCluster',
+            'FargateProfileName': 'MyFargateProfile',
+            'PodExecutionRoleArn': 'arn:aws:iam::123456789012:role/MyFargatePodExecutionRole',
+            'Selectors': [{
+                'Namespace': 'my-namespace',
+                'Labels': {'my-label': 'my-value'}
+            }]
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -820,13 +879,14 @@ def test_eks_create_fargate_profile_step_creation():
                 'Labels': {'my-label': 'my-value'}
             }]
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_fargate_profile_step_creation_sync():
-    step = EksCreateFargateProfileStep("Create Fargate profile sync", parameters={
+    step = EksCreateFargateProfileStep("Create Fargate profile sync", result_selector=RESULT_SELECTOR, parameters={
         'ClusterName': 'MyCluster',
         'FargateProfileName': 'MyFargateProfile',
         'PodExecutionRoleArn': 'arn:aws:iam::123456789012:role/MyFargatePodExecutionRole',
@@ -848,16 +908,21 @@ def test_eks_create_fargate_profile_step_creation_sync():
                 'Labels': {'my-label': 'my-value'}
             }]
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_fargate_profile_step_creation():
-    step = EksDeleteFargateProfileStep("Delete Fargate profile", wait_for_completion=False, parameters={
-        'ClusterName': 'MyCluster',
-        'FargateProfileName': 'MyFargateProfile'
-    })
+    step = EksDeleteFargateProfileStep(
+        "Delete Fargate profile",
+        result_selector=RESULT_SELECTOR,
+        wait_for_completion=False,
+        parameters={
+            'ClusterName': 'MyCluster',
+            'FargateProfileName': 'MyFargateProfile'
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -866,13 +931,14 @@ def test_eks_delete_fargate_profile_step_creation():
             'ClusterName': 'MyCluster',
             'FargateProfileName': 'MyFargateProfile'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_fargate_profile_step_creation_sync():
-    step = EksDeleteFargateProfileStep("Delete Fargate profile sync", parameters={
+    step = EksDeleteFargateProfileStep("Delete Fargate profile sync", result_selector=RESULT_SELECTOR, parameters={
         'ClusterName': 'MyCluster',
         'FargateProfileName': 'MyFargateProfile'
     })
@@ -884,21 +950,26 @@ def test_eks_delete_fargate_profile_step_creation_sync():
             'ClusterName': 'MyCluster',
             'FargateProfileName': 'MyFargateProfile'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_node_group_step_creation():
-    step = EksCreateNodeGroupStep("Create Node Group", wait_for_completion=False, parameters={
-        'ClusterName': 'MyCluster',
-        'NodegroupName': 'MyNodegroup',
-        'NodeRole': 'arn:aws:iam::123456789012:role/MyNodeInstanceRole',
-        'Subnets': [
-            'subnet-00000000000000000',
-            'subnet-00000000000000001'
-        ]
-    })
+    step = EksCreateNodeGroupStep(
+        "Create Node Group",
+        result_selector=RESULT_SELECTOR,
+        wait_for_completion=False,
+        parameters={
+            'ClusterName': 'MyCluster',
+            'NodegroupName': 'MyNodegroup',
+            'NodeRole': 'arn:aws:iam::123456789012:role/MyNodeInstanceRole',
+            'Subnets': [
+                'subnet-00000000000000000',
+                'subnet-00000000000000001'
+            ]
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -912,12 +983,13 @@ def test_eks_create_node_group_step_creation():
                 'subnet-00000000000000001'
             ],
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 def test_eks_create_node_group_step_creation_sync():
-    step = EksCreateNodeGroupStep("Create Node Group sync", parameters={
+    step = EksCreateNodeGroupStep("Create Node Group sync", result_selector=RESULT_SELECTOR, parameters={
         'ClusterName': 'MyCluster',
         'NodegroupName': 'MyNodegroup',
         'NodeRole': 'arn:aws:iam::123456789012:role/MyNodeInstanceRole',
@@ -939,15 +1011,20 @@ def test_eks_create_node_group_step_creation_sync():
                 'subnet-00000000000000001'
             ],
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_node_group_step_creation():
-    step = EksDeleteNodegroupStep("Delete Node Group", wait_for_completion=False, parameters={
-        'ClusterName': 'MyCluster',
-        'NodegroupName': 'MyNodegroup'
-    })
+    step = EksDeleteNodegroupStep(
+        "Delete Node Group",
+        result_selector=RESULT_SELECTOR,
+        wait_for_completion=False,
+        parameters={
+            'ClusterName': 'MyCluster',
+            'NodegroupName': 'MyNodegroup'
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -956,13 +1033,14 @@ def test_eks_delete_node_group_step_creation():
             'ClusterName': 'MyCluster',
             'NodegroupName': 'MyNodegroup'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_node_group_step_creation_sync():
-    step = EksDeleteNodegroupStep("Delete Node Group sync", parameters={
+    step = EksDeleteNodegroupStep("Delete Node Group sync", result_selector=RESULT_SELECTOR, parameters={
         'ClusterName': 'MyCluster',
         'NodegroupName': 'MyNodegroup'
     })
@@ -974,13 +1052,14 @@ def test_eks_delete_node_group_step_creation_sync():
             'ClusterName': 'MyCluster',
             'NodegroupName': 'MyNodegroup'
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_run_job_step_creation():
-    step = EksRunJobStep("Run Job", wait_for_completion=False, parameters={
+    step = EksRunJobStep("Run Job", result_selector=RESULT_SELECTOR, wait_for_completion=False, parameters={
         'ClusterName': 'MyCluster',
         'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
         'Endpoint': 'https://AKIAIOSFODNN7EXAMPLE.yl4.us-east-1.eks.amazonaws.com',
@@ -1045,13 +1124,14 @@ def test_eks_run_job_step_creation():
                 }
             }
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_run_job_step_creation_sync():
-    step = EksRunJobStep("Run Job sync", parameters={
+    step = EksRunJobStep("Run Job sync", result_selector=RESULT_SELECTOR, parameters={
         'ClusterName': 'MyCluster',
         'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
         'Endpoint': 'https://AKIAIOSFODNN7EXAMPLE.yl4.us-east-1.eks.amazonaws.com',
@@ -1122,13 +1202,14 @@ def test_eks_run_job_step_creation_sync():
                 }
             }
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_call_step_creation():
-    step = EksCallStep("Call", parameters={
+    step = EksCallStep("Call", result_selector=RESULT_SELECTOR, parameters={
         'ClusterName': 'MyCluster',
         'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
         'Endpoint': 'https://444455556666.yl4.us-east-1.eks.amazonaws.com',
@@ -1156,5 +1237,6 @@ def test_eks_call_step_creation():
                 ]
             }
         },
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }

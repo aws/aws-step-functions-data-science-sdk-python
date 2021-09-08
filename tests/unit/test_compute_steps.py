@@ -16,16 +16,24 @@ import pytest
 import boto3
 
 from unittest.mock import patch
+
+from stepfunctions.inputs import StepResult
 from stepfunctions.steps.compute import LambdaStep, GlueStartJobRunStep, BatchSubmitJobStep, EcsRunTaskStep
 
 
+STEP_RESULT = StepResult()
+RESULT_SELECTOR = {
+    "OutputA":  STEP_RESULT['A']
+}
+
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_lambda_step_creation():
-    step = LambdaStep('Echo')
+    step = LambdaStep('Echo', result_selector=RESULT_SELECTOR)
 
     assert step.to_dict() == {
         'Type': 'Task',
         'Resource': 'arn:aws:states:::lambda:invoke',
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
@@ -51,11 +59,12 @@ def test_lambda_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_glue_start_job_run_step_creation():
-    step = GlueStartJobRunStep('Glue Job', wait_for_completion=False)
+    step = GlueStartJobRunStep('Glue Job', wait_for_completion=False, result_selector=RESULT_SELECTOR)
 
     assert step.to_dict() == {
         'Type': 'Task',
         'Resource': 'arn:aws:states:::glue:startJobRun',
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
@@ -75,11 +84,12 @@ def test_glue_start_job_run_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_batch_submit_job_step_creation():
-    step = BatchSubmitJobStep('Batch Job', wait_for_completion=False)
+    step = BatchSubmitJobStep('Batch Job', wait_for_completion=False, result_selector=RESULT_SELECTOR)
 
     assert step.to_dict() == {
         'Type': 'Task',
         'Resource': 'arn:aws:states:::batch:submitJob',
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
@@ -101,11 +111,12 @@ def test_batch_submit_job_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_ecs_run_task_step_creation():
-    step = EcsRunTaskStep('Ecs Job', wait_for_completion=False)
+    step = EcsRunTaskStep('Ecs Job', wait_for_completion=False, result_selector=RESULT_SELECTOR)
 
     assert step.to_dict() == {
         'Type': 'Task',
         'Resource': 'arn:aws:states:::ecs:runTask',
+        'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
 
