@@ -27,7 +27,9 @@ from sagemaker.processing import ProcessingInput, ProcessingOutput
 
 from unittest.mock import MagicMock, patch
 from stepfunctions.inputs import ExecutionInput, StepInput
-from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, ProcessingStep
+from stepfunctions.steps.fields import Field
+from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep,\
+    ProcessingStep
 from stepfunctions.steps.sagemaker import tuning_config
 
 from tests.unit.utils import mock_boto_api_call
@@ -958,6 +960,139 @@ def test_processing_step_creation(sklearn_processor):
             },
             'ProcessingJobName': 'MyProcessingJob',
             'RoleArn': EXECUTION_ROLE
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createProcessingJob.sync',
+        'End': True
+    }
+
+
+def test_processing_step_creation_with_placeholders(sklearn_processor):
+    execution_input = ExecutionInput(schema={
+        'image_uri': str,
+        'instance_count': int,
+        'entrypoint': str,
+        'output_kms_key': str,
+        'role': str,
+        'env': str,
+        'volume_size_in_gb': int,
+        'volume_kms_key': str,
+        'max_runtime_in_seconds': int,
+        'tags': [{str: str}],
+        'container_arguments': [str]
+    })
+
+    step_input = StepInput(schema={
+        'instance_type': str
+    })
+
+    parameters = {
+        'AppSpecification': {
+            'ContainerEntrypoint': execution_input['entrypoint'],
+            'ImageUri': execution_input['image_uri']
+        },
+        'Environment': execution_input['env'],
+        'ProcessingOutputConfig': {
+            'KmsKeyId': execution_input['output_kms_key']
+        },
+        'ProcessingResources': {
+            'ClusterConfig': {
+                'InstanceCount': execution_input['instance_count'],
+                'InstanceType': step_input['instance_type'],
+                'VolumeKmsKeyId': execution_input['volume_kms_key'],
+                'VolumeSizeInGB': execution_input['volume_size_in_gb']
+            }
+        },
+        'RoleArn': execution_input['role'],
+        'StoppingCondition': {
+            'MaxRuntimeInSeconds': execution_input['max_runtime_in_seconds']
+        },
+        'Tags': execution_input['tags']
+    }
+
+    inputs = [ProcessingInput(source='dataset.csv', destination='/opt/ml/processing/input')]
+    outputs = [
+        ProcessingOutput(source='/opt/ml/processing/output/train'),
+        ProcessingOutput(source='/opt/ml/processing/output/validation'),
+        ProcessingOutput(source='/opt/ml/processing/output/test')
+    ]
+    step = ProcessingStep(
+        'Feature Transformation',
+        sklearn_processor,
+        'MyProcessingJob',
+        container_entrypoint=execution_input['entrypoint'],
+        container_arguments=execution_input['container_arguments'],
+        kms_key_id=execution_input['output_kms_key'],
+        inputs=inputs,
+        outputs=outputs,
+        parameters=parameters
+    )
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'AppSpecification': {
+                'ContainerArguments.$': "$$.Execution.Input['container_arguments']",
+                'ContainerEntrypoint.$': "$$.Execution.Input['entrypoint']",
+                'ImageUri.$': "$$.Execution.Input['image_uri']"
+            },
+            'Environment.$': "$$.Execution.Input['env']",
+            'ProcessingInputs': [
+                {
+                    'InputName': None,
+                    'AppManaged': False,
+                    'S3Input': {
+                        'LocalPath': '/opt/ml/processing/input',
+                        'S3CompressionType': 'None',
+                        'S3DataDistributionType': 'FullyReplicated',
+                        'S3DataType': 'S3Prefix',
+                        'S3InputMode': 'File',
+                        'S3Uri': 'dataset.csv'
+                    }
+                }
+            ],
+            'ProcessingOutputConfig': {
+                'KmsKeyId.$': "$$.Execution.Input['output_kms_key']",
+                'Outputs': [
+                    {
+                        'OutputName': None,
+                        'AppManaged': False,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/train',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    },
+                    {
+                        'OutputName': None,
+                        'AppManaged': False,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/validation',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    },
+                    {
+                        'OutputName': None,
+                        'AppManaged': False,
+                        'S3Output': {
+                            'LocalPath': '/opt/ml/processing/output/test',
+                            'S3UploadMode': 'EndOfJob',
+                            'S3Uri': None
+                        }
+                    }
+                ]
+            },
+            'ProcessingResources': {
+                'ClusterConfig': {
+                    'InstanceCount.$': "$$.Execution.Input['instance_count']",
+                    'InstanceType.$': "$['instance_type']",
+                    'VolumeKmsKeyId.$': "$$.Execution.Input['volume_kms_key']",
+                    'VolumeSizeInGB.$': "$$.Execution.Input['volume_size_in_gb']"
+                }
+            },
+            'ProcessingJobName': 'MyProcessingJob',
+            'RoleArn.$': "$$.Execution.Input['role']",
+            'Tags.$': "$$.Execution.Input['tags']",
+            'StoppingCondition': {'MaxRuntimeInSeconds.$': "$$.Execution.Input['max_runtime_in_seconds']"},
         },
         'Resource': 'arn:aws:states:::sagemaker:createProcessingJob.sync',
         'End': True
