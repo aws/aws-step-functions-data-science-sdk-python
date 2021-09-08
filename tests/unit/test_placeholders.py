@@ -17,11 +17,13 @@ import json
 
 from stepfunctions.inputs import ExecutionInput, StepInput, StepResult
 
+
 @pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
 def test_placeholder_creation_with_subscript_operator(placeholder):
     placeholder_variable = placeholder["A"]
     assert placeholder_variable.name == "A"
     assert placeholder_variable.type is None
+
 
 @pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
 def test_placeholder_creation_with_type(placeholder):
@@ -29,11 +31,13 @@ def test_placeholder_creation_with_type(placeholder):
     assert placeholder_variable.name == "C"
     assert placeholder_variable.type == float
 
+
 @pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
 def test_placeholder_creation_with_int_key(placeholder):
     placeholder_variable = placeholder["A"][0]
     assert placeholder_variable.name == 0
     assert placeholder_variable.type == None
+
 
 @pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
 def test_placeholder_creation_with_invalid_key(placeholder):
@@ -42,17 +46,20 @@ def test_placeholder_creation_with_invalid_key(placeholder):
     with pytest.raises(ValueError):
         placeholder["A"].get(1.2, str)
 
+
 @pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
 def test_placeholder_creation_failure_with_type(placeholder):
     placeholder_variable = placeholder["A"]["b"].get("C", float)
     with pytest.raises(ValueError):
         placeholder["A"]["b"].get("C", int)
 
+
 @pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
 def test_placeholder_path(placeholder):
     placeholder_variable = placeholder["A"]["b"]["C"]
     expected_path = ["A", "b", "C"]
     assert placeholder_variable._get_path() == expected_path
+
 
 @pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
 def test_placeholder_contains(placeholder):
@@ -67,6 +74,7 @@ def test_placeholder_contains(placeholder):
     assert placeholder.contains(var_three) == True
     assert placeholder.contains(var_five) == False
     assert placeholder_two.contains(var_three) == False
+
 
 @pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
 def test_placeholder_schema_as_dict(placeholder):
@@ -93,6 +101,7 @@ def test_placeholder_schema_as_dict(placeholder):
 
     assert placeholder.get_schema_as_dict() == expected_schema
 
+
 @pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
 def test_placeholder_schema_as_json(placeholder):
     placeholder["Response"].get("StatusCode", int)
@@ -114,12 +123,14 @@ def test_placeholder_schema_as_json(placeholder):
 
     assert placeholder.get_schema_as_json() == json.dumps(expected_schema)
 
+
 @pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
 def test_placeholder_is_empty(placeholder):
     placeholder_variable = placeholder["A"]["B"]["C"]
     assert placeholder_variable._is_empty() == True
     placeholder["A"]["B"]["C"]["D"]
     assert placeholder_variable._is_empty() == False
+
 
 @pytest.mark.parametrize("placeholder", [StepInput(), StepResult(), ExecutionInput()])
 def test_placeholder_make_immutable(placeholder):
@@ -133,6 +144,7 @@ def test_placeholder_make_immutable(placeholder):
 
     placeholder._make_immutable()
     assert check_immutable(placeholder) == True
+
 
 def test_placeholder_with_schema():
     test_schema = {
@@ -156,23 +168,26 @@ def test_placeholder_with_schema():
     with pytest.raises(ValueError):
         workflow_input["A"]["B"].get("C", float)
 
+
 def test_workflow_input_jsonpath():
     workflow_input = ExecutionInput()
     placeholder_variable = workflow_input["A"]["b"].get("C", float)
     assert placeholder_variable.to_jsonpath() == "$$.Execution.Input['A']['b']['C']"
+
 
 def test_step_input_jsonpath():
     step_input = StepInput()
     placeholder_variable = step_input["A"]["b"].get(0, float)
     assert placeholder_variable.to_jsonpath() == "$['A']['b'][0]"
 
+
 def test_step_result_jsonpath():
     step_result = StepResult()
     placeholder_variable = step_result["A"]["b"].get(0, float)
     assert placeholder_variable.to_jsonpath() == "$['A']['b'][0]"
 
-# UTILS
 
+# UTILS
 def check_immutable(placeholder):
     if placeholder.immutable is True:
         if placeholder._is_empty():

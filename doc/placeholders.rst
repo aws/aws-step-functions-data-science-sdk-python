@@ -107,7 +107,10 @@ that returns the placeholder output for that step.
 Step Result
 -----------
 The third mechanism is a placeholder for a step's result. The result of a step can be modified
-with the **result_selector** field to replace the step's result. 
+with the **result_selector** field to replace the step's result.
+
+.. autoclass:: stepfunctions.inputs.StepResult
+                :inherited-members:
 
 .. code-block:: python
 
@@ -126,7 +129,3 @@ with the **result_selector** field to replace the step's result.
   )
 
 
-
-
-.. autoclass:: stepfunctions.inputs.StepResult
-                :inherited-members:

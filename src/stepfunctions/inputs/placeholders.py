@@ -260,10 +260,12 @@ class ExecutionInput(Placeholder):
     def _create_variable(self, name, parent, type=None):
         """
             Creates a placeholder variable for Workflow Input.
-            A placeholder variable can only be created if the collection is not immutable due to a pre-specified schema.
+            A placeholder variable can only be created if the collection is mutable.
+            A collection is mutable if no pre-specified schema was defined at construction.
         """
         if self.immutable:
-            raise ValueError("Placeholder variable does not conform to schema set for the placeholder collection.")
+            raise ValueError(f"Placeholder variable does not conform to schema set for the placeholder collection:"
+                             f" {self.schema}")
         if type:
             return ExecutionInput(name=name, parent=parent, type=type)
         else:
@@ -283,10 +285,12 @@ class StepInput(Placeholder):
     def _create_variable(self, name, parent, type=None):
         """
             Creates a placeholder variable for Step Input.
-            A placeholder variable can only be created if the collection is not immutable due to a pre-specified schema.
+            A placeholder variable can only be created if the collection is mutable.
+            A collection is mutable if no pre-specified schema was defined at construction..
         """
         if self.immutable:
-            raise ValueError("Placeholder variable does not conform to schema set for the placeholder collection.")
+            raise ValueError(f"Placeholder variable does not conform to schema set for the placeholder collection:"
+                             f" {self.schema}")
         if type:
             return StepInput(name=name, parent=parent, type=type)
         else:
@@ -306,10 +310,12 @@ class StepResult(Placeholder):
     def _create_variable(self, name, parent, type=None):
         """
             Creates a placeholder variable for Step Result.
-            A placeholder variable can only be created if the collection is not immutable due to a pre-specified schema.
+            A placeholder variable can only be created if the collection is mutable.
+            A collection is mutable if no pre-specified schema was defined at construction.
         """
         if self.immutable:
-            raise ValueError("Placeholder variable does not conform to schema set for the placeholder collection.")
+            raise ValueError(f"Placeholder variable does not conform to schema set for the placeholder collection:"
+                             f" {self.schema}")
         if type:
             return StepResult(name=name, parent=parent, type=type)
         else:
