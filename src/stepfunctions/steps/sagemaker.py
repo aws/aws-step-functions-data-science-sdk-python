@@ -157,7 +157,7 @@ class TrainingStep(Task):
             model.name = model_name
         else:
             model.name = self.job_name
-        if self.estimator.environment is not None:
+        if self.estimator.environment:
             model.env = self.estimator.environment
         model.model_data = self.output()["ModelArtifacts"]["S3ModelArtifacts"]
         return model
