@@ -6,11 +6,18 @@ Once defined, a workflow is static unless you update it explicitly. But, you can
 input to workflow executions. You can have dynamic values
 that you use in the **parameters** or **result_selector** fields of the steps in your workflow. For this,
 the AWS Step Functions Data Science SDK provides a way to define placeholders to pass around when you
-create your workflow.
+create your workflow. There are 3 mechanisms for passing dynamic values in a workflow.
 
 .. autoclass:: stepfunctions.inputs.Placeholder
 
-There are 3 mechanisms for passing dynamic values in a workflow:
+.. autoclass:: stepfunctions.inputs.ExecutionInput
+                :inherited-members:
+
+.. autoclass:: stepfunctions.inputs.StepInput
+                :inherited-members:
+
+.. autoclass:: stepfunctions.inputs.StepResult
+                :inherited-members:
 
 - `Execution Input <#execution-input>`__
 
@@ -23,9 +30,6 @@ Execution Input
 The first mechanism is a global input to the workflow execution. This input is
 accessible to all the steps in the workflow. The SDK provides :py:meth:`stepfunctions.inputs.ExecutionInput`
 to define the schema for this input, and to access the values in your workflow.
-
-.. autoclass:: stepfunctions.inputs.ExecutionInput
-                :inherited-members:
 
 .. code-block:: python
 
@@ -76,9 +80,6 @@ The SDK provides the :py:meth:`stepfunctions.inputs.StepInput` class for this.
 By default, each step has an output method :py:meth:`stepfunctions.steps.states.State.output`
 that returns the placeholder output for that step.
 
-.. autoclass:: stepfunctions.inputs.StepInput
-                :inherited-members:
-
 .. code-block:: python
 
   lambda_state_first = LambdaStep(
@@ -109,9 +110,6 @@ Step Result
 The third mechanism is a placeholder for a step's result. The result of a step can be modified
 with the **result_selector** field to replace the step's result.
 
-.. autoclass:: stepfunctions.inputs.StepResult
-                :inherited-members:
-
 .. code-block:: python
 
   lambda_result = StepResult(
@@ -127,5 +125,3 @@ with the **result_selector** field to replace the step's result.
           "Status": "Success"
       }
   )
-
-
