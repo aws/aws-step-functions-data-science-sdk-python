@@ -50,7 +50,11 @@ def pca_estimator():
         role=EXECUTION_ROLE,
         instance_count=1,
         instance_type='ml.c4.xlarge',
-        output_path=s3_output_location
+        output_path=s3_output_location,
+        environment={
+            'JobName': "job_name",
+            'ModelName': "model_name"
+        }
     )
 
     pca.set_hyperparameters(
@@ -489,7 +493,10 @@ def test_training_step_creation_with_model(pca_estimator):
             'ExecutionRoleArn': EXECUTION_ROLE,
             'ModelName.$': "$['TrainingJobName']",
             'PrimaryContainer': {
-                'Environment': {},
+                'Environment': {
+                    'JobName': 'job_name',
+                    'ModelName': 'model_name'
+                },
                 'Image': PCA_IMAGE,
                 'ModelDataUrl.$': "$['ModelArtifacts']['S3ModelArtifacts']"
             }
@@ -757,7 +764,10 @@ def test_get_expected_model(pca_estimator):
             'ExecutionRoleArn': EXECUTION_ROLE,
             'ModelName': 'pca-model',
             'PrimaryContainer': {
-                'Environment': {},
+                'Environment': {
+                    'JobName': 'job_name',
+                    'ModelName': 'model_name'
+                },
                 'Image': expected_model.image_uri,
                 'ModelDataUrl.$': "$['ModelArtifacts']['S3ModelArtifacts']"
             }
