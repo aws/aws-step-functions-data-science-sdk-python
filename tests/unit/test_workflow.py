@@ -56,6 +56,7 @@ def client():
     })
     return sfn
 
+
 @pytest.fixture
 def workflow(client):
     workflow = Workflow(
@@ -67,8 +68,10 @@ def workflow(client):
     workflow.create()
     return workflow
 
+
 def test_workflow_creation(client, workflow):
     assert workflow.state_machine_arn == state_machine_arn
+
 
 def test_workflow_creation_failure_duplicate_state_ids(client):
     improper_definition = steps.Chain([steps.Pass('HelloWorld'), steps.Succeed('HelloWorld')])
@@ -79,6 +82,7 @@ def test_workflow_creation_failure_duplicate_state_ids(client):
             role=role_arn,
             client=client
         )
+
 
 # calling update() before create()
 def test_workflow_update_when_statemachinearn_is_none(client):
@@ -92,10 +96,12 @@ def test_workflow_update_when_statemachinearn_is_none(client):
     with pytest.raises(WorkflowNotFound):
         workflow.update(definition=new_definition)
 
+
 # calling update() after create() without arguments
 def test_workflow_update_when_arguments_are_missing(client, workflow):
     with pytest.raises(MissingRequiredParameter):
         workflow.update()
+
 
 # calling update() after create()
 def test_workflow_update(client, workflow):
@@ -106,11 +112,13 @@ def test_workflow_update(client, workflow):
     new_role = 'arn:aws:iam::1234567890:role/service-role/StepFunctionsRoleNew'
     assert workflow.update(definition=new_definition, role=new_role) == state_machine_arn
 
+
 def test_attach_existing_workflow(client):
     workflow = Workflow.attach(state_machine_arn, client)
     assert workflow.name == state_machine_name
     assert workflow.role == role_arn
     assert workflow.state_machine_arn == state_machine_arn
+
 
 def test_workflow_list_executions(client, workflow):
     paginator = client.get_paginator('list_executions')
@@ -140,11 +148,13 @@ def test_workflow_list_executions(client, workflow):
     workflow.state_machine_arn = None
     assert workflow.list_executions() == []
 
+
 def test_workflow_makes_deletion_call(client, workflow):
     client.delete_state_machine = MagicMock(return_value=None)
     workflow.delete()
 
     client.delete_state_machine.assert_called_once_with(stateMachineArn=state_machine_arn)
+
 
 def test_workflow_execute_creation(client, workflow):
     execution = workflow.execute()
@@ -164,10 +174,12 @@ def test_workflow_execute_creation(client, workflow):
         input='{}'
     )
 
+
 def test_workflow_execute_when_statemachinearn_is_none(client, workflow):
     workflow.state_machine_arn = None
     with pytest.raises(WorkflowNotFound):
         workflow.execute()
+
 
 def test_execution_makes_describe_call(client, workflow):
     execution = workflow.execute()
@@ -176,6 +188,7 @@ def test_execution_makes_describe_call(client, workflow):
     execution.describe()
 
     client.describe_execution.assert_called_once()
+
 
 def test_execution_makes_stop_call(client, workflow):
     execution = workflow.execute()
@@ -193,6 +206,7 @@ def test_execution_makes_stop_call(client, workflow):
         cause='Test',
         error='Error'
     )
+
 
 def test_execution_list_events(client, workflow):
     paginator = client.get_paginator('get_execution_history')
@@ -229,6 +243,7 @@ def test_execution_list_events(client, workflow):
         }
     )
 
+
 def test_list_workflows(client):
     paginator = client.get_paginator('list_state_machines')
     paginator.paginate = MagicMock(return_value=[
@@ -254,11 +269,14 @@ def test_list_workflows(client):
         }
     )
 
+
 def test_cloudformation_export_with_simple_definition(workflow):
     cfn_template = workflow.get_cloudformation_template()
     cfn_template = yaml.load(cfn_template)
     assert 'StateMachineComponent' in cfn_template['Resources']
     assert workflow.role == cfn_template['Resources']['StateMachineComponent']['Properties']['RoleArn']
+    assert cfn_template['Description'] == "CloudFormation template for AWS Step Functions - State Machine"
+
 
 def test_cloudformation_export_with_sagemaker_execution_role(workflow):
     workflow.definition.to_dict = MagicMock(return_value={
@@ -281,7 +299,8 @@ def test_cloudformation_export_with_sagemaker_execution_role(workflow):
             }
         }
     })
-    cfn_template = workflow.get_cloudformation_template()
+    cfn_template = workflow.get_cloudformation_template(description="CloudFormation template with Sagemaker role")
     cfn_template = yaml.load(cfn_template)
     assert json.dumps(workflow.definition.to_dict(), indent=2) == cfn_template['Resources']['StateMachineComponent']['Properties']['DefinitionString']
     assert workflow.role == cfn_template['Resources']['StateMachineComponent']['Properties']['RoleArn']
+    assert cfn_template['Description'] == "CloudFormation template with Sagemaker role"
