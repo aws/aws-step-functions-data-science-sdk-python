@@ -376,11 +376,13 @@ class Workflow(object):
         widget = WorkflowGraphWidget(self.definition.to_json())
         return widget.show(portrait=portrait)
 
-    def get_cloudformation_template(self):
+    def get_cloudformation_template(self, description=None):
         """
         Returns a CloudFormation template that contains only the StateMachine resource. To reuse the CloudFormation template in a different region, please make sure to update the region specific AWS resources (e.g: Lambda ARN, Training Image) in the StateMachine definition.
+        Args:
+            description (str, optional): Description of the template
         """
-        return build_cloudformation_template(self)
+        return build_cloudformation_template(self, description)
 
     def __repr__(self):
         return '{}(name={!r}, role={!r}, state_machine_arn={!r})'.format(
