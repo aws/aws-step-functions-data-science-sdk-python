@@ -18,10 +18,12 @@ import logging
 
 logger = logging.getLogger('stepfunctions')
 
+
 def repr_str(dumper, data):
     if '\n' in data:
         return dumper.represent_scalar(u'tag:yaml.org,2002:str', data, style='|')
     return dumper.org_represent_str(data)
+
 
 yaml.SafeDumper.org_represent_str = yaml.SafeDumper.represent_str
 yaml.add_representer(dict, lambda self, data: yaml.representer.SafeRepresenter.represent_dict(self, data.items()), Dumper=yaml.SafeDumper)
@@ -42,7 +44,14 @@ CLOUDFORMATION_BASE_TEMPLATE = {
     }
 }
 
+
 def build_cloudformation_template(workflow, description=None):
+    """
+    Creates a CloudFormation template from the provided Workflow
+    Args:
+        workflow (Workflow): Step Functions workflow instance
+        description (str, optional): Description of the template. If none provided, the default description will be used: "CloudFormation template for AWS Step Functions - State Machine"
+    """
     logger.warning('To reuse the CloudFormation template in different regions, please make sure to update the region specific AWS resources in the StateMachine definition.')
 
     template = CLOUDFORMATION_BASE_TEMPLATE.copy()
