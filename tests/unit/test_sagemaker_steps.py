@@ -275,7 +275,9 @@ def test_training_step_creation_with_placeholders(pca_estimator):
     execution_input = ExecutionInput(schema={
         'Data': str,
         'OutputPath': str,
-        'HyperParameters': str
+        'num_components': str,
+        'HyperParamA': str,
+        'HyperParamB': str,
     })
 
     step_input = StepInput(schema={
@@ -293,7 +295,11 @@ def test_training_step_creation_with_placeholders(pca_estimator):
             'TrialComponentDisplayName': 'Training'
         },
         tags=DEFAULT_TAGS,
-        hyperparameters=execution_input['HyperParameters']
+        hyperparameters={
+            'num_components': execution_input['num_components'],
+            'HyperParamA': execution_input['HyperParamA'],
+            'HyperParamB': execution_input['HyperParamB']
+        }
     )
     assert step.to_dict() == {
         'Type': 'Task',
@@ -314,7 +320,15 @@ def test_training_step_creation_with_placeholders(pca_estimator):
                 'VolumeSizeInGB': 30
             },
             'RoleArn': EXECUTION_ROLE,
-            'HyperParameters.$': "$$.Execution.Input['HyperParameters']",
+            'HyperParameters': {
+                'HyperParamA.$': "$$.Execution.Input['HyperParamA']",
+                'HyperParamB.$': "$$.Execution.Input['HyperParamB']",
+                'algorithm_mode': 'randomized',
+                'feature_dim': 50000,
+                'mini_batch_size': 200,
+                'num_components.$': "$$.Execution.Input['num_components']",
+                'subtract_mean': True
+            },
             'InputDataConfig': [
                 {
                     'ChannelName': 'training',

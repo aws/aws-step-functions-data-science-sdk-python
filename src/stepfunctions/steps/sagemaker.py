@@ -69,7 +69,7 @@ class TrainingStep(Task):
                 * (list[sagemaker.amazon.amazon_estimator.RecordSet]) - A list of
                     :class:`sagemaker.amazon.amazon_estimator.RecordSet` objects,
                     where each instance is a different channel of training data.
-            hyperparameters (dict, optional): Parameters used for training.
+            hyperparameters (dict[str, str] or dict[str, Placeholder], optional): Parameters used for training.
                     Hyperparameters supplied will be merged with the Hyperparameters specified in the estimator.
                     If there are duplicate entries, the value provided through this property will be used. (Default: Hyperparameters specified in the estimator.)
             mini_batch_size (int): Specify this argument only when estimator is a built-in estimator of an Amazon algorithm. For other estimators, batch size should be specified in the estimator.
@@ -127,9 +127,8 @@ class TrainingStep(Task):
             parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = data_uri
 
         if hyperparameters is not None:
-            if not isinstance(hyperparameters, Placeholder):
-                if estimator.hyperparameters() is not None:
-                    hyperparameters = self.__merge_hyperparameters(hyperparameters, estimator.hyperparameters())
+            if estimator.hyperparameters() is not None:
+                hyperparameters = self.__merge_hyperparameters(hyperparameters, estimator.hyperparameters())
             parameters['HyperParameters'] = hyperparameters
 
         if experiment_config is not None:
