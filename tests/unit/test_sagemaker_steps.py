@@ -50,6 +50,33 @@ def pca_estimator():
         role=EXECUTION_ROLE,
         instance_count=1,
         instance_type='ml.c4.xlarge',
+        output_path=s3_output_location
+    )
+
+    pca.set_hyperparameters(
+        feature_dim=50000,
+        num_components=10,
+        subtract_mean=True,
+        algorithm_mode='randomized',
+        mini_batch_size=200
+    )
+
+    pca.sagemaker_session = MagicMock()
+    pca.sagemaker_session.boto_region_name = 'us-east-1'
+    pca.sagemaker_session._default_bucket = 'sagemaker'
+
+    return pca
+
+
+@pytest.fixture
+def pca_estimator_with_env():
+    s3_output_location = 's3://sagemaker/models'
+
+    pca = sagemaker.estimator.Estimator(
+        PCA_IMAGE,
+        role=EXECUTION_ROLE,
+        instance_count=1,
+        instance_type='ml.c4.xlarge',
         output_path=s3_output_location,
         environment={
             'JobName': "job_name",
@@ -493,6 +520,60 @@ def test_training_step_creation_with_model(pca_estimator):
             'ExecutionRoleArn': EXECUTION_ROLE,
             'ModelName.$': "$['TrainingJobName']",
             'PrimaryContainer': {
+                'Environment': {},
+                'Image': PCA_IMAGE,
+                'ModelDataUrl.$': "$['ModelArtifacts']['S3ModelArtifacts']"
+            }
+        },
+        'End': True
+    }
+
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_training_step_creation_with_model_with_env(pca_estimator_with_env):
+    training_step = TrainingStep('Training', estimator=pca_estimator_with_env, job_name='TrainingJob')
+    model_step = ModelStep('Training - Save Model', training_step.get_expected_model(model_name=training_step.output()['TrainingJobName']))
+    training_step.next(model_step)
+    assert training_step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'AlgorithmSpecification': {
+                'TrainingImage': PCA_IMAGE,
+                'TrainingInputMode': 'File'
+            },
+            'OutputDataConfig': {
+                'S3OutputPath': 's3://sagemaker/models'
+            },
+            'StoppingCondition': {
+                'MaxRuntimeInSeconds': 86400
+            },
+            'ResourceConfig': {
+                'InstanceCount': 1,
+                'InstanceType': 'ml.c4.xlarge',
+                'VolumeSizeInGB': 30
+            },
+            'RoleArn': EXECUTION_ROLE,
+            'HyperParameters': {
+                'feature_dim': '50000',
+                'num_components': '10',
+                'subtract_mean': 'True',
+                'algorithm_mode': 'randomized',
+                'mini_batch_size': '200'
+            },
+            'TrainingJobName': 'TrainingJob'
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
+        'Next': 'Training - Save Model'
+    }
+
+    assert model_step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::sagemaker:createModel',
+        'Parameters': {
+            'ExecutionRoleArn': EXECUTION_ROLE,
+            'ModelName.$': "$['TrainingJobName']",
+            'PrimaryContainer': {
                 'Environment': {
                     'JobName': 'job_name',
                     'ModelName': 'model_name'
@@ -764,10 +845,7 @@ def test_get_expected_model(pca_estimator):
             'ExecutionRoleArn': EXECUTION_ROLE,
             'ModelName': 'pca-model',
             'PrimaryContainer': {
-                'Environment': {
-                    'JobName': 'job_name',
-                    'ModelName': 'model_name'
-                },
+                'Environment': {},
                 'Image': expected_model.image_uri,
                 'ModelDataUrl.$': "$['ModelArtifacts']['S3ModelArtifacts']"
             }
