@@ -70,7 +70,7 @@ class TrainingStep(Task):
                     :class:`sagemaker.amazon.amazon_estimator.RecordSet` objects,
                     where each instance is a different channel of training data.
             hyperparameters: Parameters used for training.
-                * (dict[str, str], optional) - Hyperparameters supplied will be merged with the Hyperparameters specified in the estimator.
+                * (dict, optional) - Hyperparameters supplied will be merged with the Hyperparameters specified in the estimator.
                     If there are duplicate entries, the value provided through this property will be used. (Default: Hyperparameters specified in the estimator.)
                 * (Placeholder, optional) - The TrainingStep will use the hyperparameters specified by the Placeholder's value instead of the hyperparameters specified in the estimator.
             mini_batch_size (int): Specify this argument only when estimator is a built-in estimator of an Amazon algorithm. For other estimators, batch size should be specified in the estimator.

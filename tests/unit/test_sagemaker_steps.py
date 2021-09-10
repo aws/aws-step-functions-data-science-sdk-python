@@ -367,62 +367,21 @@ def test_training_step_creation_with_hyperparameters_containing_placeholders(pca
         },
         tags=DEFAULT_TAGS,
         hyperparameters={
-            'num_components': execution_input['num_components'],
+            'num_components': execution_input['num_components'],  # This will overwrite the value that was defined in the pca_estimator
             'HyperParamA': execution_input['HyperParamA'],
             'HyperParamB': execution_input['HyperParamB']
         }
     )
-    assert step.to_dict() == {
-        'Type': 'Task',
-        'Parameters': {
-            'AlgorithmSpecification': {
-                'TrainingImage': PCA_IMAGE,
-                'TrainingInputMode': 'File'
-            },
-            'OutputDataConfig': {
-                'S3OutputPath.$': "$$.Execution.Input['OutputPath']"
-            },
-            'StoppingCondition': {
-                'MaxRuntimeInSeconds': 86400
-            },
-            'ResourceConfig': {
-                'InstanceCount': 1,
-                'InstanceType': 'ml.c4.xlarge',
-                'VolumeSizeInGB': 30
-            },
-            'RoleArn': EXECUTION_ROLE,
-            'HyperParameters': {
-                'HyperParamA.$': "$$.Execution.Input['HyperParamA']",
-                'HyperParamB.$': "$$.Execution.Input['HyperParamB']",
-                'algorithm_mode': 'randomized',
-                'feature_dim': 50000,
-                'mini_batch_size': 200,
-                'num_components.$': "$$.Execution.Input['num_components']",
-                'subtract_mean': True
-            },
-            'InputDataConfig': [
-                {
-                    'ChannelName': 'training',
-                    'DataSource': {
-                        'S3DataSource': {
-                            'S3DataDistributionType': 'FullyReplicated',
-                            'S3DataType': 'S3Prefix',
-                            'S3Uri.$': "$$.Execution.Input['Data']"
-                        }
-                    }
-                }
-            ],
-            'ExperimentConfig': {
-                'ExperimentName': 'pca_experiment',
-                'TrialName': 'pca_trial',
-                'TrialComponentDisplayName': 'Training'
-            },
-            'TrainingJobName.$': "$['JobName']",
-            'Tags': DEFAULT_TAGS_LIST
-        },
-        'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
-        'End': True
+    assert step.to_dict()['Parameters']['HyperParameters'] == {
+        'HyperParamA.$': "$$.Execution.Input['HyperParamA']",
+        'HyperParamB.$': "$$.Execution.Input['HyperParamB']",
+        'algorithm_mode': 'randomized',
+        'feature_dim': 50000,
+        'mini_batch_size': 200,
+        'num_components.$': "$$.Execution.Input['num_components']",
+        'subtract_mean': True
     }
+
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
