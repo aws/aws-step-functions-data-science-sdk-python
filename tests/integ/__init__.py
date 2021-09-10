@@ -14,5 +14,15 @@ from __future__ import absolute_import
 
 import os
 
+from stepfunctions.steps import Retry
+
 DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "data")
 DEFAULT_TIMEOUT_MINUTES = 25
+
+# Constants retrying on sagemaker exceptions when running tests
+SAGEMAKER_RETRY_STRATEGY = Retry(
+    error_equals=["SageMaker.AmazonSageMakerException"],
+    interval_seconds=5,
+    max_attempts=5,
+    backoff_rate=2
+)
