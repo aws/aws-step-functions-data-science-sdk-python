@@ -335,6 +335,7 @@ def test_training_step_creation_with_placeholders(pca_estimator):
     execution_input = ExecutionInput(schema={
         'Data': str,
         'OutputPath': str,
+        'HyperParameters': str
     })
 
     step_input = StepInput(schema={
@@ -352,6 +353,7 @@ def test_training_step_creation_with_placeholders(pca_estimator):
             'TrialComponentDisplayName': 'Training'
         },
         tags=DEFAULT_TAGS,
+        hyperparameters=execution_input['HyperParameters']
     )
     assert step.to_dict() == {
         'Type': 'Task',
@@ -372,13 +374,7 @@ def test_training_step_creation_with_placeholders(pca_estimator):
                 'VolumeSizeInGB': 30
             },
             'RoleArn': EXECUTION_ROLE,
-            'HyperParameters': {
-                'feature_dim': '50000',
-                'num_components': '10',
-                'subtract_mean': 'True',
-                'algorithm_mode': 'randomized',
-                'mini_batch_size': '200'
-            },
+            'HyperParameters.$': "$$.Execution.Input['HyperParameters']",
             'InputDataConfig': [
                 {
                     'ChannelName': 'training',
@@ -401,6 +397,49 @@ def test_training_step_creation_with_placeholders(pca_estimator):
         },
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
         'End': True
+    }
+
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_training_step_creation_with_hyperparameters_containing_placeholders(pca_estimator):
+    execution_input = ExecutionInput(schema={
+        'Data': str,
+        'OutputPath': str,
+        'num_components': str,
+        'HyperParamA': str,
+        'HyperParamB': str,
+    })
+
+    step_input = StepInput(schema={
+        'JobName': str,
+    })
+
+    step = TrainingStep('Training',
+        estimator=pca_estimator,
+        job_name=step_input['JobName'],
+        data=execution_input['Data'],
+        output_data_config_path=execution_input['OutputPath'],
+        experiment_config={
+            'ExperimentName': 'pca_experiment',
+            'TrialName': 'pca_trial',
+            'TrialComponentDisplayName': 'Training'
+        },
+        tags=DEFAULT_TAGS,
+        hyperparameters={
+            'num_components': execution_input['num_components'],  # This will overwrite the value that was defined in the pca_estimator
+            'HyperParamA': execution_input['HyperParamA'],
+            'HyperParamB': execution_input['HyperParamB']
+        }
+    )
+    assert step.to_dict()['Parameters']['HyperParameters'] == {
+        'HyperParamA.$': "$$.Execution.Input['HyperParamA']",
+        'HyperParamB.$': "$$.Execution.Input['HyperParamB']",
+        'algorithm_mode': 'randomized',
+        'feature_dim': 50000,
+        'mini_batch_size': 200,
+        'num_components.$': "$$.Execution.Input['num_components']",
+        'subtract_mean': True
     }
 
 
