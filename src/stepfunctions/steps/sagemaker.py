@@ -72,7 +72,7 @@ class TrainingStep(Task):
             hyperparameters: Parameters used for training.
                 * (dict[str, str], optional) - Hyperparameters supplied will be merged with the Hyperparameters specified in the estimator.
                     If there are duplicate entries, the value provided through this property will be used. (Default: Hyperparameters specified in the estimator.)
-                * (Placeholder, optional) - Hyperparameters supplied will overwrite the Hyperparameters specified in the estimator.
+                * (Placeholder, optional) - The TrainingStep will use the hyperparameters specified by the Placeholder's value instead of the hyperparameters specified in the estimator.
             mini_batch_size (int): Specify this argument only when estimator is a built-in estimator of an Amazon algorithm. For other estimators, batch size should be specified in the estimator.
             experiment_config (dict, optional): Specify the experiment config for the training. (Default: None)
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the training job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the training job and proceed to the next step. (default: True)
