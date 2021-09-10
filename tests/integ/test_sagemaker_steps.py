@@ -30,7 +30,7 @@ from sagemaker.tuner import HyperparameterTuner
 from sagemaker.processing import ProcessingInput, ProcessingOutput
 
 from stepfunctions.inputs import ExecutionInput
-from stepfunctions.steps import Chain, Retry
+from stepfunctions.steps import Chain
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, TuningStep, ProcessingStep
 from stepfunctions.workflow import Workflow
 
