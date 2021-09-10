@@ -275,6 +275,77 @@ def test_training_step_creation_with_placeholders(pca_estimator):
     execution_input = ExecutionInput(schema={
         'Data': str,
         'OutputPath': str,
+        'HyperParameters': str
+    })
+
+    step_input = StepInput(schema={
+        'JobName': str,
+    })
+
+    step = TrainingStep('Training',
+        estimator=pca_estimator,
+        job_name=step_input['JobName'],
+        data=execution_input['Data'],
+        output_data_config_path=execution_input['OutputPath'],
+        experiment_config={
+            'ExperimentName': 'pca_experiment',
+            'TrialName': 'pca_trial',
+            'TrialComponentDisplayName': 'Training'
+        },
+        tags=DEFAULT_TAGS,
+        hyperparameters=execution_input['HyperParameters']
+    )
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'AlgorithmSpecification': {
+                'TrainingImage': PCA_IMAGE,
+                'TrainingInputMode': 'File'
+            },
+            'OutputDataConfig': {
+                'S3OutputPath.$': "$$.Execution.Input['OutputPath']"
+            },
+            'StoppingCondition': {
+                'MaxRuntimeInSeconds': 86400
+            },
+            'ResourceConfig': {
+                'InstanceCount': 1,
+                'InstanceType': 'ml.c4.xlarge',
+                'VolumeSizeInGB': 30
+            },
+            'RoleArn': EXECUTION_ROLE,
+            'HyperParameters.$': "$$.Execution.Input['HyperParameters']",
+            'InputDataConfig': [
+                {
+                    'ChannelName': 'training',
+                    'DataSource': {
+                        'S3DataSource': {
+                            'S3DataDistributionType': 'FullyReplicated',
+                            'S3DataType': 'S3Prefix',
+                            'S3Uri.$': "$$.Execution.Input['Data']"
+                        }
+                    }
+                }
+            ],
+            'ExperimentConfig': {
+                'ExperimentName': 'pca_experiment',
+                'TrialName': 'pca_trial',
+                'TrialComponentDisplayName': 'Training'
+            },
+            'TrainingJobName.$': "$['JobName']",
+            'Tags': DEFAULT_TAGS_LIST
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
+        'End': True
+    }
+
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_training_step_creation_with_hyperparameters_containing_placeholders(pca_estimator):
+    execution_input = ExecutionInput(schema={
+        'Data': str,
+        'OutputPath': str,
         'num_components': str,
         'HyperParamA': str,
         'HyperParamB': str,
@@ -352,7 +423,6 @@ def test_training_step_creation_with_placeholders(pca_estimator):
         'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
         'End': True
     }
-
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')

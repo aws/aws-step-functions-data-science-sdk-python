@@ -69,9 +69,10 @@ class TrainingStep(Task):
                 * (list[sagemaker.amazon.amazon_estimator.RecordSet]) - A list of
                     :class:`sagemaker.amazon.amazon_estimator.RecordSet` objects,
                     where each instance is a different channel of training data.
-            hyperparameters (dict[str, str] or dict[str, Placeholder], optional): Parameters used for training.
-                    Hyperparameters supplied will be merged with the Hyperparameters specified in the estimator.
+            hyperparameters: Parameters used for training.
+                * (dict[str, str], optional) - Hyperparameters supplied will be merged with the Hyperparameters specified in the estimator.
                     If there are duplicate entries, the value provided through this property will be used. (Default: Hyperparameters specified in the estimator.)
+                * (Placeholder, optional) - Hyperparameters supplied will overwrite the Hyperparameters specified in the estimator.
             mini_batch_size (int): Specify this argument only when estimator is a built-in estimator of an Amazon algorithm. For other estimators, batch size should be specified in the estimator.
             experiment_config (dict, optional): Specify the experiment config for the training. (Default: None)
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the training job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the training job and proceed to the next step. (default: True)
@@ -127,8 +128,9 @@ class TrainingStep(Task):
             parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = data_uri
 
         if hyperparameters is not None:
-            if estimator.hyperparameters() is not None:
-                hyperparameters = self.__merge_hyperparameters(hyperparameters, estimator.hyperparameters())
+            if not isinstance(hyperparameters, Placeholder):
+                if estimator.hyperparameters() is not None:
+                    hyperparameters = self.__merge_hyperparameters(hyperparameters, estimator.hyperparameters())
             parameters['HyperParameters'] = hyperparameters
 
         if experiment_config is not None:
@@ -173,7 +175,12 @@ class TrainingStep(Task):
             estimator_hyperparameters (dict): Hyperparameters specified in the estimator
         """
         merged_hyperparameters = estimator_hyperparameters.copy()
-        merge_dicts(merged_hyperparameters, training_step_hyperparameters)
+        for key, value in training_step_hyperparameters.items():
+            if key in merged_hyperparameters:
+                logger.info(
+                    f"hyperparameter property: <{key}> with value: <{merged_hyperparameters[key]}> provided in the"
+                    f" estimator will be overwritten with value provided in constructor: <{value}>")
+            merged_hyperparameters[key] = value
         return merged_hyperparameters
 
 class TransformStep(Task):
