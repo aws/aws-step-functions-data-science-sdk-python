@@ -192,6 +192,8 @@ def test_map_item_index_creation_with_subscript_operator():
     map_item_placeholder = MapItemIndex()
     with pytest.raises(AttributeError):
         map_item_placeholder["A"]
+    assert not map_item_placeholder.get_schema_as_dict()
+    assert not map_item_placeholder.immutable
 
 
 def test_map_item_value_creation_with_type():
@@ -335,6 +337,22 @@ def test_map_item_value_with_schema():
 
     with pytest.raises(ValueError):
         workflow_input["A"]["B"].get("C", float)
+
+
+def test_map_item_index_with_schema():
+    test_schema = {
+        "A": {
+            "B": {
+                "C": int
+            }
+        },
+        "Request": {
+            "Status": str
+        },
+        "Hello": float
+    }
+    with pytest.raises(AttributeError):
+        workflow_input = MapItemIndex(schema=test_schema)
 
 
 def test_map_item_value_jsonpath():
