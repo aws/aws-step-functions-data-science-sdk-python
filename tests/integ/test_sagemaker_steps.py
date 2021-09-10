@@ -34,9 +34,7 @@ from stepfunctions.steps import Chain, Retry
 from stepfunctions.steps.sagemaker import TrainingStep, TransformStep, ModelStep, EndpointStep, EndpointConfigStep, TuningStep, ProcessingStep
 from stepfunctions.workflow import Workflow
 
-from tests.integ import DATA_DIR, DEFAULT_TIMEOUT_MINUTES, RETRY_SAGEMAKER_EXCEPTION_TYPES, \
-    RETRY_SAGEMAKER_BACKOFF_RATE, RETRY_SAGEMAKER_MAX_ATTEMPTS, RETRY_SAGEMAKER_INTERVAL_SECONDS, \
-    SAGEMAKER_RETRY_STRATEGY
+from tests.integ import DATA_DIR, DEFAULT_TIMEOUT_MINUTES, SAGEMAKER_RETRY_STRATEGY
 from tests.integ.timeout import timeout
 from tests.integ.utils import (
     state_machine_delete_wait,
