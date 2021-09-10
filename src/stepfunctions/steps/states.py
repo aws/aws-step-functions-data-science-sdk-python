@@ -73,10 +73,32 @@ class Block(object):
                 k = to_pascalcase(k)
                 if k == to_pascalcase(Field.Parameters.value):
                     result[k] = self._replace_placeholders(v)
+                elif self._is_placeholder_compatible(k):
+                    if isinstance(v, Placeholder):
+                        result[k] = v.to_jsonpath()
+                    else:
+                        result[k] = v
                 else:
                     result[k] = v
 
         return result
+
+    @staticmethod
+    def _is_placeholder_compatible(field):
+        """
+        Check if the field is placeholder compatible
+        Args:
+            field: Field against which to verify placeholder compatibility
+        """
+        return field in [
+            # Common fields
+            to_pascalcase(Field.InputPath.value),
+            to_pascalcase(Field.OutputPath.value),
+
+            # Map
+            to_pascalcase(Field.ItemsPath.value)
+        ]
+
 
     def to_json(self, pretty=False):
         """Serialize to a JSON formatted string.
@@ -541,13 +563,13 @@ class Map(State):
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             iterator (State or Chain): State or chain to execute for each of the items in `items_path`.
-            items_path (str, optional): Path in the input for items to iterate over. (default: '$')
+            items_path (str or Placeholder, optional): Path in the input for items to iterate over. (default: '$')
             max_concurrency (int, optional): Maximum number of iterations to have running at any given point in time. (default: 0)
             comment (str, optional): Human-readable comment or description. (default: None)
-            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            input_path (str or Placeholder, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
-            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            output_path (str or Placeholder, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         super(Map, self).__init__(state_id, 'Map', **kwargs)
 

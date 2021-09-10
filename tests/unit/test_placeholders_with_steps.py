@@ -176,8 +176,22 @@ def test_step_input_order_validation():
 
 def test_map_state_with_placeholders():
     workflow_input = ExecutionInput()
+    map_item_value = MapItemValue(schema={
+        'name': str,
+        'age': str
+    })
 
-    map_state = Map('MapState01')
+    map_state = Map(
+        'MapState01',
+        input_path=workflow_input['input_path'],
+        items_path=workflow_input['items_path'],
+        output_path=workflow_input['output_path'],
+        parameters={
+            "MapIndex": MapItemIndex(),
+            "Name": map_item_value['name'],
+            "Age": map_item_value['age']
+        }
+    )
     iterator_state = Pass(
         'TrainIterator',
         parameters={
@@ -194,6 +208,9 @@ def test_map_state_with_placeholders():
             "MapState01": {
                 "Type": "Map",
                 "End": True,
+                "InputPath": "$$.Execution.Input['input_path']",
+                "ItemsPath": "$$.Execution.Input['items_path']",
+                "OutputPath": "$$.Execution.Input['output_path']",
                 "Iterator": {
                     "StartAt": "TrainIterator",
                     "States": {
@@ -206,62 +223,12 @@ def test_map_state_with_placeholders():
                             "End": True
                         }
                     }
+                },
+                'Parameters': {
+                    'Age.$': "$$.Map.Item.Value['age']",
+                    'MapIndex.$': '$$.Map.Item.Index',
+                    'Name.$': "$$.Map.Item.Value['name']"
                 }
-            }
-        }
-    }
-
-    result = Graph(workflow_definition).to_dict()
-    assert result == expected_repr
-
-
-def test_map_state_with_placeholders():
-    map_item_value = MapItemValue(schema={
-        'name': str,
-        'age': str
-    })
-
-    map_state = Map(
-        'MapState01',
-        parameters={
-            "MapIndex": MapItemIndex(),
-            "Name": map_item_value['name'],
-            "Age": map_item_value['age']
-        }
-    )
-    iterator_state = Pass(
-        'TrainIterator',
-        parameters={
-            'ParamA': map_state.output()['X']["Y"]
-        }
-    )
-
-    map_state.attach_iterator(iterator_state)
-    workflow_definition = Chain([map_state])
-
-    expected_repr = {
-        "StartAt": "MapState01",
-        "States": {
-            "MapState01": {
-                "Type": "Map",
-                "End": True,
-                "Iterator": {
-                    "StartAt": "TrainIterator",
-                    "States": {
-                        "TrainIterator": {
-                            "Parameters": {
-                                "ParamA.$": "$['X']['Y']"
-                            },
-                            "Type": "Pass",
-                            "End": True
-                        }
-                    }
-                },
-                "Parameters": {
-                    "Age.$": "$$.Map.Item.Value['age']",
-                    "MapIndex.$": "$$.Map.Item.Index",
-                    "Name.$": "$$.Map.Item.Value['name']"
-                },
             }
         }
     }
