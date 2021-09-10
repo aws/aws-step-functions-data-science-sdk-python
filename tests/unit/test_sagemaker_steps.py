@@ -81,7 +81,11 @@ def pca_estimator_with_env():
         environment={
             'JobName': "job_name",
             'ModelName': "model_name"
-        }
+        },
+        subnets=[
+            'subnet-00000000000000000',
+            'subnet-00000000000000001'
+        ]
     )
 
     pca.set_hyperparameters(
@@ -184,6 +188,31 @@ def pca_model():
         image_uri=PCA_IMAGE,
         role=EXECUTION_ROLE,
         name='pca-model'
+    )
+
+
+@pytest.fixture
+def pca_model_with_env():
+    model_data = 's3://sagemaker/models/pca.tar.gz'
+    return Model(
+        model_data=model_data,
+        image_uri=PCA_IMAGE,
+        role=EXECUTION_ROLE,
+        name='pca-model',
+        env={
+            'JobName': "job_name",
+            'ModelName': "model_name"
+        },
+        vpc_config={
+            "SecurityGroupIds": ["sg-00000000000000000"],
+            "Subnets": ["subnet-00000000000000000", "subnet-00000000000000001"]
+        },
+        image_config={
+            "RepositoryAccessMode": "Vpc",
+            "RepositoryAuthConfig": {
+                "RepositoryCredentialsProviderArn": "arn"
+            }
+        }
     )
 
 
@@ -857,6 +886,31 @@ def test_get_expected_model(pca_estimator):
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_get_expected_model_with_env(pca_estimator_with_env):
+    training_step = TrainingStep('Training', estimator=pca_estimator_with_env, job_name='TrainingJob')
+    expected_model = training_step.get_expected_model()
+    model_step = ModelStep('Create model', model=expected_model, model_name='pca-model')
+    assert model_step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'ExecutionRoleArn': EXECUTION_ROLE,
+            'ModelName': 'pca-model',
+            'PrimaryContainer': {
+                'Environment': {
+                    'JobName': 'job_name',
+                    'ModelName': 'model_name'
+                },
+                'Image': expected_model.image_uri,
+                'ModelDataUrl.$': "$['ModelArtifacts']['S3ModelArtifacts']"
+            }
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createModel',
+        'End': True
+    }
+
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_get_expected_model_with_framework_estimator(tensorflow_estimator):
     training_step = TrainingStep('Training',
         estimator=tensorflow_estimator,
@@ -900,6 +954,29 @@ def test_model_step_creation(pca_model):
                 'Environment': {},
                 'Image': pca_model.image_uri,
                 'ModelDataUrl': pca_model.model_data
+            },
+            'Tags': DEFAULT_TAGS_LIST
+        },
+        'Resource': 'arn:aws:states:::sagemaker:createModel',
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_model_step_creation_with_env(pca_model_with_env):
+    step = ModelStep('Create model', model=pca_model_with_env, model_name='pca-model', tags=DEFAULT_TAGS)
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Parameters': {
+            'ExecutionRoleArn': EXECUTION_ROLE,
+            'ModelName': 'pca-model',
+            'PrimaryContainer': {
+                'Environment': {
+                    'JobName': 'job_name',
+                    'ModelName': 'model_name'
+                },
+                'Image': pca_model_with_env.image_uri,
+                'ModelDataUrl': pca_model_with_env.model_data
             },
             'Tags': DEFAULT_TAGS_LIST
         },

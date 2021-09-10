@@ -286,10 +286,20 @@ class ModelStep(Task):
             instance_type (str, optional): The EC2 instance type to deploy this Model to. For example, 'ml.p2.xlarge'.
             tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
         """
-        if isinstance(model, Model):
+        if isinstance(model, FrameworkModel):
             parameters = model_config(model=model, instance_type=instance_type, role=model.role, image_uri=model.image_uri)
             if model_name:
                 parameters['ModelName'] = model_name
+        elif isinstance(model, Model):
+            parameters = {
+                'ExecutionRoleArn': model.role,
+                'ModelName': model_name or model.name,
+                'PrimaryContainer': {
+                    'Environment': model.env,
+                    'Image': model.image_uri,
+                    'ModelDataUrl': model.model_data
+                }
+            }
         else:
             raise ValueError("Expected 'model' parameter to be of type 'sagemaker.model.Model', but received type '{}'".format(type(model).__name__))
 
