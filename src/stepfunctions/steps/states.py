@@ -541,7 +541,7 @@ class Map(State):
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             iterator (State or Chain): State or chain to execute for each of the items in `items_path`.
-            items_path (str or Placeholder, optional): Path in the input for items to iterate over. (default: '$')
+            items_path (str, optional): Path in the input for items to iterate over. (default: '$')
             max_concurrency (int, optional): Maximum number of iterations to have running at any given point in time. (default: 0)
             comment (str, optional): Human-readable comment or description. (default: None)
             input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')

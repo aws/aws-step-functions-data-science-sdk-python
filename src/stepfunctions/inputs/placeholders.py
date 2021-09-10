@@ -308,7 +308,8 @@ class MapItemValue(Placeholder):
             A placeholder variable can only be created if the collection is not immutable due to a pre-specified schema.
         """
         if self.immutable:
-            raise ValueError("Placeholder variable does not conform to schema set for the placeholder collection.")
+            raise ValueError("Placeholder variable does not conform to schema set for the placeholder collection: "
+                             f" {self.schema}")
         if type:
             return MapItemValue(name=name, parent=parent, type=type)
         else:
@@ -330,7 +331,8 @@ class MapItemIndex(Placeholder):
             A placeholder variable can only be created if the collection is not immutable due to a pre-specified schema.
         """
         if self.immutable:
-            raise ValueError("Placeholder variable does not conform to schema set for the placeholder collection.")
+            raise ValueError(f"Placeholder variable does not conform to schema set for the placeholder collection: "
+                             f" {self.schema}")
         if type:
             return MapItemIndex(name=name, parent=parent, type=type)
         else:

@@ -221,12 +221,10 @@ def test_map_state_with_placeholders():
         'age': str
     })
 
-    map_item_index = MapItemIndex()
-
     map_state = Map(
         'MapState01',
         parameters={
-            "MapIndex": map_item_index,
+            "MapIndex": MapItemIndex(),
             "Name": map_item_value['name'],
             "Age": map_item_value['age']
         }

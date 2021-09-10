@@ -328,6 +328,7 @@ def test_map_item_value_with_schema():
     workflow_input = MapItemValue(schema=test_schema)
     assert workflow_input.get_schema_as_dict() == test_schema
     assert workflow_input.immutable == True
+    assert workflow_input['A']['B'].get("C", int)
 
     with pytest.raises(ValueError):
         workflow_input["A"]["B"]["D"]
