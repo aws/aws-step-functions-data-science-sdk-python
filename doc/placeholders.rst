@@ -5,7 +5,7 @@ Once defined, a workflow is static unless you update it explicitly. But, you can
 input to workflow executions. You can have dynamic values
 that you use in the **parameters** fields of the steps in your workflow. For this,
 the AWS Step Functions Data Science SDK provides a way to define placeholders to pass around when you
-create your workflow. There are 2 mechanisms for passing dynamic values in a workflow.
+create your workflow. There are 4 mechanisms for passing dynamic values in a workflow.
 
 The first mechanism is a global input to the workflow execution. This input is
 accessible to all the steps in the workflow. The SDK provides :py:meth:`stepfunctions.inputs.ExecutionInput`
@@ -82,6 +82,89 @@ that returns the placeholder output for that step.
   definition = Chain([lambda_state_first, lambda_state_second])
 
 
+The third and fourth mechanisms can be used to access context objects from the Map state.
+The SDK provides the :py:meth:`stepfunctions.inputs.MapItemIndex` class that allows you to get the index number of the
+array item that is being processed in the current iteration and the :py:meth:`stepfunctions.inputs.MapItemValue` class
+which is used for accessing the value of the array item that is currently being processed.
+
+.. code-block:: python
+
+  # Create an instance of MapItemValue class, and define a schema. Defining
+  # a schema is optional, but it is a good practice
+  map_item_value = MapItemValue(schema={
+      'name': str,
+      'age': str
+  })
+
+  map_state = Map(
+      'MapState',
+      parameters={
+          "MapIndex": MapItemIndex(),
+          "Name": map_item_value['name'],
+          "Age": map_item_value['age']
+      }
+  )
+  iterator_state = Pass('TrainIterator')
+  map_state.attach_iterator(iterator_state)
+
+  # Workflow is created with the placeholders
+  workflow = Workflow(
+      name='MyMapWorkflow',
+      definition=map_state,
+      role=workflow_execution_role,
+  )
+
+  # Create the workflow on AWS Step Functions
+  workflow.create()
+
+  # This creates a workflow with the following definition:
+  """
+  {
+    "StartAt": "MapState01",
+    "States": {
+        "MapState": {
+            "Parameters": {
+                "MapIndex.$": "$$.Map.Item.Index",
+                "Name.$": "$$.Map.Item.Value['name']",
+                "Age.$": "$$.Map.Item.Value['age']"
+            },
+            "Type": "Map",
+            "End": true,
+            "Iterator": {
+                "StartAt": "TrainIterator",
+                "States": {
+                    "TrainIterator": {
+                        "Type": "Pass",
+                        "End": true
+                    }
+                }
+            }
+        }
+    }
+  }
+  """
+
+  # The placeholder is assigned a value during execution. The SDK will
+  # verify that all placeholder values are assigned values, and that
+  # these values are of the expected type based on the defined schema
+  # before the execution starts.
+  workflow_input = execution_input = [{"name": "John", "age": 21}, {"name": "Snow", "age": 18}]
+  workflow.execute(inputs=workflow_input)
+
+  # The execution output will be:
+  [
+    {
+        "MapIndex": 0,
+        "Age": 21,
+        "Name": "John"
+    },
+    {
+        "MapIndex": 1,
+        "Age": 18,
+        "Name": "Snow"
+    }
+  ]
+
 
 .. autoclass:: stepfunctions.inputs.Placeholder
 
@@ -89,4 +172,10 @@ that returns the placeholder output for that step.
                 :inherited-members:
 
 .. autoclass:: stepfunctions.inputs.StepInput
+                :inherited-members:
+
+.. autoclass:: stepfunctions.inputs.MapItemValue
+                :inherited-members:
+
+.. autoclass:: stepfunctions.inputs.MapItemIndex
                 :inherited-members:
