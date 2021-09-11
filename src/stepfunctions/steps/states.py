@@ -73,11 +73,9 @@ class Block(object):
                 k = to_pascalcase(k)
                 if k == to_pascalcase(Field.Parameters.value):
                     result[k] = self._replace_placeholders(v)
-                elif self._is_placeholder_compatible(k):
-                    if isinstance(v, Placeholder):
-                        result[k] = v.to_jsonpath()
-                    else:
-                        result[k] = v
+                elif self._is_placeholder_compatible(k) and isinstance(v, Placeholder):
+                    result[k] = v.to_jsonpath()
+
                 else:
                     result[k] = v
 
