@@ -159,6 +159,8 @@ class TrainingStep(Task):
             model.name = model_name
         else:
             model.name = self.job_name
+        if self.estimator.environment:
+            model.env = self.estimator.environment
         model.model_data = self.output()["ModelArtifacts"]["S3ModelArtifacts"]
         return model
 
@@ -295,7 +297,7 @@ class ModelStep(Task):
                 'ExecutionRoleArn': model.role,
                 'ModelName': model_name or model.name,
                 'PrimaryContainer': {
-                    'Environment': {},
+                    'Environment': model.env,
                     'Image': model.image_uri,
                     'ModelDataUrl': model.model_data
                 }
