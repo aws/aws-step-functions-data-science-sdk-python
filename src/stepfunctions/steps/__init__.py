@@ -34,3 +34,4 @@ from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateCluste
 from stepfunctions.steps.service import EventBridgePutEventsStep
 from stepfunctions.steps.service import GlueDataBrewStartJobRunStep
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
+from stepfunctions.steps.service import StepFunctionsStartExecutionStep

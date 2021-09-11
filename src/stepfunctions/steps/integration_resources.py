@@ -25,6 +25,7 @@ class IntegrationPattern(Enum):
     WaitForTaskToken = "waitForTaskToken"
     WaitForCompletion = "sync"
     RequestResponse = ""
+    WaitForCompletionWithJsonResponse = "sync:2"
 
 
 def get_service_integration_arn(service, api, integration_pattern=IntegrationPattern.RequestResponse):

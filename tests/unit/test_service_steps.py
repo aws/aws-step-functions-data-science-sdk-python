@@ -30,6 +30,7 @@ from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateCluste
 from stepfunctions.steps.service import EventBridgePutEventsStep
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import GlueDataBrewStartJobRunStep
+from stepfunctions.steps.service import StepFunctionsStartExecutionStep
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
@@ -1157,4 +1158,109 @@ def test_eks_call_step_creation():
             }
         },
         'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation():
+    step = StepFunctionsStartExecutionStep(
+        "SFN Start Execution", wait_for_callback=False, wait_for_completion=False,
+        parameters={
+            "Input": {
+                "Comment": "Hello world!"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::states:startExecution",
+        "Parameters": {
+            "Input": {
+                "Comment": "Hello world!"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        },
+        "End": True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_sync_json_response():
+    step = StepFunctionsStartExecutionStep(
+        "SFN Start Execution - Sync with json response", wait_for_callback=False, wait_for_completion=True,
+        json_ouput=True, parameters={
+            "Input": {
+                "Comment": "Hello world!"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::states:startExecution.sync:2",
+        "Parameters": {
+            "Input": {
+                "Comment": "Hello world!"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        },
+        "End": True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_sync_json_response():
+    step = StepFunctionsStartExecutionStep(
+        "SFN Start Execution - Sync with string response", wait_for_callback=False, wait_for_completion=True,
+        json_ouput=False, parameters={
+            "Input": {
+                "Comment": "Hello world!"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::states:startExecution.sync",
+        "Parameters": {
+            "Input": {
+                "Comment": "Hello world!"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        },
+        "End": True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_wait_for_callback():
+    step = StepFunctionsStartExecutionStep(
+        "SFN Start Execution - Wait for Callback", wait_for_callback=True, parameters={
+            "Input": {
+                "Comment": "Hello world!",
+                "token.$": "$$.Task.Token"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::states:startExecution.waitForTaskToken",
+        "Parameters": {
+            "Input": {
+                "Comment": "Hello world!",
+                "token.$": "$$.Task.Token"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        },
+        "End": True
     }

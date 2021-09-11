@@ -24,6 +24,7 @@ EVENTBRIDGE_SERVICE_NAME = "events"
 GLUE_DATABREW_SERVICE_NAME = "databrew"
 SNS_SERVICE_NAME = "sns"
 SQS_SERVICE_NAME = "sqs"
+STEP_FUNCTIONS_SERVICE_NAME = "states"
 
 
 class DynamoDBApi(Enum):
@@ -68,6 +69,10 @@ class SnsApi(Enum):
 
 class SqsApi(Enum):
     SendMessage = "sendMessage"
+
+
+class StepFunctions(Enum):
+    StartExecution = "startExecution"
 
 
 class DynamoDBGetItemStep(Task):
@@ -887,3 +892,59 @@ class EmrModifyInstanceGroupByNameStep(Task):
                                                                    ElasticMapReduceApi.ModifyInstanceGroupByName)
 
         super(EmrModifyInstanceGroupByNameStep, self).__init__(state_id, **kwargs)
+
+
+class StepFunctionsStartExecutionStep(Task):
+
+    """
+    Creates a Task state that starts an execution of another state machine. See `Manage AWS Step Functions Executions as an Integrated Service <https://docs.aws.amazon.com/step-functions/latest/dg/connect-stepfunctions.html`_ for more details.
+    """
+
+    def __init__(self, state_id, wait_for_callback=False, wait_for_completion=True, json_ouput=False, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            wait_for_callback(bool, optional): Boolean value set to `True` if the Task state should wait for callback to resume the operation. (default: False)
+            timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
+            timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
+            heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state.
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
+            json_output(bool, optional): Boolean value set to `True` if the the Task should return a response in JSON format. If set to `False`, the Task should return a str response (default: False)
+        """
+        if wait_for_callback:
+            """
+            Example resource arn: arn:aws:states:::states:startExecution.waitForTaskToken
+            """
+
+            kwargs[Field.Resource.value] = get_service_integration_arn(STEP_FUNCTIONS_SERVICE_NAME,
+                                                                       StepFunctions.StartExecution,
+                                                                       IntegrationPattern.WaitForTaskToken)
+        elif wait_for_completion:
+            if json_ouput:
+                """
+                Example resource arn:aws:states:::states:startExecution.sync:2
+                """
+                kwargs[Field.Resource.value] = get_service_integration_arn(STEP_FUNCTIONS_SERVICE_NAME,
+                                                                       StepFunctions.StartExecution,
+                                                                       IntegrationPattern.WaitForCompletionWithJsonResponse)
+            else:
+                """
+                Example resource arn:aws:states:::states:startExecution.sync
+                """
+                kwargs[Field.Resource.value] = get_service_integration_arn(STEP_FUNCTIONS_SERVICE_NAME,
+                                                                       StepFunctions.StartExecution,
+                                                                       IntegrationPattern.WaitForCompletion)
+        else:
+            """
+            Example resource arn:aws:states:::states:startExecution
+            """
+            kwargs[Field.Resource.value] = get_service_integration_arn(STEP_FUNCTIONS_SERVICE_NAME,
+                                                                       StepFunctions.StartExecution)
+
+        super(StepFunctionsStartExecutionStep, self).__init__(state_id, **kwargs)
