@@ -2,11 +2,11 @@
 
 Please include a summary of the change being made.
 
-### Why is the change necessary?
-* What capability does it enable?
-* What problem does it solve?
-
 Fixes #(issue)
+
+### Why is the change necessary?
+
+What capability does it enable? What problem does it solve?
 
 ### Solution
 
@@ -39,4 +39,4 @@ Please check all boxes (including N/A items)
 
 ----
 
-By submitting this pull request, I confirm that you can use, modify, copy, and redistribute this contribution, under the terms of your choice.
+By submitting this pull request, I confirm that my contribution is made under the terms of the Apache-2.0 license.
