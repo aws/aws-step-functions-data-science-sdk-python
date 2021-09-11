@@ -42,7 +42,7 @@ if sys.version_info < (3, 4):
 setup(
     name="stepfunctions",
     version=read_version(),
-    description="Open source library for develping data science workflows on AWS Step Functions.",
+    description="Open source library for developing data science workflows on AWS Step Functions.",
     packages=find_packages("src"),
     package_dir={"": "src"},
     py_modules=[os.path.splitext(os.path.basename(path))[0] for path in glob("src/*.py")],
