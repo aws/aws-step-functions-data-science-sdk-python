@@ -924,7 +924,7 @@ class StepFunctionsStartExecutionStep(Task):
         property_flags = [(wait_for_callback, "wait_for_callback"), (wait_for_completion, "wait_for_completion"),
                           (async_call, "async_call")]
         enabled_property_flags = [property_flag[1] for property_flag in property_flags if property_flag[0]]
-        if len(enabled_property_flags) == 0:
+        if not enabled_property_flags:
             raise ValueError(f"No resource flag enabled - Please enable one of "
                              f"{[property_flag[1] for property_flag in property_flags]}")
         elif len(enabled_property_flags) > 1:
