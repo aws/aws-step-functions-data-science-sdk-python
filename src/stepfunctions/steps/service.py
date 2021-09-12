@@ -903,13 +903,12 @@ class StepFunctionsStartExecutionStep(Task):
         Disable the two flags for the Task state to start an execution of another state machine and proceed to the next step in the workflow without waiting for completion.
     """
 
-    def __init__(self, state_id, wait_for_callback=False, wait_for_completion=True, string_response=False, **kwargs):
+    def __init__(self, state_id, wait_for_callback=False, wait_for_completion=True, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             wait_for_callback(bool, optional): Boolean value set to `True` if the Task state should wait for callback to resume the operation. (default: False)
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
-            string_response(bool, optional): Boolean value set to `True` if the the Task should return a response in string format instead of the default JSON format (default: False)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
             heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
@@ -921,12 +920,8 @@ class StepFunctionsStartExecutionStep(Task):
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         # Validate that only 1 one of the property flags are set to true
-        enabled_property_flags = []
         property_flags = [(wait_for_callback, "wait_for_callback"), (wait_for_completion, "wait_for_completion")]
-        for property_flag in property_flags:
-            if property_flag[0]:
-                enabled_property_flags.append(property_flag[1])
-
+        enabled_property_flags = [property_flag[1] for property_flag in property_flags if property_flag[0]]
         if len(enabled_property_flags) > 1:
             raise ValueError(f"More than 1 activated resource flags: {enabled_property_flags} - "
                              f"Please enable one at most.")
@@ -940,14 +935,6 @@ class StepFunctionsStartExecutionStep(Task):
                                                                        StepFunctions.StartExecution,
                                                                        IntegrationPattern.WaitForTaskToken)
         elif wait_for_completion:
-            if string_response:
-                """
-                Example resource arn:aws:states:::states:startExecution.sync
-                """
-                kwargs[Field.Resource.value] = get_service_integration_arn(STEP_FUNCTIONS_SERVICE_NAME,
-                                                                           StepFunctions.StartExecution,
-                                                                           IntegrationPattern.WaitForCompletion)
-            else:
                 """
                 Example resource arn:aws:states:::states:startExecution.sync:2
                 """
