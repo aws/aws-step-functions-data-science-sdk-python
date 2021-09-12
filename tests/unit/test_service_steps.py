@@ -13,6 +13,7 @@
 from __future__ import absolute_import
 
 import boto3
+import pytest
 
 from unittest.mock import patch
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
@@ -1188,36 +1189,10 @@ def test_step_functions_start_execution_step_creation():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation_sync_json_response():
-    step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution - Sync with json response", wait_for_callback=False, wait_for_completion=True,
-        json_ouput=True, parameters={
-            "Input": {
-                "Comment": "Hello world!"
-            },
-            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
-            "Name": "ExecutionName"
-        })
-
-    assert step.to_dict() == {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::states:startExecution.sync:2",
-        "Parameters": {
-            "Input": {
-                "Comment": "Hello world!"
-            },
-            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
-            "Name": "ExecutionName"
-        },
-        "End": True
-    }
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation_sync_json_response():
+def test_step_functions_start_execution_step_creation_sync_string_response():
     step = StepFunctionsStartExecutionStep(
         "SFN Start Execution - Sync with string response", wait_for_callback=False, wait_for_completion=True,
-        json_ouput=False, parameters={
+        string_response=True, parameters={
             "Input": {
                 "Comment": "Hello world!"
             },
@@ -1240,9 +1215,35 @@ def test_step_functions_start_execution_step_creation_sync_json_response():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_sync():
+    step = StepFunctionsStartExecutionStep(
+        "SFN Start Execution - Sync", wait_for_callback=False, wait_for_completion=True,
+        parameters={
+            "Input": {
+                "Comment": "Hello world!"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::states:startExecution.sync:2",
+        "Parameters": {
+            "Input": {
+                "Comment": "Hello world!"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        },
+        "End": True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_step_functions_start_execution_step_creation_wait_for_callback():
     step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution - Wait for Callback", wait_for_callback=True, parameters={
+        "SFN Start Execution - Wait for Callback", wait_for_callback=True, wait_for_completion=False, parameters={
             "Input": {
                 "Comment": "Hello world!",
                 "token.$": "$$.Task.Token"
@@ -1264,3 +1265,10 @@ def test_step_functions_start_execution_step_creation_wait_for_callback():
         },
         "End": True
     }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_multiple_enabled_flags_raises_exception():
+    with pytest.raises(ValueError):
+        StepFunctionsStartExecutionStep("SFN Start Execution - Multiple flags", wait_for_callback=True,
+                                        wait_for_completion=True)
