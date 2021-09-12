@@ -1165,7 +1165,7 @@ def test_eks_call_step_creation():
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_step_functions_start_execution_step_creation():
     step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution", wait_for_callback=False, wait_for_completion=False,
+        "SFN Start Execution", wait_for_callback=False, wait_for_completion=False, async_call=True,
         parameters={
             "Input": {
                 "Comment": "Hello world!"
@@ -1191,7 +1191,7 @@ def test_step_functions_start_execution_step_creation():
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_step_functions_start_execution_step_creation_sync():
     step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution - Sync", wait_for_callback=False, wait_for_completion=True,
+        "SFN Start Execution - Sync", wait_for_callback=False, wait_for_completion=True, async_call=False,
         parameters={
             "Input": {
                 "Comment": "Hello world!"
@@ -1217,7 +1217,8 @@ def test_step_functions_start_execution_step_creation_sync():
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_step_functions_start_execution_step_creation_wait_for_callback():
     step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution - Wait for Callback", wait_for_callback=True, wait_for_completion=False, parameters={
+        "SFN Start Execution - Wait for Callback", wait_for_callback=True, wait_for_completion=False, async_call=False,
+        parameters={
             "Input": {
                 "Comment": "Hello world!",
                 "token.$": "$$.Task.Token"
@@ -1241,8 +1242,20 @@ def test_step_functions_start_execution_step_creation_wait_for_callback():
     }
 
 
+@pytest.mark.parametrize("resource_flags", [
+    {'wait_for_callback': True, 'wait_for_completion': True, 'async_call': True},
+    {'wait_for_callback': False, 'wait_for_completion': True, 'async_call': True},
+    {'wait_for_callback': True, 'wait_for_completion': False, 'async_call': True},
+    {'wait_for_callback': True, 'wait_for_completion': True, 'async_call': False},
+])
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation_multiple_enabled_flags_raises_exception():
+def test_step_functions_start_execution_step_creation_multiple_enabled_flags_raises_exception(resource_flags):
     with pytest.raises(ValueError):
-        StepFunctionsStartExecutionStep("SFN Start Execution - Multiple flags", wait_for_callback=True,
-                                        wait_for_completion=True)
+        StepFunctionsStartExecutionStep("SFN Start Execution - Multiple flags", **resource_flags)
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_no_enabled_flags_raises_exception():
+    with pytest.raises(ValueError):
+        StepFunctionsStartExecutionStep("SFN Start Execution - Multiple flags", wait_for_callback=False,
+                                        wait_for_completion=False, async_call=False)
