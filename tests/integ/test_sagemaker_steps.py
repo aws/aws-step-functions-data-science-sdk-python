@@ -179,6 +179,7 @@ def test_transform_step(trained_estimator, sfn_client, sfn_role_arn):
         state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
         # End of Cleanup
 
+
 def test_transform_step_with_placeholder(trained_estimator, sfn_client, sfn_role_arn):
     # Create transformer from previously created estimator
     job_name = generate_job_name()
@@ -186,6 +187,7 @@ def test_transform_step_with_placeholder(trained_estimator, sfn_client, sfn_role
 
     # Create a model step to save the model
     model_step = ModelStep('create_model_step', model=trained_estimator.create_model(), model_name=job_name)
+    model_step.add_retry(SAGEMAKER_RETRY_STRATEGY)
 
     # Upload data for transformation to S3
     data_path = os.path.join(DATA_DIR, "one_p_mnist")
@@ -227,6 +229,7 @@ def test_transform_step_with_placeholder(trained_estimator, sfn_client, sfn_role
         content_type=execution_input['content_type'],
         parameters=parameters
     )
+    transform_step.add_retry(SAGEMAKER_RETRY_STRATEGY)
     workflow_graph = Chain([model_step, transform_step])
 
     with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
