@@ -1257,5 +1257,5 @@ def test_step_functions_start_execution_step_creation_multiple_enabled_flags_rai
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_step_functions_start_execution_step_creation_no_enabled_flags_raises_exception():
     with pytest.raises(ValueError):
-        StepFunctionsStartExecutionStep("SFN Start Execution - Multiple flags", wait_for_callback=False,
+        StepFunctionsStartExecutionStep("SFN Start Execution - No active flags", wait_for_callback=False,
                                         wait_for_completion=False, async_call=False)
