@@ -13,8 +13,12 @@
 
 from __future__ import absolute_import
 
+import logging
+
 from enum import Enum
 from stepfunctions.steps.utils import get_aws_partition
+
+logger = logging.getLogger('stepfunctions')
 
 
 class IntegrationPattern(Enum):
@@ -26,6 +30,16 @@ class IntegrationPattern(Enum):
     WaitForCompletion = "sync"
     RequestResponse = ""
     WaitForCompletionWithJsonResponse = "sync:2"
+
+
+class ServiceIntegrationType(Enum):
+    """
+    Service Integration Types for service integration resources (see `Service Integration Patterns <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html`_ for more details.)
+    """
+
+    REQUEST_RESPONSE = "RequestResponse",
+    RUN_A_JOB = "RunAJob",
+    WAIT_FOR_CALLBACK = "WaitForCallback"
 
 
 def get_service_integration_arn(service, api, integration_pattern=IntegrationPattern.RequestResponse):
@@ -44,4 +58,21 @@ def get_service_integration_arn(service, api, integration_pattern=IntegrationPat
         arn = f"arn:{get_aws_partition()}:states:::{service}:{api.value}.{integration_pattern.value}"
     return arn
 
+
+def get_integration_pattern_from_service_integration_type(service_integration_type):
+    """
+    Returns the integration pattern to use for the service integration type.
+    IntegrationPattern.RequestResponse is returned by default if the service type is not recognized
+    Args:
+        service_integration_type(ServiceIntegrationType): Service integration type to use to get the integration pattern
+    """
+
+    if service_integration_type == ServiceIntegrationType.RUN_A_JOB:
+        return IntegrationPattern.WaitForCompletion
+    elif service_integration_type == ServiceIntegrationType.WAIT_FOR_CALLBACK:
+        return IntegrationPattern.WaitForTaskToken
+    else:
+        if not isinstance(service_integration_type, ServiceIntegrationType):
+            logger.warning(f"Invalid Service integration type ({service_integration_type}) - returning IntegrationPattern.RequestResponse by default")
+        return IntegrationPattern.RequestResponse
 

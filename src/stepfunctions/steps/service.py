@@ -15,7 +15,8 @@ from __future__ import absolute_import
 from enum import Enum
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
-from stepfunctions.steps.integration_resources import IntegrationPattern, get_service_integration_arn
+from stepfunctions.steps.integration_resources import IntegrationPattern, ServiceIntegrationType,\
+    get_integration_pattern_from_service_integration_type, get_service_integration_arn
 
 DYNAMODB_SERVICE_NAME = "dynamodb"
 EKS_SERVICES_NAME = "eks"
@@ -903,13 +904,12 @@ class StepFunctionsStartExecutionStep(Task):
         One of three must be enabled to create the step successfully.
     """
 
-    def __init__(self, state_id, wait_for_callback=False, wait_for_completion=True, async_call=False, **kwargs):
+    def __init__(self, state_id, service_integration_type, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
-            wait_for_callback(bool, optional): Boolean value set to `True` if the Task state should wait for callback to resume the operation. (default: False)
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
-            async_call(bool, optional): Boolean value set to `True` for the Task proceed to the next step in the workflow without waiting for completion. (default: False):
+            integration_pattern (stepfunctions.steps.integration_resources.ServiceIntegrationType): Service integration type to use to build resource.
+                Supported service integration types: REQUEST_RESPONSE, RUN_A_JOB and WAIT_FOR_CALLBACK
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
             heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
@@ -920,38 +920,33 @@ class StepFunctionsStartExecutionStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        # Validate that only 1 one of the property flags are set to true
-        property_flags = [(wait_for_callback, "wait_for_callback"), (wait_for_completion, "wait_for_completion"),
-                          (async_call, "async_call")]
-        enabled_property_flags = [property_flag[1] for property_flag in property_flags if property_flag[0]]
-        if not enabled_property_flags:
-            raise ValueError(f"No resource flag enabled - Please enable one of "
-                             f"{[property_flag[1] for property_flag in property_flags]}")
-        elif len(enabled_property_flags) > 1:
-            raise ValueError(f"Multiple resource flags enabled({enabled_property_flags}) - "
-                             f"Please enable only one.")
+        supported_integ_types = [ServiceIntegrationType.REQUEST_RESPONSE, ServiceIntegrationType.RUN_A_JOB,
+                                 ServiceIntegrationType.WAIT_FOR_CALLBACK]
 
-        if wait_for_callback:
-            """
-            Example resource arn: arn:aws:states:::states:startExecution.waitForTaskToken
-            """
+        if not isinstance(service_integration_type, ServiceIntegrationType):
+            raise ValueError(f"Invalid type used for service_integration_type arg ({service_integration_type}, "
+                             f"{type(service_integration_type)}). Accepted type: {ServiceIntegrationType}")
+        elif service_integration_type not in supported_integ_types:
+            raise ValueError(f"Service Integration Type ({service_integration_type.name}) is not supported for this step - "
+                             f"Please use one of the following: "
+                             f"{[integ_type.name for integ_type in supported_integ_types]}")
 
+        if service_integration_type == ServiceIntegrationType.RUN_A_JOB:
+            # For RunAJob service integration type, use the resource that returns json response (`.sync:2`)
+            """
+            Example resource arn:aws:states:::states:startExecution.sync:2
+            """
             kwargs[Field.Resource.value] = get_service_integration_arn(STEP_FUNCTIONS_SERVICE_NAME,
                                                                        StepFunctions.StartExecution,
-                                                                       IntegrationPattern.WaitForTaskToken)
-        elif wait_for_completion:
-                """
-                Example resource arn:aws:states:::states:startExecution.sync:2
-                """
-
-                kwargs[Field.Resource.value] = get_service_integration_arn(STEP_FUNCTIONS_SERVICE_NAME,
-                                                                           StepFunctions.StartExecution,
-                                                                           IntegrationPattern.WaitForCompletionWithJsonResponse)
+                                                                       IntegrationPattern.WaitForCompletionWithJsonResponse)
         else:
             """
-            Example resource arn:aws:states:::states:startExecution
+            Example resource arn:
+                - arn:aws:states:::states:startExecution.waitForTaskToken
+                - arn:aws:states:::states:startExecution
             """
             kwargs[Field.Resource.value] = get_service_integration_arn(STEP_FUNCTIONS_SERVICE_NAME,
-                                                                       StepFunctions.StartExecution)
+                                                                       StepFunctions.StartExecution,
+                                                                       get_integration_pattern_from_service_integration_type(service_integration_type))
 
         super(StepFunctionsStartExecutionStep, self).__init__(state_id, **kwargs)

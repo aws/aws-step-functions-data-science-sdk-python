@@ -32,6 +32,7 @@ from stepfunctions.steps.service import EventBridgePutEventsStep
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import GlueDataBrewStartJobRunStep
 from stepfunctions.steps.service import StepFunctionsStartExecutionStep
+from stepfunctions.steps.integration_resources import IntegrationPattern, ServiceIntegrationType
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
@@ -1165,8 +1166,7 @@ def test_eks_call_step_creation():
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_step_functions_start_execution_step_creation():
     step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution", wait_for_callback=False, wait_for_completion=False, async_call=True,
-        parameters={
+        "SFN Start Execution", service_integration_type=ServiceIntegrationType.REQUEST_RESPONSE, parameters={
             "Input": {
                 "Comment": "Hello world!"
             },
@@ -1191,8 +1191,7 @@ def test_step_functions_start_execution_step_creation():
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_step_functions_start_execution_step_creation_sync():
     step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution - Sync", wait_for_callback=False, wait_for_completion=True, async_call=False,
-        parameters={
+        "SFN Start Execution - Sync", service_integration_type=ServiceIntegrationType.RUN_A_JOB, parameters={
             "Input": {
                 "Comment": "Hello world!"
             },
@@ -1217,7 +1216,7 @@ def test_step_functions_start_execution_step_creation_sync():
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_step_functions_start_execution_step_creation_wait_for_callback():
     step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution - Wait for Callback", wait_for_callback=True, wait_for_completion=False, async_call=False,
+        "SFN Start Execution - Wait for Callback", service_integration_type=ServiceIntegrationType.WAIT_FOR_CALLBACK,
         parameters={
             "Input": {
                 "Comment": "Hello world!",
@@ -1242,20 +1241,12 @@ def test_step_functions_start_execution_step_creation_wait_for_callback():
     }
 
 
-@pytest.mark.parametrize("resource_flags", [
-    {'wait_for_callback': True, 'wait_for_completion': True, 'async_call': True},
-    {'wait_for_callback': False, 'wait_for_completion': True, 'async_call': True},
-    {'wait_for_callback': True, 'wait_for_completion': False, 'async_call': True},
-    {'wait_for_callback': True, 'wait_for_completion': True, 'async_call': False},
+@pytest.mark.parametrize("service_integration_type", [
+    None,
+    "ServiceIntegrationTypeStr",
+    IntegrationPattern.RequestResponse
 ])
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation_multiple_enabled_flags_raises_exception(resource_flags):
+def test_step_functions_start_execution_step_creation_invalid_service_integration_type_raises_exception(service_integration_type):
     with pytest.raises(ValueError):
-        StepFunctionsStartExecutionStep("SFN Start Execution - Multiple flags", **resource_flags)
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation_no_enabled_flags_raises_exception():
-    with pytest.raises(ValueError):
-        StepFunctionsStartExecutionStep("SFN Start Execution - No active flags", wait_for_callback=False,
-                                        wait_for_completion=False, async_call=False)
+        StepFunctionsStartExecutionStep("SFN Start Execution - invalid ServiceType", service_integration_type=service_integration_type)
