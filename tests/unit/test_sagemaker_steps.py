@@ -971,51 +971,46 @@ def test_transform_step_creation_with_placeholder(pca_transformer):
         parameters=parameters
     )
 
-    assert step.to_dict() == {
-        'Type': 'Task',
-        'Parameters': {
-            'BatchStrategy.$': "$$.Execution.Input['strategy']",
-            'ModelName.$': "$$.Execution.Input['model_name']",
-            'TransformInput': {
-                'CompressionType.$': "$$.Execution.Input['compression_type']",
-                'ContentType.$': "$$.Execution.Input['content_type']",
-                'DataSource': {
-                    'S3DataSource': {
-                        'S3DataType.$': "$$.Execution.Input['data_type']",
-                        'S3Uri.$': "$$.Execution.Input['data']"
-                    }
-                },
-                'SplitType.$': "$$.Execution.Input['split_type']"
+    assert step.to_dict()['Parameters'] == {
+        'BatchStrategy.$': "$$.Execution.Input['strategy']",
+        'ModelName.$': "$$.Execution.Input['model_name']",
+        'TransformInput': {
+            'CompressionType.$': "$$.Execution.Input['compression_type']",
+            'ContentType.$': "$$.Execution.Input['content_type']",
+            'DataSource': {
+                'S3DataSource': {
+                    'S3DataType.$': "$$.Execution.Input['data_type']",
+                    'S3Uri.$': "$$.Execution.Input['data']"
+                }
             },
-            'TransformOutput': {
-                'Accept.$': "$$.Execution.Input['accept']",
-                'AssembleWith.$': "$$.Execution.Input['assemble_with']",
-                'KmsKeyId.$': "$$.Execution.Input['output_kms_key']",
-                'S3OutputPath.$': "$$.Execution.Input['output_path']"
-            },
-            'TransformJobName.$': "$$.Execution.Input['job_name']",
-            'TransformResources': {
-                'InstanceCount.$': "$$.Execution.Input['instance_count']",
-                'InstanceType.$': "$['instance_type']",
-                'VolumeKmsKeyId.$': "$$.Execution.Input['volume_kms_key']"
-            },
-            'ExperimentConfig': {
-                'ExperimentName': 'pca_experiment',
-                'TrialName': 'pca_trial',
-                'TrialComponentDisplayName': 'Transform'
-            },
-            'DataProcessing': {
-                'InputFilter.$': "$$.Execution.Input['input_filter']",
-                'OutputFilter.$': "$$.Execution.Input['output_filter']",
-                'JoinSource.$': "$$.Execution.Input['join_source']",
-            },
-            'Tags.$': "$$.Execution.Input['tags']",
-            'Environment.$': "$$.Execution.Input['env']",
-            'MaxConcurrentTransforms.$': "$$.Execution.Input['max_concurrent_transforms']",
-            'MaxPayloadInMB.$': "$$.Execution.Input['max_payload']",
+            'SplitType.$': "$$.Execution.Input['split_type']"
         },
-        'Resource': 'arn:aws:states:::sagemaker:createTransformJob.sync',
-        'End': True
+        'TransformOutput': {
+            'Accept.$': "$$.Execution.Input['accept']",
+            'AssembleWith.$': "$$.Execution.Input['assemble_with']",
+            'KmsKeyId.$': "$$.Execution.Input['output_kms_key']",
+            'S3OutputPath.$': "$$.Execution.Input['output_path']"
+        },
+        'TransformJobName.$': "$$.Execution.Input['job_name']",
+        'TransformResources': {
+            'InstanceCount.$': "$$.Execution.Input['instance_count']",
+            'InstanceType.$': "$['instance_type']",
+            'VolumeKmsKeyId.$': "$$.Execution.Input['volume_kms_key']"
+        },
+        'ExperimentConfig': {
+            'ExperimentName': 'pca_experiment',
+            'TrialName': 'pca_trial',
+            'TrialComponentDisplayName': 'Transform'
+        },
+        'DataProcessing': {
+            'InputFilter.$': "$$.Execution.Input['input_filter']",
+            'OutputFilter.$': "$$.Execution.Input['output_filter']",
+            'JoinSource.$': "$$.Execution.Input['join_source']",
+        },
+        'Tags.$': "$$.Execution.Input['tags']",
+        'Environment.$': "$$.Execution.Input['env']",
+        'MaxConcurrentTransforms.$': "$$.Execution.Input['max_concurrent_transforms']",
+        'MaxPayloadInMB.$': "$$.Execution.Input['max_payload']"
     }
 
 
