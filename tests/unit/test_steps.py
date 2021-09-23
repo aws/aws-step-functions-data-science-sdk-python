@@ -469,4 +469,66 @@ def test_default_paths_not_converted_to_null():
     assert '"OutputPath": null' not in task_state.to_json()
 
 
+RETRY = Retry(error_equals=['ErrorA', 'ErrorB'], interval_seconds=1, max_attempts=2, backoff_rate=2)
+RETRIES = [RETRY, Retry(error_equals=['ErrorC'], interval_seconds=5)]
+EXPECTED_RETRY = [{'ErrorEquals': ['ErrorA', 'ErrorB'], 'IntervalSeconds': 1, 'BackoffRate': 2, 'MaxAttempts': 2}]
+EXPECTED_RETRIES = EXPECTED_RETRY + [{'ErrorEquals': ['ErrorC'], 'IntervalSeconds': 5}]
 
+CATCH = Catch(error_equals=['States.ALL'], next_step=Pass('End State'))
+CATCHES = [CATCH, Catch(error_equals=['States.TaskFailed'], next_step=Pass('Next State'))]
+EXPECTED_CATCH = [{'ErrorEquals': ['States.ALL'], 'Next': 'End State'}]
+EXPECTED_CATCHES = EXPECTED_CATCH + [{'ErrorEquals': ['States.TaskFailed'], 'Next': 'Next State'}]
+
+
+@pytest.mark.parametrize("state, state_id, extra_args, retry, expected_retry", [
+    (Parallel, 'Parallel', {}, RETRY, EXPECTED_RETRY),
+    (Parallel, 'Parallel', {}, RETRIES, EXPECTED_RETRIES),
+    (Map, 'Map', {'iterator': Pass('Iterator')}, RETRY, EXPECTED_RETRY),
+    (Map, 'Map', {'iterator': Pass('Iterator')}, RETRIES, EXPECTED_RETRIES),
+    (Task, 'Task', {}, RETRY, EXPECTED_RETRY),
+    (Task, 'Task', {}, RETRIES, EXPECTED_RETRIES)
+])
+def test_state_creation_with_retry(state, state_id, extra_args, retry, expected_retry):
+    step = state(state_id, retry=retry, **extra_args)
+    assert step.to_dict()['Retry'] == expected_retry
+
+
+@pytest.mark.parametrize("state, state_id, extra_args, catch, expected_catch", [
+    (Parallel, 'Parallel', {}, CATCH, EXPECTED_CATCH),
+    (Parallel, 'Parallel', {}, CATCHES, EXPECTED_CATCHES),
+    (Map, 'Map', {'iterator': Pass('Iterator')}, CATCH, EXPECTED_CATCH),
+    (Map, 'Map', {'iterator': Pass('Iterator')}, CATCHES, EXPECTED_CATCHES),
+    (Task, 'Task', {}, CATCH, EXPECTED_CATCH),
+    (Task, 'Task', {}, CATCHES, EXPECTED_CATCHES)
+])
+def test_state_creation_with_catch(state, state_id, extra_args, catch, expected_catch):
+    step = state(state_id, catch=catch, **extra_args)
+    assert step.to_dict()['Catch'] == expected_catch
+
+
+@pytest.mark.parametrize("state, state_id, extra_args, retry, expected_retry", [
+    (Parallel, 'Parallel', {}, RETRY, EXPECTED_RETRY),
+    (Parallel, 'Parallel', {}, RETRIES, EXPECTED_RETRIES),
+    (Map, 'Map', {'iterator': Pass('Iterator')}, RETRIES, EXPECTED_RETRIES),
+    (Map, 'Map', {'iterator': Pass('Iterator')}, RETRY, EXPECTED_RETRY),
+    (Task, 'Task', {}, RETRY, EXPECTED_RETRY),
+    (Task, 'Task', {}, RETRIES, EXPECTED_RETRIES)
+])
+def test_state_with_added_retry(state, state_id, extra_args, retry, expected_retry):
+    step = state(state_id, **extra_args)
+    step.add_retry(retry)
+    assert step.to_dict()['Retry'] == expected_retry
+
+
+@pytest.mark.parametrize("state, state_id, extra_args, catch, expected_catch", [
+    (Parallel, 'Parallel', {}, CATCH, EXPECTED_CATCH),
+    (Parallel, 'Parallel', {}, CATCHES, EXPECTED_CATCHES),
+    (Map, 'Map', {'iterator': Pass('Iterator')}, CATCH, EXPECTED_CATCH),
+    (Map, 'Map', {'iterator': Pass('Iterator')}, CATCHES, EXPECTED_CATCHES),
+    (Task, 'Task', {}, CATCHES, EXPECTED_CATCHES),
+    (Task, 'Task', {}, CATCHES, EXPECTED_CATCHES)
+])
+def test_state_with_added_catch(state, state_id, extra_args, catch, expected_catch):
+    step = state(state_id, **extra_args)
+    step.add_catch(catch)
+    assert step.to_dict()['Catch'] == expected_catch
