@@ -262,7 +262,7 @@ class State(Block):
         if Field.Retry in self.allowed_fields():
             self.retries.extend(retry) if isinstance(retry, list) else self.retries.append(retry)
         else:
-            raise ValueError("{state_type} state does not support retry field. ".format(state_type=type(self).__name__))
+            raise ValueError(f"{type(self).__name__} state does not support retry field. ")
 
     def add_catch(self, catch):
         """
@@ -274,7 +274,7 @@ class State(Block):
         if Field.Catch in self.allowed_fields():
             self.catches.extend(catch) if isinstance(catch, list) else self.catches.append(catch)
         else:
-            raise ValueError("{state_type} state does not support catch field. ".format(state_type=type(self).__name__))
+            raise ValueError(f"{type(self).__name__} state does not support catch field. ")
 
     def to_dict(self):
         result = super(State, self).to_dict()
