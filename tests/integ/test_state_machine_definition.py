@@ -479,6 +479,59 @@ def test_catch_state_machine_creation(sfn_client, sfn_role_arn, training_job_par
     workflow_test_suite(sfn_client, workflow, asl_state_machine_definition, catch_state_result)
 
 
+def test_state_machine_creation_with_catch_in_constructor(sfn_client, sfn_role_arn, training_job_parameters):
+    catch_state_name = "TaskWithCatchState"
+    all_fail_error = "States.ALL"
+    all_error_state_name = "Catch All End"
+    catch_state_result = "Catch Result"
+    task_resource = f"arn:{get_aws_partition()}:states:::sagemaker:createTrainingJob.sync"
+
+    # change the parameters to cause task state to fail
+    training_job_parameters["AlgorithmSpecification"]["TrainingImage"] = "not_an_image"
+
+    asl_state_machine_definition = {
+        "StartAt": catch_state_name,
+        "States": {
+            catch_state_name: {
+                "Resource": task_resource,
+                "Parameters": training_job_parameters,
+                "Type": "Task",
+                "End": True,
+                "Catch": [
+                    {
+                        "ErrorEquals": [
+                            all_fail_error
+                        ],
+                        "Next": all_error_state_name
+                    }
+                ]
+            },
+            all_error_state_name: {
+                "Type": "Pass",
+                "Result": catch_state_result,
+                "End": True
+            }
+        }
+    }
+    task = steps.Task(
+        catch_state_name,
+        parameters=training_job_parameters,
+        resource=task_resource,
+        catch=steps.Catch(
+            error_equals=[all_fail_error],
+            next_step=steps.Pass(all_error_state_name, result=catch_state_result)
+        )
+    )
+
+    workflow = Workflow(
+        unique_name_from_base('Test_Catch_In_Constructor_Workflow'),
+        definition=task,
+        role=sfn_role_arn
+    )
+
+    workflow_test_suite(sfn_client, workflow, asl_state_machine_definition, catch_state_result)
+
+
 def test_retry_state_machine_creation(sfn_client, sfn_role_arn, training_job_parameters):
     retry_state_name = "RetryStateName"
     all_fail_error = "Starts.ALL"
@@ -527,6 +580,58 @@ def test_retry_state_machine_creation(sfn_client, sfn_role_arn, training_job_par
 
     workflow = Workflow(
         unique_name_from_base('Test_Retry_Workflow'),
+        definition=task,
+        role=sfn_role_arn
+    )
+
+    workflow_test_suite(sfn_client, workflow, asl_state_machine_definition, None)
+
+
+def test_state_machine_creation_with_retry_in_constructor(sfn_client, sfn_role_arn, training_job_parameters):
+    retry_state_name = "RetryStateName"
+    all_fail_error = "Starts.ALL"
+    interval_seconds = 1
+    max_attempts = 2
+    backoff_rate = 2
+    task_resource = f"arn:{get_aws_partition()}:states:::sagemaker:createTrainingJob.sync"
+
+    # change the parameters to cause task state to fail
+    training_job_parameters["AlgorithmSpecification"]["TrainingImage"] = "not_an_image"
+
+    asl_state_machine_definition = {
+        "StartAt": retry_state_name,
+        "States": {
+            retry_state_name: {
+                "Resource": task_resource,
+                "Parameters": training_job_parameters,
+                "Type": "Task",
+                "End": True,
+                "Retry": [
+                    {
+                        "ErrorEquals": [all_fail_error],
+                        "IntervalSeconds": interval_seconds,
+                        "MaxAttempts": max_attempts,
+                        "BackoffRate": backoff_rate
+                    }
+                ]
+            }
+        }
+    }
+
+    task = steps.Task(
+        retry_state_name,
+        parameters=training_job_parameters,
+        resource=task_resource,
+        retry=steps.Retry(
+            error_equals=[all_fail_error],
+            interval_seconds=interval_seconds,
+            max_attempts=max_attempts,
+            backoff_rate=backoff_rate
+        )
+    )
+
+    workflow = Workflow(
+        unique_name_from_base('Test_Retry_In_Constructor_Workflow'),
         definition=task,
         role=sfn_role_arn
     )
