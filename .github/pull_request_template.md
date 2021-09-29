@@ -25,7 +25,7 @@ Please check all boxes (including N/A items)
 #### Testing
 
 - [ ] Unit tests added
-- [ ] integration test added
+- [ ] Integration test added
 
 #### Documentation
 
