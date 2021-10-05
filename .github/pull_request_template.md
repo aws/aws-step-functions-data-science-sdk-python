@@ -26,6 +26,7 @@ Please check all boxes (including N/A items)
 
 - [ ] Unit tests added
 - [ ] Integration test added
+- [ ] manual testing - why was it necessary? could it be automated?
 
 #### Documentation
 
