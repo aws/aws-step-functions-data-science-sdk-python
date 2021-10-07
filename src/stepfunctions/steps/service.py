@@ -16,7 +16,7 @@ from enum import Enum
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
 from stepfunctions.steps.integration_resources import IntegrationPattern, ServiceIntegrationType,\
-    get_integration_pattern_from_service_integration_type, get_service_integration_arn
+    get_integration_pattern_from_service_integration_type, get_service_integration_arn, is_integration_type_valid
 
 DYNAMODB_SERVICE_NAME = "dynamodb"
 EKS_SERVICES_NAME = "eks"
@@ -904,12 +904,12 @@ class StepFunctionsStartExecutionStep(Task):
         One of three must be enabled to create the step successfully.
     """
 
-    def __init__(self, state_id, service_integration_type, **kwargs):
+    def __init__(self, state_id, service_integration_type=ServiceIntegrationType.RUN_JOB, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
-            integration_pattern (stepfunctions.steps.integration_resources.ServiceIntegrationType): Service integration type to use to build resource.
-                Supported service integration types: REQUEST_RESPONSE, RUN_A_JOB and WAIT_FOR_CALLBACK
+            service_integration_type (stepfunctions.steps.integration_resources.ServiceIntegrationType, optional): Service integration type to use to build resource. (default: RUN_JOB)
+                Supported service integration types: REQUEST_RESPONSE, RUN_JOB and WAIT_FOR_CALLBACK
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
             heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
@@ -920,19 +920,12 @@ class StepFunctionsStartExecutionStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
-        supported_integ_types = [ServiceIntegrationType.REQUEST_RESPONSE, ServiceIntegrationType.RUN_A_JOB,
+        supported_integ_types = [ServiceIntegrationType.REQUEST_RESPONSE, ServiceIntegrationType.RUN_JOB,
                                  ServiceIntegrationType.WAIT_FOR_CALLBACK]
 
-        if not isinstance(service_integration_type, ServiceIntegrationType):
-            raise ValueError(f"Invalid type used for service_integration_type arg ({service_integration_type}, "
-                             f"{type(service_integration_type)}). Accepted type: {ServiceIntegrationType}")
-        elif service_integration_type not in supported_integ_types:
-            raise ValueError(f"Service Integration Type ({service_integration_type.name}) is not supported for this step - "
-                             f"Please use one of the following: "
-                             f"{[integ_type.name for integ_type in supported_integ_types]}")
+        is_integration_type_valid(service_integration_type, supported_integ_types)
 
-        if service_integration_type == ServiceIntegrationType.RUN_A_JOB:
-            # For RunAJob service integration type, use the resource that returns json response (`.sync:2`)
+        if service_integration_type == ServiceIntegrationType.RUN_JOB:
             """
             Example resource arn:aws:states:::states:startExecution.sync:2
             """

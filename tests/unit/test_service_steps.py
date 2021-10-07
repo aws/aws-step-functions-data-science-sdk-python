@@ -1164,37 +1164,9 @@ def test_eks_call_step_creation():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation():
+def test_step_functions_start_execution_step_creation_default():
     step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution", service_integration_type=ServiceIntegrationType.REQUEST_RESPONSE, parameters={
-            "Input": {
-                "Comment": "Hello world!"
-            },
-            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
-            "Name": "ExecutionName"
-        })
-
-    assert step.to_dict() == {
-        "Type": "Task",
-        "Resource": "arn:aws:states:::states:startExecution",
-        "Parameters": {
-            "Input": {
-                "Comment": "Hello world!"
-            },
-            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
-            "Name": "ExecutionName"
-        },
-        "End": True
-    }
-
-
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation_sync():
-    step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution - Sync", service_integration_type=ServiceIntegrationType.RUN_A_JOB, parameters={
-            "Input": {
-                "Comment": "Hello world!"
-            },
+        "SFN Start Execution", parameters={
             "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
             "Name": "ExecutionName"
         })
@@ -1203,9 +1175,44 @@ def test_step_functions_start_execution_step_creation_sync():
         "Type": "Task",
         "Resource": "arn:aws:states:::states:startExecution.sync:2",
         "Parameters": {
-            "Input": {
-                "Comment": "Hello world!"
-            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        },
+        "End": True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_request_response():
+    step = StepFunctionsStartExecutionStep(
+        "SFN Start Execution", service_integration_type=ServiceIntegrationType.REQUEST_RESPONSE, parameters={
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::states:startExecution",
+        "Parameters": {
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        },
+        "End": True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_run_job():
+    step = StepFunctionsStartExecutionStep(
+        "SFN Start Execution - Sync", service_integration_type=ServiceIntegrationType.RUN_JOB, parameters={
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::states:startExecution.sync:2",
+        "Parameters": {
             "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
             "Name": "ExecutionName"
         },
@@ -1219,7 +1226,6 @@ def test_step_functions_start_execution_step_creation_wait_for_callback():
         "SFN Start Execution - Wait for Callback", service_integration_type=ServiceIntegrationType.WAIT_FOR_CALLBACK,
         parameters={
             "Input": {
-                "Comment": "Hello world!",
                 "token.$": "$$.Task.Token"
             },
             "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
@@ -1231,7 +1237,6 @@ def test_step_functions_start_execution_step_creation_wait_for_callback():
         "Resource": "arn:aws:states:::states:startExecution.waitForTaskToken",
         "Parameters": {
             "Input": {
-                "Comment": "Hello world!",
                 "token.$": "$$.Task.Token"
             },
             "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
@@ -1247,6 +1252,6 @@ def test_step_functions_start_execution_step_creation_wait_for_callback():
     IntegrationPattern.RequestResponse
 ])
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation_invalid_service_integration_type_raises_exception(service_integration_type):
+def test_step_functions_start_execution_step_creation_invalid_service_integration_type_raises_value_error(service_integration_type):
     with pytest.raises(ValueError):
         StepFunctionsStartExecutionStep("SFN Start Execution - invalid ServiceType", service_integration_type=service_integration_type)

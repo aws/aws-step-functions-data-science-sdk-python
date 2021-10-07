@@ -38,7 +38,7 @@ class ServiceIntegrationType(Enum):
     """
 
     REQUEST_RESPONSE = "RequestResponse",
-    RUN_A_JOB = "RunAJob",
+    RUN_JOB = "RunJob",
     WAIT_FOR_CALLBACK = "WaitForCallback"
 
 
@@ -67,7 +67,7 @@ def get_integration_pattern_from_service_integration_type(service_integration_ty
         service_integration_type(ServiceIntegrationType): Service integration type to use to get the integration pattern
     """
 
-    if service_integration_type == ServiceIntegrationType.RUN_A_JOB:
+    if service_integration_type == ServiceIntegrationType.RUN_JOB:
         return IntegrationPattern.WaitForCompletion
     elif service_integration_type == ServiceIntegrationType.WAIT_FOR_CALLBACK:
         return IntegrationPattern.WaitForTaskToken
@@ -76,3 +76,12 @@ def get_integration_pattern_from_service_integration_type(service_integration_ty
             logger.warning(f"Invalid Service integration type ({service_integration_type}) - returning IntegrationPattern.RequestResponse by default")
         return IntegrationPattern.RequestResponse
 
+
+def is_integration_type_valid(service_integration_type, supported_integration_types):
+    if not isinstance(service_integration_type, ServiceIntegrationType):
+        raise ValueError(f"Invalid type used for service_integration_type arg ({service_integration_type}, "
+                         f"{type(service_integration_type)}). Accepted type: {ServiceIntegrationType}")
+    elif service_integration_type not in supported_integration_types:
+        raise ValueError(f"Service Integration Type ({service_integration_type.name}) is not supported for this step - "
+                         f"Please use one of the following: "
+                         f"{[integ_type.name for integ_type in supported_integration_types]}")
