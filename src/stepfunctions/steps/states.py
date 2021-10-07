@@ -254,10 +254,11 @@ class State(Block):
 
     def add_retry(self, retry):
         """
-        Add a Retry block or a list of Retry blocks to the tail end of the list of retriers for the state.
+        Add a retrier or a list of retriers to the tail end of the list of retriers for the state.
+        See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error>`_ for more details.
 
         Args:
-            retry (Retry or list(Retry)): Retry block(s) to add.
+            retry (Retry or list(Retry)): A retrier or list of retriers to add.
         """
         if Field.Retry in self.allowed_fields():
             self.retries.extend(retry) if isinstance(retry, list) else self.retries.append(retry)
@@ -266,10 +267,11 @@ class State(Block):
 
     def add_catch(self, catch):
         """
-        Add a Catch block or a list of Catch blocks to the tail end of the list of catchers for the state.
+        Add a catcher or a list of catchers to the tail end of the list of catchers for the state.
+        See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-fallback-states>`_ for more details.
 
         Args:
-            catch (Catch or list(Catch): Catch block(s) to add.
+            catch (Catch or list(Catch): catcher or list of catchers to add.
         """
         if Field.Catch in self.allowed_fields():
             self.catches.extend(catch) if isinstance(catch, list) else self.catches.append(catch)
@@ -491,8 +493,8 @@ class Parallel(State):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
-            retry (Retry or list(Retry), optional): Retry block(s) to add to list of Retriers that define a retry policy in case the state encounters runtime errors
-            catch (Catch or list(Catch), optional): Catch block(s) to add to list of Catchers that define a fallback state that is executed if the state encounters runtime errors and its retry policy is exhausted or isn't defined
+            retry (Retry or list(Retry), optional): A retrier or list of retriers that define the state's retry policy. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error>`_ for more details.
+            catch (Catch or list(Catch), optional): A catcher or list of catchers that define a fallback state. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-fallback-states>`_ for more details.
             comment (str, optional): Human-readable comment or description. (default: None)
             input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
             parameters (dict, optional): The value of this field becomes the effective input for the state.
@@ -549,8 +551,8 @@ class Map(State):
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             iterator (State or Chain): State or chain to execute for each of the items in `items_path`.
-            retry (Retry or list(Retry), optional): Retry block(s) to add to list of Retriers that define a retry policy in case the state encounters runtime errors
-            catch (Catch or list(Catch), optional): Catch block(s) to add to list of Catchers that define a fallback state that is executed if the state encounters runtime errors and its retry policy is exhausted or isn't defined
+            retry (Retry or list(Retry), optional): A retrier or list of retriers that define the state's retry policy. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error>`_ for more details.
+            catch (Catch or list(Catch), optional): A catcher or list of catchers that define a fallback state. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-fallback-states>`_ for more details.
             items_path (str, optional): Path in the input for items to iterate over. (default: '$')
             max_concurrency (int, optional): Maximum number of iterations to have running at any given point in time. (default: 0)
             comment (str, optional): Human-readable comment or description. (default: None)
@@ -606,8 +608,8 @@ class Task(State):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
-            retry (Retry or list(Retry), optional): Retry block(s) to add to list of Retriers that define a retry policy in case the state encounters runtime errors
-            catch (Catch or list(Catch), optional): Catch block(s) to add to list of Catchers that define a fallback state that is executed if the state encounters runtime errors and its retry policy is exhausted or isn't defined
+            retry (Retry or list(Retry), optional): A retrier or list of retriers that define the state's retry policy. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error>`_ for more details.
+            catch (Catch or list(Catch), optional): A catcher or list of catchers that define a fallback state. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-fallback-states>`_ for more details.
             resource (str): A URI that uniquely identifies the specific task to execute. The States language does not constrain the URI scheme nor any other part of the URI.
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
