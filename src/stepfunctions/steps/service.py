@@ -898,7 +898,7 @@ class EmrModifyInstanceGroupByNameStep(Task):
 class StepFunctionsStartExecutionStep(Task):
 
     """
-    Creates a Task state that starts an execution of another state machine. See `Manage AWS Step Functions Executions as an Integrated Service <https://docs.aws.amazon.com/step-functions/latest/dg/connect-stepfunctions.html`_ for more details.
+    Creates a Task state that starts an execution of a state machine. See `Manage AWS Step Functions Executions as an Integrated Service <https://docs.aws.amazon.com/step-functions/latest/dg/connect-stepfunctions.html`_ for more details.
 
     Property flags: There are three flags (wait_for_callback, wait_for_completion and async_call) that can be set in order to select which Step Functions resource to use.
         One of three must be enabled to create the step successfully.
