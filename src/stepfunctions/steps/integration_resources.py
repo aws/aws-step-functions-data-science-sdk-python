@@ -28,60 +28,35 @@ class IntegrationPattern(Enum):
 
     WaitForTaskToken = "waitForTaskToken"
     WaitForCompletion = "sync"
-    RequestResponse = ""
-    WaitForCompletionWithJsonResponse = "sync:2"
+    CallAndContinue = ""
 
 
-class ServiceIntegrationType(Enum):
-    """
-    Service Integration Types for service integration resources (see `Service Integration Patterns <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html`_ for more details.)
-    """
-
-    REQUEST_RESPONSE = "RequestResponse",
-    RUN_JOB = "RunJob",
-    WAIT_FOR_CALLBACK = "WaitForCallback"
-
-
-def get_service_integration_arn(service, api, integration_pattern=IntegrationPattern.RequestResponse):
+def get_service_integration_arn(service, api, integration_pattern=IntegrationPattern.CallAndContinue, version=None):
 
     """
     ARN builder for task integration
     Args:
         service (str): The service name for the service integration
         api (str): The api of the service integration
-        integration_pattern (IntegrationPattern, optional): The integration pattern for the task. (Default: IntegrationPattern.RequestResponse)
+        integration_pattern (IntegrationPattern, optional): The integration pattern for the task. (Default: IntegrationPattern.CallAndContinue)
+        version (int, optional): The version of the resource to use
     """
     arn = ""
-    if integration_pattern == IntegrationPattern.RequestResponse:
+    if integration_pattern == IntegrationPattern.CallAndContinue:
         arn = f"arn:{get_aws_partition()}:states:::{service}:{api.value}"
     else:
         arn = f"arn:{get_aws_partition()}:states:::{service}:{api.value}.{integration_pattern.value}"
+
+    if version:
+        arn = f"{arn}:{str(version)}"
+
     return arn
 
 
-def get_integration_pattern_from_service_integration_type(service_integration_type):
-    """
-    Returns the integration pattern to use for the service integration type.
-    IntegrationPattern.RequestResponse is returned by default if the service type is not recognized
-    Args:
-        service_integration_type(ServiceIntegrationType): Service integration type to use to get the integration pattern
-    """
-
-    if service_integration_type == ServiceIntegrationType.RUN_JOB:
-        return IntegrationPattern.WaitForCompletion
-    elif service_integration_type == ServiceIntegrationType.WAIT_FOR_CALLBACK:
-        return IntegrationPattern.WaitForTaskToken
-    else:
-        if not isinstance(service_integration_type, ServiceIntegrationType):
-            logger.warning(f"Invalid Service integration type ({service_integration_type}) - returning IntegrationPattern.RequestResponse by default")
-        return IntegrationPattern.RequestResponse
-
-
-def is_integration_type_valid(service_integration_type, supported_integration_types):
-    if not isinstance(service_integration_type, ServiceIntegrationType):
-        raise ValueError(f"Invalid type used for service_integration_type arg ({service_integration_type}, "
-                         f"{type(service_integration_type)}). Accepted type: {ServiceIntegrationType}")
-    elif service_integration_type not in supported_integration_types:
-        raise ValueError(f"Service Integration Type ({service_integration_type.name}) is not supported for this step - "
+def is_integration_pattern_valid(integration_pattern, supported_integration_patterns):
+    if not isinstance(integration_pattern, IntegrationPattern):
+        raise TypeError(f"{integration_pattern} must be of type {IntegrationPattern}")
+    elif integration_pattern not in supported_integration_patterns:
+        raise ValueError(f"Service Integration Type ({integration_pattern.name}) is not supported for this step - "
                          f"Please use one of the following: "
-                         f"{[integ_type.name for integ_type in supported_integration_types]}")
+                         f"{[integ_type.name for integ_type in supported_integration_patterns]}")

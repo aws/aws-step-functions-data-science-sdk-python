@@ -21,8 +21,8 @@ from enum import Enum
 from unittest.mock import patch
 
 from stepfunctions.steps.utils import get_aws_partition, merge_dicts
-from stepfunctions.steps.integration_resources import IntegrationPattern, ServiceIntegrationType,\
-    get_integration_pattern_from_service_integration_type, get_service_integration_arn, is_integration_type_valid
+from stepfunctions.steps.integration_resources import IntegrationPattern,\
+    get_service_integration_arn, is_integration_pattern_valid
 
 
 testService = "sagemaker"
@@ -93,40 +93,16 @@ def test_merge_dicts():
     }
 
 
-@pytest.mark.parametrize("service_integration_type, expected_integration_pattern", [
-    (ServiceIntegrationType.REQUEST_RESPONSE, IntegrationPattern.RequestResponse),
-    (ServiceIntegrationType.RUN_JOB, IntegrationPattern.WaitForCompletion),
-    (ServiceIntegrationType.WAIT_FOR_CALLBACK, IntegrationPattern.WaitForTaskToken)
-])
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_get_integration_pattern_from_service_integration_type(service_integration_type, expected_integration_pattern):
-    integration_pattern = get_integration_pattern_from_service_integration_type(service_integration_type)
-    assert integration_pattern == expected_integration_pattern
-
-
 @pytest.mark.parametrize("service_integration_type", [
     None,
-    "ServiceIntegrationTypeStr",
-    IntegrationPattern.RequestResponse
+    "IntegrationPatternStr",
+    0
 ])
-@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_get_integration_pattern_from_service_integration_type_with_invalid_type(service_integration_type, caplog):
-    with caplog.at_level(logging.WARNING):
-        integration_pattern = get_integration_pattern_from_service_integration_type(service_integration_type)
-        assert 'WARNING' in caplog.text
-    assert integration_pattern == IntegrationPattern.RequestResponse
+def test_is_integration_pattern_valid_with_invalid_type_raises_type_error(service_integration_type):
+    with pytest.raises(TypeError):
+        is_integration_pattern_valid(service_integration_type, [IntegrationPattern.WaitForTaskToken])
 
 
-@pytest.mark.parametrize("service_integration_type", [
-    None,
-    "ServiceIntegrationTypeStr",
-    IntegrationPattern.RequestResponse
-])
-def test_is_integration_type_valid_with_invalid_type_raises_value_error(service_integration_type):
+def test_is_integration_pattern_valid_with_non_supported_type_raises_value_error():
     with pytest.raises(ValueError):
-        is_integration_type_valid(service_integration_type, [ServiceIntegrationType.REQUEST_RESPONSE])
-
-
-def test_is_integration_type_valid_with_non_supported_type_raises_value_error():
-    with pytest.raises(ValueError):
-        is_integration_type_valid(ServiceIntegrationType.WAIT_FOR_CALLBACK, [ServiceIntegrationType.REQUEST_RESPONSE])
+        is_integration_pattern_valid(IntegrationPattern.WaitForTaskToken, [IntegrationPattern.WaitForCompletion])

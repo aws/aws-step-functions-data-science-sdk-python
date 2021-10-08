@@ -32,7 +32,7 @@ from stepfunctions.steps.service import EventBridgePutEventsStep
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import GlueDataBrewStartJobRunStep
 from stepfunctions.steps.service import StepFunctionsStartExecutionStep
-from stepfunctions.steps.integration_resources import IntegrationPattern, ServiceIntegrationType
+from stepfunctions.steps.integration_resources import IntegrationPattern
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
@@ -1183,9 +1183,9 @@ def test_step_functions_start_execution_step_creation_default():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation_request_response():
+def test_step_functions_start_execution_step_creation_call_and_continue():
     step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution", service_integration_type=ServiceIntegrationType.REQUEST_RESPONSE, parameters={
+        "SFN Start Execution", integration_pattern=IntegrationPattern.CallAndContinue, parameters={
             "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
             "Name": "ExecutionName"
         })
@@ -1202,9 +1202,9 @@ def test_step_functions_start_execution_step_creation_request_response():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation_run_job():
+def test_step_functions_start_execution_step_creation_wait_for_completion():
     step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution - Sync", service_integration_type=ServiceIntegrationType.RUN_JOB, parameters={
+        "SFN Start Execution - Sync", integration_pattern=IntegrationPattern.WaitForCompletion, parameters={
             "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
             "Name": "ExecutionName"
         })
@@ -1221,9 +1221,9 @@ def test_step_functions_start_execution_step_creation_run_job():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation_wait_for_callback():
+def test_step_functions_start_execution_step_creation_wait_for_task_token():
     step = StepFunctionsStartExecutionStep(
-        "SFN Start Execution - Wait for Callback", service_integration_type=ServiceIntegrationType.WAIT_FOR_CALLBACK,
+        "SFN Start Execution - Wait for Callback", integration_pattern=IntegrationPattern.WaitForTaskToken,
         parameters={
             "Input": {
                 "token.$": "$$.Task.Token"
@@ -1246,12 +1246,12 @@ def test_step_functions_start_execution_step_creation_wait_for_callback():
     }
 
 
-@pytest.mark.parametrize("service_integration_type", [
+@pytest.mark.parametrize("integration_pattern", [
     None,
     "ServiceIntegrationTypeStr",
-    IntegrationPattern.RequestResponse
+    0
 ])
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_step_functions_start_execution_step_creation_invalid_service_integration_type_raises_value_error(service_integration_type):
-    with pytest.raises(ValueError):
-        StepFunctionsStartExecutionStep("SFN Start Execution - invalid ServiceType", service_integration_type=service_integration_type)
+def test_step_functions_start_execution_step_creation_invalid_integration_pattern_raises_type_error(integration_pattern):
+    with pytest.raises(TypeError):
+        StepFunctionsStartExecutionStep("SFN Start Execution - invalid ServiceType", integration_pattern=integration_pattern)
