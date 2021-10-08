@@ -898,7 +898,7 @@ class EmrModifyInstanceGroupByNameStep(Task):
 class StepFunctionsStartExecutionStep(Task):
 
     """
-    Creates a Task state that starts an execution of another state machine. See `Manage AWS Step Functions Executions as an Integrated Service <https://docs.aws.amazon.com/step-functions/latest/dg/connect-stepfunctions.html`_ for more details.
+    Creates a Task state that starts an execution of a state machine. See `Manage AWS Step Functions Executions as an Integrated Service <https://docs.aws.amazon.com/step-functions/latest/dg/connect-stepfunctions.html`_ for more details.
     """
 
     def __init__(self, state_id, integration_pattern=IntegrationPattern.WaitForCompletion, **kwargs):
