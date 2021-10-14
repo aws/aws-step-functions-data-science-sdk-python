@@ -55,7 +55,7 @@ def get_service_integration_arn(service, api, integration_pattern=IntegrationPat
 
 def is_integration_pattern_valid(integration_pattern, supported_integration_patterns):
     if not isinstance(integration_pattern, IntegrationPattern):
-        raise TypeError(f"{integration_pattern} must be of type {IntegrationPattern}")
+        raise TypeError(f"Integration pattern must be of type {IntegrationPattern}")
     elif integration_pattern not in supported_integration_patterns:
         raise ValueError(f"Service Integration Type ({integration_pattern.name}) is not supported for this step - "
                          f"Please use one of the following: "
