@@ -272,7 +272,7 @@ def test_list_workflows(client):
 
 def test_cloudformation_export_with_simple_definition(workflow):
     cfn_template = workflow.get_cloudformation_template()
-    cfn_template = yaml.load(cfn_template)
+    cfn_template = yaml.safe_load(cfn_template)
     assert 'StateMachineComponent' in cfn_template['Resources']
     assert workflow.role == cfn_template['Resources']['StateMachineComponent']['Properties']['RoleArn']
     assert cfn_template['Description'] == "CloudFormation template for AWS Step Functions - State Machine"
@@ -300,7 +300,7 @@ def test_cloudformation_export_with_sagemaker_execution_role(workflow):
         }
     })
     cfn_template = workflow.get_cloudformation_template(description="CloudFormation template with Sagemaker role")
-    cfn_template = yaml.load(cfn_template)
+    cfn_template = yaml.safe_load(cfn_template)
     assert json.dumps(workflow.definition.to_dict(), indent=2) == cfn_template['Resources']['StateMachineComponent']['Properties']['DefinitionString']
     assert workflow.role == cfn_template['Resources']['StateMachineComponent']['Properties']['RoleArn']
     assert cfn_template['Description'] == "CloudFormation template with Sagemaker role"

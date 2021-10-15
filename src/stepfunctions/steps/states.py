@@ -274,27 +274,29 @@ class State(Block):
 
     def add_retry(self, retry):
         """
-        Add a Retry block to the tail end of the list of retriers for the state.
+        Add a retrier or a list of retriers to the tail end of the list of retriers for the state.
+        See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error>`_ for more details.
 
         Args:
-            retry (Retry): Retry block to add.
+            retry (Retry or list(Retry)): A retrier or list of retriers to add.
         """
         if Field.Retry in self.allowed_fields():
-            self.retries.append(retry)
+            self.retries.extend(retry) if isinstance(retry, list) else self.retries.append(retry)
         else:
-            raise ValueError("{state_type} state does not support retry field. ".format(state_type=type(self).__name__))
+            raise ValueError(f"{type(self).__name__} state does not support retry field. ")
 
     def add_catch(self, catch):
         """
-        Add a Catch block to the tail end of the list of catchers for the state.
+        Add a catcher or a list of catchers to the tail end of the list of catchers for the state.
+        See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-fallback-states>`_ for more details.
 
         Args:
-            catch (Catch): Catch block to add.
+            catch (Catch or list(Catch): catcher or list of catchers to add.
         """
         if Field.Catch in self.allowed_fields():
-            self.catches.append(catch)
+            self.catches.extend(catch) if isinstance(catch, list) else self.catches.append(catch)
         else:
-            raise ValueError("{state_type} state does not support catch field. ".format(state_type=type(self).__name__))
+            raise ValueError(f"{type(self).__name__} state does not support catch field. ")
 
     def to_dict(self):
         result = super(State, self).to_dict()
@@ -507,10 +509,12 @@ class Parallel(State):
     A Parallel state causes the interpreter to execute each branch as concurrently as possible, and wait until each branch terminates (reaches a terminal state) before processing the next state in the Chain.
     """
 
-    def __init__(self, state_id, **kwargs):
+    def __init__(self, state_id, retry=None, catch=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            retry (Retry or list(Retry), optional): A retrier or list of retriers that define the state's retry policy. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error>`_ for more details.
+            catch (Catch or list(Catch), optional): A catcher or list of catchers that define a fallback state. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-fallback-states>`_ for more details.
             comment (str, optional): Human-readable comment or description. (default: None)
             input_path (str or Placeholder, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
             parameters (dict, optional): The value of this field becomes the effective input for the state.
@@ -519,6 +523,12 @@ class Parallel(State):
         """
         super(Parallel, self).__init__(state_id, 'Parallel', **kwargs)
         self.branches = []
+
+        if retry:
+            self.add_retry(retry)
+
+        if catch:
+            self.add_catch(catch)
 
     def allowed_fields(self):
         return [
@@ -556,11 +566,13 @@ class Map(State):
     A Map state can accept an input with a list of items, execute a state or chain for each item in the list, and return a list, with all corresponding results of each execution, as its output.
     """
 
-    def __init__(self, state_id, **kwargs):
+    def __init__(self, state_id, retry=None, catch=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             iterator (State or Chain): State or chain to execute for each of the items in `items_path`.
+            retry (Retry or list(Retry), optional): A retrier or list of retriers that define the state's retry policy. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error>`_ for more details.
+            catch (Catch or list(Catch), optional): A catcher or list of catchers that define a fallback state. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-fallback-states>`_ for more details.
             items_path (str or Placeholder, optional): Path in the input for items to iterate over. (default: '$')
             max_concurrency (int, optional): Maximum number of iterations to have running at any given point in time. (default: 0)
             comment (str, optional): Human-readable comment or description. (default: None)
@@ -570,6 +582,12 @@ class Map(State):
             output_path (str or Placeholder, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         super(Map, self).__init__(state_id, 'Map', **kwargs)
+
+        if retry:
+            self.add_retry(retry)
+
+        if catch:
+            self.add_catch(catch)
 
     def attach_iterator(self, iterator):
         """
@@ -606,10 +624,12 @@ class Task(State):
     Task State causes the interpreter to execute the work identified by the state’s `resource` field.
     """
 
-    def __init__(self, state_id, **kwargs):
+    def __init__(self, state_id, retry=None, catch=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            retry (Retry or list(Retry), optional): A retrier or list of retriers that define the state's retry policy. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error>`_ for more details.
+            catch (Catch or list(Catch), optional): A catcher or list of catchers that define a fallback state. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-fallback-states>`_ for more details.
             resource (str): A URI that uniquely identifies the specific task to execute. The States language does not constrain the URI scheme nor any other part of the URI.
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
@@ -627,6 +647,12 @@ class Task(State):
 
         if self.heartbeat_seconds is not None and self.heartbeat_seconds_path is not None:
             raise ValueError("Only one of 'heartbeat_seconds' or 'heartbeat_seconds_path' can be provided.")
+
+        if retry:
+            self.add_retry(retry)
+
+        if catch:
+            self.add_catch(catch)
 
     def allowed_fields(self):
         return [
