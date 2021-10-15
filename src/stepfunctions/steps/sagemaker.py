@@ -276,7 +276,7 @@ class TransformStep(Task):
             transform_parameters['Tags'] = tags if isinstance(tags, Placeholder) else tags_dict_to_kv_list(tags)
 
         if Field.Parameters.value in kwargs and isinstance(kwargs[Field.Parameters.value], dict):
-            # Update processing_parameters with input parameters
+            # Update transform_parameters with input parameters
             merge_dicts(transform_parameters, kwargs[Field.Parameters.value])
 
         kwargs[Field.Parameters.value] = transform_parameters

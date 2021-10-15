@@ -181,7 +181,7 @@ def test_transform_step(trained_estimator, sfn_client, sfn_role_arn):
 
 
 def test_transform_step_with_placeholder(trained_estimator, sfn_client, sfn_role_arn):
-    # Create transformer from previously created estimator
+    # Create transformer from supplied estimator
     job_name = generate_job_name()
     pca_transformer = trained_estimator.transformer(instance_count=INSTANCE_COUNT, instance_type=INSTANCE_TYPE)
 
