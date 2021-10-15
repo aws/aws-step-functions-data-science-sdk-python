@@ -422,17 +422,37 @@ def test_task_state_machine_creation(sfn_client, sfn_role_arn, training_job_para
 
 def test_catch_state_machine_creation(sfn_client, sfn_role_arn, training_job_parameters):
     catch_state_name = "TaskWithCatchState"
-    custom_error = "CustomError"
     task_failed_error = "States.TaskFailed"
-    all_fail_error = "States.ALL"
-    custom_error_state_name = "Custom Error End"
-    task_failed_state_name = "Task Failed End"
-    all_error_state_name = "Catch All End"
+    timeout_error = "States.Timeout"
+    task_failed_state_name = "Catch Task Failed End"
+    timeout_state_name = "Catch Timeout End"
     catch_state_result = "Catch Result"
     task_resource = f"arn:{get_aws_partition()}:states:::sagemaker:createTrainingJob.sync"
 
-    # change the parameters to cause task state to fail
+    # Provide invalid TrainingImage to cause States.TaskFailed error
     training_job_parameters["AlgorithmSpecification"]["TrainingImage"] = "not_an_image"
+
+    task = steps.Task(
+        catch_state_name,
+        parameters=training_job_parameters,
+        resource=task_resource,
+        catch=steps.Catch(
+            error_equals=[timeout_error],
+            next_step=steps.Pass(timeout_state_name, result=catch_state_result)
+        )
+    )
+    task.add_catch(
+        steps.Catch(
+            error_equals=[task_failed_error],
+            next_step=steps.Pass(task_failed_state_name, result=catch_state_result)
+        )
+    )
+
+    workflow = Workflow(
+        unique_name_from_base('Test_Catch_Workflow'),
+        definition=task,
+        role=sfn_role_arn
+    )
 
     asl_state_machine_definition = {
         "StartAt": catch_state_name,
@@ -445,80 +465,61 @@ def test_catch_state_machine_creation(sfn_client, sfn_role_arn, training_job_par
                 "Catch": [
                     {
                         "ErrorEquals": [
-                            all_fail_error
+                            timeout_error
                         ],
-                        "Next": all_error_state_name
+                        "Next": timeout_state_name
+                    },
+                    {
+                        "ErrorEquals": [
+                            task_failed_error
+                        ],
+                        "Next": task_failed_state_name
                     }
                 ]
             },
-            all_error_state_name: {
+            task_failed_state_name: {
                 "Type": "Pass",
                 "Result": catch_state_result,
                 "End": True
-            }
+            },
+            timeout_state_name: {
+                "Type": "Pass",
+                "Result": catch_state_result,
+                "End": True
+            },
         }
     }
-    task = steps.Task(
-        catch_state_name,
-        parameters=training_job_parameters,
-        resource=task_resource
-    )
-    task.add_catch(
-        steps.Catch(
-            error_equals=[all_fail_error],
-            next_step=steps.Pass(all_error_state_name, result=catch_state_result)
-        )
-    )
-
-    workflow = Workflow(
-        unique_name_from_base('Test_Catch_Workflow'),
-        definition=task,
-        role=sfn_role_arn
-    )
 
     workflow_test_suite(sfn_client, workflow, asl_state_machine_definition, catch_state_result)
 
 
 def test_retry_state_machine_creation(sfn_client, sfn_role_arn, training_job_parameters):
     retry_state_name = "RetryStateName"
-    all_fail_error = "Starts.ALL"
+    task_failed_error = "States.TaskFailed"
+    timeout_error = "States.Timeout"
     interval_seconds = 1
     max_attempts = 2
     backoff_rate = 2
     task_resource = f"arn:{get_aws_partition()}:states:::sagemaker:createTrainingJob.sync"
 
-    # change the parameters to cause task state to fail
+    # Provide invalid TrainingImage to cause States.TaskFailed error
     training_job_parameters["AlgorithmSpecification"]["TrainingImage"] = "not_an_image"
-
-    asl_state_machine_definition = {
-        "StartAt": retry_state_name,
-        "States": {
-            retry_state_name: {
-                "Resource": task_resource,
-                "Parameters": training_job_parameters,
-                "Type": "Task",
-                "End": True,
-                "Retry": [
-                    {
-                        "ErrorEquals": [all_fail_error],
-                        "IntervalSeconds": interval_seconds,
-                        "MaxAttempts": max_attempts,
-                        "BackoffRate": backoff_rate
-                    }
-                ]
-            }
-        }
-    }
 
     task = steps.Task(
         retry_state_name,
         parameters=training_job_parameters,
-        resource=task_resource
+        resource=task_resource,
+        retry=steps.Retry(
+            error_equals=[timeout_error],
+            interval_seconds=interval_seconds,
+            max_attempts=max_attempts,
+            backoff_rate=backoff_rate
+        )
     )
 
     task.add_retry(
         steps.Retry(
-            error_equals=[all_fail_error],
+            error_equals=[task_failed_error],
             interval_seconds=interval_seconds,
             max_attempts=max_attempts,
             backoff_rate=backoff_rate
@@ -530,5 +531,31 @@ def test_retry_state_machine_creation(sfn_client, sfn_role_arn, training_job_par
         definition=task,
         role=sfn_role_arn
     )
+
+    asl_state_machine_definition = {
+        "StartAt": retry_state_name,
+        "States": {
+            retry_state_name: {
+                "Resource": task_resource,
+                "Parameters": training_job_parameters,
+                "Type": "Task",
+                "End": True,
+                "Retry": [
+                    {
+                        "ErrorEquals": [timeout_error],
+                        "IntervalSeconds": interval_seconds,
+                        "MaxAttempts": max_attempts,
+                        "BackoffRate": backoff_rate
+                    },
+                    {
+                        "ErrorEquals": [task_failed_error],
+                        "IntervalSeconds": interval_seconds,
+                        "MaxAttempts": max_attempts,
+                        "BackoffRate": backoff_rate
+                    }
+                ]
+            }
+        }
+    }
 
     workflow_test_suite(sfn_client, workflow, asl_state_machine_definition, None)
