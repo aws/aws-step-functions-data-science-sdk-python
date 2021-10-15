@@ -13,12 +13,8 @@
 
 from __future__ import absolute_import
 
-import logging
-
 from enum import Enum
 from stepfunctions.steps.utils import get_aws_partition
-
-logger = logging.getLogger('stepfunctions')
 
 
 class IntegrationPattern(Enum):
