@@ -211,17 +211,17 @@ def test_transform_step_with_placeholder(trained_estimator, sfn_client, sfn_role
     })
 
     parameters = {
-            'BatchStrategy': execution_input['strategy'],
-            'TransformInput': {
-                'SplitType': execution_input['split_type'],
-            },
-            'TransformResources': {
-                'InstanceCount': execution_input['instance_count'],
-                'InstanceType': execution_input['instance_type'],
-            },
-            'MaxConcurrentTransforms': execution_input['max_concurrent_transforms'],
-            'MaxPayloadInMB': execution_input['max_payload']
-        }
+        'BatchStrategy': execution_input['strategy'],
+        'TransformInput': {
+            'SplitType': execution_input['split_type'],
+        },
+        'TransformResources': {
+            'InstanceCount': execution_input['instance_count'],
+            'InstanceType': execution_input['instance_type'],
+        },
+        'MaxConcurrentTransforms': execution_input['max_concurrent_transforms'],
+        'MaxPayloadInMB': execution_input['max_payload']
+    }
 
     # Build workflow definition
     transform_step = TransformStep(

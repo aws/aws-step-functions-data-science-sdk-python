@@ -925,6 +925,7 @@ def test_transform_step_creation_with_placeholder(pca_transformer):
         'tags': [{str: str}],
         'env': str,
         'volume_kms_key': str,
+        'experiment_config': str,
     })
 
     step_input = StepInput(schema={
@@ -944,10 +945,11 @@ def test_transform_step_creation_with_placeholder(pca_transformer):
                 'InstanceType': step_input['instance_type'],
                 'VolumeKmsKeyId': execution_input['volume_kms_key']
             },
+            'ExperimentConfig': execution_input['experiment_config'],
             'Tags': execution_input['tags'],
             'Environment': execution_input['env'],
             'MaxConcurrentTransforms': execution_input['max_concurrent_transforms'],
-            'MaxPayloadInMB': execution_input['max_payload']
+            'MaxPayloadInMB': execution_input['max_payload'],
         }
 
     step = TransformStep('Inference',
@@ -997,11 +999,7 @@ def test_transform_step_creation_with_placeholder(pca_transformer):
             'InstanceType.$': "$['instance_type']",
             'VolumeKmsKeyId.$': "$$.Execution.Input['volume_kms_key']"
         },
-        'ExperimentConfig': {
-            'ExperimentName': 'pca_experiment',
-            'TrialName': 'pca_trial',
-            'TrialComponentDisplayName': 'Transform'
-        },
+        'ExperimentConfig.$': "$$.Execution.Input['experiment_config']",
         'DataProcessing': {
             'InputFilter.$': "$$.Execution.Input['input_filter']",
             'OutputFilter.$': "$$.Execution.Input['output_filter']",
