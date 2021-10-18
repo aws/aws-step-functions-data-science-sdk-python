@@ -185,36 +185,42 @@ class TrainingStep(Task):
             merged_hyperparameters[key] = value
         return merged_hyperparameters
 
+
 class TransformStep(Task):
 
     """
     Creates a Task State to execute a `SageMaker Transform Job <https://docs.aws.amazon.com/sagemaker/latest/dg/API_CreateTransformJob.html>`_.
     """
 
-    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None, compression_type=None, split_type=None, experiment_config=None, wait_for_completion=True, tags=None, input_filter=None, output_filter=None, join_source=None, **kwargs):
+    def __init__(self, state_id, transformer, job_name, model_name, data, data_type='S3Prefix', content_type=None,
+                 compression_type=None, split_type=None, experiment_config=None, wait_for_completion=True, tags=None,
+                 input_filter=None, output_filter=None, join_source=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             transformer (sagemaker.transformer.Transformer): The SageMaker transformer to use in the TransformStep.
             job_name (str or Placeholder): Specify a transform job name. We recommend to use :py:class:`~stepfunctions.inputs.ExecutionInput` placeholder collection to pass the value dynamically in each execution.
             model_name (str or Placeholder): Specify a model name for the transform job to use. We recommend to use :py:class:`~stepfunctions.inputs.ExecutionInput` placeholder collection to pass the value dynamically in each execution.
-            data (str): Input data location in S3.
-            data_type (str): What the S3 location defines (default: 'S3Prefix').
+            data (str or Placeholder): Input data location in S3.
+            data_type (str or Placeholder): What the S3 location defines (default: 'S3Prefix').
                 Valid values:
 
                 * 'S3Prefix' - the S3 URI defines a key name prefix. All objects with this prefix will
                     be used as inputs for the transform job.
                 * 'ManifestFile' - the S3 URI points to a single manifest file listing each S3 object
                     to use as an input for the transform job.
-            content_type (str): MIME type of the input data (default: None).
-            compression_type (str): Compression type of the input data, if compressed (default: None). Valid values: 'Gzip', None.
-            split_type (str): The record delimiter for the input object (default: 'None'). Valid values: 'None', 'Line', 'RecordIO', and 'TFRecord'.
-            experiment_config (dict, optional): Specify the experiment config for the transform. (Default: None)
+            content_type (str or Placeholder): MIME type of the input data (default: None).
+            compression_type (str or Placeholder): Compression type of the input data, if compressed (default: None). Valid values: 'Gzip', None.
+            split_type (str or Placeholder): The record delimiter for the input object (default: 'None'). Valid values: 'None', 'Line', 'RecordIO', and 'TFRecord'.
+            experiment_config (dict or Placeholder, optional): Specify the experiment config for the transform. (Default: None)
             wait_for_completion(bool, optional): Boolean value set to `True` if the Task state should wait for the transform job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the transform job and proceed to the next step. (default: True)
-            tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
-            input_filter (str): A JSONPath to select a portion of the input to pass to the algorithm container for inference. If you omit the field, it gets the value ‘$’, representing the entire input. For CSV data, each row is taken as a JSON array, so only index-based JSONPaths can be applied, e.g. $[0], $[1:]. CSV data should follow the RFC format. See Supported JSONPath Operators for a table of supported JSONPath operators. For more information, see the SageMaker API documentation for CreateTransformJob. Some examples: “$[1:]”, “$.features” (default: None).
-            output_filter (str): A JSONPath to select a portion of the joined/original output to return as the output. For more information, see the SageMaker API documentation for CreateTransformJob. Some examples: “$[1:]”, “$.prediction” (default: None).
-            join_source (str): The source of data to be joined to the transform output. It can be set to ‘Input’ meaning the entire input record will be joined to the inference result. You can use OutputFilter to select the useful portion before uploading to S3. (default: None). Valid values: Input, None.
+            tags (list[dict] or Placeholder, optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            input_filter (str or Placeholder): A JSONPath to select a portion of the input to pass to the algorithm container for inference. If you omit the field, it gets the value ‘$’, representing the entire input. For CSV data, each row is taken as a JSON array, so only index-based JSONPaths can be applied, e.g. $[0], $[1:]. CSV data should follow the RFC format. See Supported JSONPath Operators for a table of supported JSONPath operators. For more information, see the SageMaker API documentation for CreateTransformJob. Some examples: “$[1:]”, “$.features” (default: None).
+            output_filter (str or Placeholder): A JSONPath to select a portion of the joined/original output to return as the output. For more information, see the SageMaker API documentation for CreateTransformJob. Some examples: “$[1:]”, “$.prediction” (default: None).
+            join_source (str or Placeholder): The source of data to be joined to the transform output. It can be set to ‘Input’ meaning the entire input record will be joined to the inference result. You can use OutputFilter to select the useful portion before uploading to S3. (default: None). Valid values: Input, None.
+            parameters(dict, optional): The value of this field is merged with other arguments to become the request payload for SageMaker `CreateTransformJob<https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateTransformJob.html>`_.
+                You can use `parameters` to override the value provided by other arguments and specify any field's value dynamically using `Placeholders<https://aws-step-functions-data-science-sdk.readthedocs.io/en/stable/placeholders.html?highlight=placeholder#stepfunctions.inputs.Placeholder>`_.
+
         """
         if wait_for_completion:
             """
@@ -233,7 +239,7 @@ class TransformStep(Task):
                                                                        SageMakerApi.CreateTransformJob)
 
         if isinstance(job_name, str):
-            parameters = transform_config(
+            transform_parameters = transform_config(
                 transformer=transformer,
                 data=data,
                 data_type=data_type,
@@ -246,7 +252,7 @@ class TransformStep(Task):
                 join_source=join_source
             )
         else:
-            parameters = transform_config(
+            transform_parameters = transform_config(
                 transformer=transformer,
                 data=data,
                 data_type=data_type,
@@ -259,17 +265,21 @@ class TransformStep(Task):
             )
 
         if isinstance(job_name, Placeholder):
-            parameters['TransformJobName'] = job_name
+            transform_parameters['TransformJobName'] = job_name
 
-        parameters['ModelName'] = model_name
+        transform_parameters['ModelName'] = model_name
 
         if experiment_config is not None:
-            parameters['ExperimentConfig'] = experiment_config
+            transform_parameters['ExperimentConfig'] = experiment_config
 
         if tags:
-            parameters['Tags'] = tags_dict_to_kv_list(tags)
+            transform_parameters['Tags'] = tags if isinstance(tags, Placeholder) else tags_dict_to_kv_list(tags)
 
-        kwargs[Field.Parameters.value] = parameters
+        if Field.Parameters.value in kwargs and isinstance(kwargs[Field.Parameters.value], dict):
+            # Update transform_parameters with input parameters
+            merge_dicts(transform_parameters, kwargs[Field.Parameters.value])
+
+        kwargs[Field.Parameters.value] = transform_parameters
         super(TransformStep, self).__init__(state_id, **kwargs)
 
 

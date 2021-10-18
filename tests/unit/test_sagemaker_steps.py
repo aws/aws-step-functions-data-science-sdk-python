@@ -901,6 +901,117 @@ def test_transform_step_creation(pca_transformer):
     }
 
 
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_transform_step_creation_with_placeholder(pca_transformer):
+    execution_input = ExecutionInput(schema={
+        'data': str,
+        'data_type': str,
+        'content_type': str,
+        'compression_type': str,
+        'split_type': str,
+        'input_filter': str,
+        'output_filter': str,
+        'join_source': str,
+        'job_name': str,
+        'model_name': str,
+        'instance_count': int,
+        'strategy': str,
+        'assemble_with': str,
+        'output_path': str,
+        'output_kms_key': str,
+        'accept': str,
+        'max_concurrent_transforms': int,
+        'max_payload': int,
+        'tags': [{str: str}],
+        'env': str,
+        'volume_kms_key': str,
+        'experiment_config': str,
+    })
+
+    step_input = StepInput(schema={
+        'instance_type': str
+    })
+
+    parameters = {
+            'BatchStrategy': execution_input['strategy'],
+            'TransformOutput': {
+                'Accept': execution_input['accept'],
+                'AssembleWith': execution_input['assemble_with'],
+                'KmsKeyId': execution_input['output_kms_key'],
+                'S3OutputPath': execution_input['output_path']
+            },
+            'TransformResources': {
+                'InstanceCount': execution_input['instance_count'],
+                'InstanceType': step_input['instance_type'],
+                'VolumeKmsKeyId': execution_input['volume_kms_key']
+            },
+            'ExperimentConfig': execution_input['experiment_config'],
+            'Tags': execution_input['tags'],
+            'Environment': execution_input['env'],
+            'MaxConcurrentTransforms': execution_input['max_concurrent_transforms'],
+            'MaxPayloadInMB': execution_input['max_payload'],
+        }
+
+    step = TransformStep('Inference',
+        transformer=pca_transformer,
+        data=execution_input['data'],
+        data_type=execution_input['data_type'],
+        content_type=execution_input['content_type'],
+        compression_type=execution_input['compression_type'],
+        split_type=execution_input['split_type'],
+        job_name=execution_input['job_name'],
+        model_name=execution_input['model_name'],
+        experiment_config={
+            'ExperimentName': 'pca_experiment',
+            'TrialName': 'pca_trial',
+            'TrialComponentDisplayName': 'Transform'
+        },
+        tags=execution_input['tags'],
+        join_source=execution_input['join_source'],
+        output_filter=execution_input['output_filter'],
+        input_filter=execution_input['input_filter'],
+        parameters=parameters
+    )
+
+    assert step.to_dict()['Parameters'] == {
+        'BatchStrategy.$': "$$.Execution.Input['strategy']",
+        'ModelName.$': "$$.Execution.Input['model_name']",
+        'TransformInput': {
+            'CompressionType.$': "$$.Execution.Input['compression_type']",
+            'ContentType.$': "$$.Execution.Input['content_type']",
+            'DataSource': {
+                'S3DataSource': {
+                    'S3DataType.$': "$$.Execution.Input['data_type']",
+                    'S3Uri.$': "$$.Execution.Input['data']"
+                }
+            },
+            'SplitType.$': "$$.Execution.Input['split_type']"
+        },
+        'TransformOutput': {
+            'Accept.$': "$$.Execution.Input['accept']",
+            'AssembleWith.$': "$$.Execution.Input['assemble_with']",
+            'KmsKeyId.$': "$$.Execution.Input['output_kms_key']",
+            'S3OutputPath.$': "$$.Execution.Input['output_path']"
+        },
+        'TransformJobName.$': "$$.Execution.Input['job_name']",
+        'TransformResources': {
+            'InstanceCount.$': "$$.Execution.Input['instance_count']",
+            'InstanceType.$': "$['instance_type']",
+            'VolumeKmsKeyId.$': "$$.Execution.Input['volume_kms_key']"
+        },
+        'ExperimentConfig.$': "$$.Execution.Input['experiment_config']",
+        'DataProcessing': {
+            'InputFilter.$': "$$.Execution.Input['input_filter']",
+            'OutputFilter.$': "$$.Execution.Input['output_filter']",
+            'JoinSource.$': "$$.Execution.Input['join_source']",
+        },
+        'Tags.$': "$$.Execution.Input['tags']",
+        'Environment.$': "$$.Execution.Input['env']",
+        'MaxConcurrentTransforms.$': "$$.Execution.Input['max_concurrent_transforms']",
+        'MaxPayloadInMB.$': "$$.Execution.Input['max_payload']"
+    }
+
+
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_get_expected_model(pca_estimator):
