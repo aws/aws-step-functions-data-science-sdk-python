@@ -454,7 +454,10 @@ class TuningStep(Task):
                     :class:`sagemaker.amazon.amazon_estimator.RecordSet` objects,
                     where each instance is a different channel of training data.
             wait_for_completion(bool, optional): Boolean value set to `True` if the Task state should wait for the tuning job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the tuning job and proceed to the next step. (default: True)
-            tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            tags (list[dict] or Placeholder, optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            parameters(dict, optional): The value of this field is merged with other arguments to become the request payload for SageMaker `CreateHyperParameterTuningJob<https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateHyperParameterTuningJob.html>`_.
+                You can use `parameters` to override the value provided by other arguments and specify any field's value dynamically using `Placeholders<https://aws-step-functions-data-science-sdk.readthedocs.io/en/stable/placeholders.html?highlight=placeholder#stepfunctions.inputs.Placeholder>`_.
+
         """
         if wait_for_completion:
             """
@@ -472,19 +475,22 @@ class TuningStep(Task):
             kwargs[Field.Resource.value] = get_service_integration_arn(SAGEMAKER_SERVICE_NAME,
                                                                        SageMakerApi.CreateHyperParameterTuningJob)
 
-        parameters = tuning_config(tuner=tuner, inputs=data, job_name=job_name).copy()
+        tuning_parameters = tuning_config(tuner=tuner, inputs=data, job_name=job_name).copy()
 
         if job_name is not None:
-            parameters['HyperParameterTuningJobName'] = job_name
+            tuning_parameters['HyperParameterTuningJobName'] = job_name
 
-        if 'S3Operations' in parameters:
-            del parameters['S3Operations']
+        if 'S3Operations' in tuning_parameters:
+            del tuning_parameters['S3Operations']
 
         if tags:
-            parameters['Tags'] = tags_dict_to_kv_list(tags)
+            tuning_parameters['Tags'] = tags if isinstance(tags, Placeholder) else tags_dict_to_kv_list(tags)
 
-        kwargs[Field.Parameters.value] = parameters
+        if Field.Parameters.value in kwargs and isinstance(kwargs[Field.Parameters.value], dict):
+            # Update tuning parameters with input parameters
+            merge_dicts(tuning_parameters, kwargs[Field.Parameters.value])
 
+        kwargs[Field.Parameters.value] = tuning_parameters
         super(TuningStep, self).__init__(state_id, **kwargs)
 
 

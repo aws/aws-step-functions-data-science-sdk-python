@@ -347,6 +347,7 @@ def test_create_endpoint_step(trained_estimator, record_set_fixture, sfn_client,
         delete_sagemaker_model(model.name, sagemaker_session)
         # End of Cleanup
 
+
 def test_tuning_step(sfn_client, record_set_for_hyperparameter_tuning, sagemaker_role_arn, sfn_role_arn):
     job_name = generate_job_name()
 
@@ -397,6 +398,98 @@ def test_tuning_step(sfn_client, record_set_for_hyperparameter_tuning, sagemaker
         # Cleanup
         state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
         # End of Cleanup
+
+
+def test_tuning_step_with_placeholders(sfn_client, record_set_for_hyperparameter_tuning, sagemaker_role_arn, sfn_role_arn):
+    kmeans = KMeans(
+        role=sagemaker_role_arn,
+        instance_count=1,
+        instance_type=INSTANCE_TYPE,
+        k=10
+    )
+
+    hyperparameter_ranges = {
+        "extra_center_factor": IntegerParameter(4, 10),
+        "mini_batch_size": IntegerParameter(10, 100),
+        "epochs": IntegerParameter(1, 2),
+        "init_method": CategoricalParameter(["kmeans++", "random"]),
+    }
+
+    tuner = HyperparameterTuner(
+        estimator=kmeans,
+        objective_metric_name="test:msd",
+        hyperparameter_ranges=hyperparameter_ranges,
+        objective_type="Maximize",
+        max_jobs=2,
+        max_parallel_jobs=1,
+    )
+
+    execution_input = ExecutionInput(schema={
+        'job_name': str,
+        'objective_metric_name': str,
+        'objective_type': str,
+        'max_jobs': int,
+        'max_parallel_jobs': int,
+        'early_stopping_type': str,
+        'strategy': str,
+    })
+
+    parameters = {
+        'HyperParameterTuningJobConfig': {
+            'HyperParameterTuningJobObjective': {
+                'MetricName': execution_input['objective_metric_name'],
+                'Type': execution_input['objective_type']
+            },
+            'ResourceLimits': {'MaxNumberOfTrainingJobs': execution_input['max_jobs'],
+                               'MaxParallelTrainingJobs': execution_input['max_parallel_jobs']},
+            'Strategy': execution_input['strategy'],
+            'TrainingJobEarlyStoppingType': execution_input['early_stopping_type']
+        },
+        'TrainingJobDefinition': {
+            'AlgorithmSpecification': {
+                'TrainingInputMode': 'File'
+            }
+        }
+    }
+
+    # Build workflow definition
+    tuning_step = TuningStep('Tuning', tuner=tuner, job_name=execution_input['job_name'],
+                             data=record_set_for_hyperparameter_tuning, parameters=parameters)
+    tuning_step.add_retry(SAGEMAKER_RETRY_STRATEGY)
+    workflow_graph = Chain([tuning_step])
+
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
+        # Create workflow and check definition
+        workflow = create_workflow_and_check_definition(
+            workflow_graph=workflow_graph,
+            workflow_name=unique_name_from_base("integ-test-tuning-step-workflow"),
+            sfn_client=sfn_client,
+            sfn_role_arn=sfn_role_arn
+        )
+
+        job_name = generate_job_name()
+
+        inputs = {
+            'job_name': job_name,
+            'objective_metric_name': 'test:msd',
+            'objective_type': 'Minimize',
+            'max_jobs': 2,
+            'max_parallel_jobs': 2,
+            'early_stopping_type': 'Off',
+            'strategy': 'Bayesian',
+        }
+
+        # Execute workflow
+        execution = workflow.execute(inputs=inputs)
+        execution_output = execution.get_output(wait=True)
+
+        # Check workflow output
+        assert execution_output.get("HyperParameterTuningJobStatus") == "Completed"
+
+        # Cleanup
+        state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
+        # End of Cleanup
+
 
 def test_processing_step(sklearn_processor_fixture, sagemaker_session, sfn_client, sfn_role_arn):
     region = boto3.session.Session().region_name
