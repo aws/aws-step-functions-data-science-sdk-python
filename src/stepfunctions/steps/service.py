@@ -15,7 +15,8 @@ from __future__ import absolute_import
 from enum import Enum
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
-from stepfunctions.steps.integration_resources import IntegrationPattern, get_service_integration_arn
+from stepfunctions.steps.integration_resources import IntegrationPattern, get_service_integration_arn,\
+    is_integration_pattern_valid
 
 DYNAMODB_SERVICE_NAME = "dynamodb"
 EKS_SERVICES_NAME = "eks"
@@ -24,6 +25,7 @@ EVENTBRIDGE_SERVICE_NAME = "events"
 GLUE_DATABREW_SERVICE_NAME = "databrew"
 SNS_SERVICE_NAME = "sns"
 SQS_SERVICE_NAME = "sqs"
+STEP_FUNCTIONS_SERVICE_NAME = "states"
 
 
 class DynamoDBApi(Enum):
@@ -68,6 +70,10 @@ class SnsApi(Enum):
 
 class SqsApi(Enum):
     SendMessage = "sendMessage"
+
+
+class StepFunctions(Enum):
+    StartExecution = "startExecution"
 
 
 class DynamoDBGetItemStep(Task):
@@ -887,3 +893,54 @@ class EmrModifyInstanceGroupByNameStep(Task):
                                                                    ElasticMapReduceApi.ModifyInstanceGroupByName)
 
         super(EmrModifyInstanceGroupByNameStep, self).__init__(state_id, **kwargs)
+
+
+class StepFunctionsStartExecutionStep(Task):
+
+    """
+    Creates a Task state that starts an execution of a state machine. See `Manage AWS Step Functions Executions as an Integrated Service <https://docs.aws.amazon.com/step-functions/latest/dg/connect-stepfunctions.html`_ for more details.
+    """
+
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.WaitForCompletion, **kwargs):
+        """
+        Args:
+            state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. (default: WaitForCompletion)
+                Supported integration patterns:
+                    WaitForCompletion: Wait for the state machine execution to complete before going to the next state. (See `Run A Job <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-sync`_ for more details.)
+                    WaitForTaskToken: Wait for the state machine execution to return a task token before progressing to the next state (See `Wait for a Callback with the Task Token <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-wait-token`_ for more details.)
+                    CallAndContinue: Call StartExecution and progress to the next state (See `Request Response <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-default`_ for more details.)
+            timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
+            timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
+            heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
+            comment (str, optional): Human-readable comment or description. (default: None)
+            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            parameters (dict, optional): The value of this field becomes the effective input for the state. (default: None)
+            result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
+            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+        """
+        supported_integ_patterns = [IntegrationPattern.WaitForCompletion, IntegrationPattern.WaitForTaskToken,
+                                    IntegrationPattern.CallAndContinue]
+
+        is_integration_pattern_valid(integration_pattern, supported_integ_patterns)
+
+        if integration_pattern == IntegrationPattern.WaitForCompletion:
+            """
+            Example resource arn:aws:states:::states:startExecution.sync:2
+            """
+            kwargs[Field.Resource.value] = get_service_integration_arn(STEP_FUNCTIONS_SERVICE_NAME,
+                                                                       StepFunctions.StartExecution,
+                                                                       integration_pattern,
+                                                                       2)
+        else:
+            """
+            Example resource arn:
+                - arn:aws:states:::states:startExecution.waitForTaskToken
+                - arn:aws:states:::states:startExecution
+            """
+            kwargs[Field.Resource.value] = get_service_integration_arn(STEP_FUNCTIONS_SERVICE_NAME,
+                                                                       StepFunctions.StartExecution,
+                                                                       integration_pattern)
+
+        super(StepFunctionsStartExecutionStep, self).__init__(state_id, **kwargs)
