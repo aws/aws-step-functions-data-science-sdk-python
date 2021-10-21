@@ -24,23 +24,35 @@ class IntegrationPattern(Enum):
 
     WaitForTaskToken = "waitForTaskToken"
     WaitForCompletion = "sync"
-    RequestResponse = ""
+    CallAndContinue = ""
 
 
-def get_service_integration_arn(service, api, integration_pattern=IntegrationPattern.RequestResponse):
+def get_service_integration_arn(service, api, integration_pattern=IntegrationPattern.CallAndContinue, version=None):
 
     """
     ARN builder for task integration
     Args:
         service (str): The service name for the service integration
         api (str): The api of the service integration
-        integration_pattern (IntegrationPattern, optional): The integration pattern for the task. (Default: IntegrationPattern.RequestResponse)
+        integration_pattern (IntegrationPattern, optional): The integration pattern for the task. (Default: IntegrationPattern.CallAndContinue)
+        version (int, optional): The version of the resource to use. (Default: None)
     """
     arn = ""
-    if integration_pattern == IntegrationPattern.RequestResponse:
+    if integration_pattern == IntegrationPattern.CallAndContinue:
         arn = f"arn:{get_aws_partition()}:states:::{service}:{api.value}"
     else:
         arn = f"arn:{get_aws_partition()}:states:::{service}:{api.value}.{integration_pattern.value}"
+
+    if version:
+        arn = f"{arn}:{str(version)}"
+
     return arn
 
 
+def is_integration_pattern_valid(integration_pattern, supported_integration_patterns):
+    if not isinstance(integration_pattern, IntegrationPattern):
+        raise TypeError(f"Integration pattern must be of type {IntegrationPattern}")
+    elif integration_pattern not in supported_integration_patterns:
+        raise ValueError(f"Integration Pattern ({integration_pattern.name}) is not supported for this step - "
+                         f"Please use one of the following: "
+                         f"{[integ_type.name for integ_type in supported_integration_patterns]}")

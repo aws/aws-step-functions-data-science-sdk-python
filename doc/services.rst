@@ -20,6 +20,8 @@ This module provides classes to build steps that integrate with Amazon DynamoDB,
 
 - `Amazon SQS <#amazon-sqs>`__
 
+- `AWS Step Functions <#aws-step-functions>`__
+
 
 Amazon DynamoDB
 ----------------
@@ -82,3 +84,8 @@ Amazon SNS
 Amazon SQS
 -----------
 .. autoclass:: stepfunctions.steps.service.SqsSendMessageStep
+
+AWS Step Functions
+------------------
+.. autoclass:: stepfunctions.steps.service.StepFunctionsStartExecutionStep
+
