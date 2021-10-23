@@ -13,6 +13,7 @@
 from __future__ import absolute_import
 
 import boto3
+import pytest
 
 from unittest.mock import patch
 
@@ -32,6 +33,8 @@ from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateCluste
 from stepfunctions.steps.service import EventBridgePutEventsStep
 from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
 from stepfunctions.steps.service import GlueDataBrewStartJobRunStep
+from stepfunctions.steps.service import StepFunctionsStartExecutionStep
+from stepfunctions.steps.integration_resources import IntegrationPattern
 
 
 STEP_RESULT = StepResult()
@@ -1240,3 +1243,97 @@ def test_eks_call_step_creation():
         'ResultSelector': {'OutputA.$': "$['A']"},
         'End': True
     }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_default():
+    step = StepFunctionsStartExecutionStep(
+        "SFN Start Execution", parameters={
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::states:startExecution.sync:2",
+        "Parameters": {
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        },
+        "End": True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_call_and_continue():
+    step = StepFunctionsStartExecutionStep(
+        "SFN Start Execution", integration_pattern=IntegrationPattern.CallAndContinue, parameters={
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::states:startExecution",
+        "Parameters": {
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        },
+        "End": True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_wait_for_completion():
+    step = StepFunctionsStartExecutionStep(
+        "SFN Start Execution - Sync", integration_pattern=IntegrationPattern.WaitForCompletion, parameters={
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::states:startExecution.sync:2",
+        "Parameters": {
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        },
+        "End": True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_wait_for_task_token():
+    step = StepFunctionsStartExecutionStep(
+        "SFN Start Execution - Wait for Callback", integration_pattern=IntegrationPattern.WaitForTaskToken,
+        parameters={
+            "Input": {
+                "token.$": "$$.Task.Token"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        })
+
+    assert step.to_dict() == {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::states:startExecution.waitForTaskToken",
+        "Parameters": {
+            "Input": {
+                "token.$": "$$.Task.Token"
+            },
+            "StateMachineArn": "arn:aws:states:us-east-1:123456789012:stateMachine:HelloWorld",
+            "Name": "ExecutionName"
+        },
+        "End": True
+    }
+
+
+@pytest.mark.parametrize("integration_pattern", [
+    None,
+    "ServiceIntegrationTypeStr",
+    0
+])
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_step_functions_start_execution_step_creation_invalid_integration_pattern_raises_type_error(integration_pattern):
+    with pytest.raises(TypeError):
+        StepFunctionsStartExecutionStep("SFN Start Execution - invalid ServiceType", integration_pattern=integration_pattern)

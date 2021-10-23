@@ -13,11 +13,16 @@
 
 # Test if boto3 session can fetch correct aws partition info from test environment
 
-from stepfunctions.steps.utils import get_aws_partition, merge_dicts
-from stepfunctions.steps.integration_resources import IntegrationPattern, get_service_integration_arn
 import boto3
-from unittest.mock import patch
+import logging
+import pytest
+
 from enum import Enum
+from unittest.mock import patch
+
+from stepfunctions.steps.utils import get_aws_partition, merge_dicts
+from stepfunctions.steps.integration_resources import IntegrationPattern,\
+    get_service_integration_arn, is_integration_pattern_valid
 
 
 testService = "sagemaker"
@@ -86,3 +91,18 @@ def test_merge_dicts():
         'b': 2,
         'c': 3
     }
+
+
+@pytest.mark.parametrize("service_integration_type", [
+    None,
+    "IntegrationPatternStr",
+    0
+])
+def test_is_integration_pattern_valid_with_invalid_type_raises_type_error(service_integration_type):
+    with pytest.raises(TypeError):
+        is_integration_pattern_valid(service_integration_type, [IntegrationPattern.WaitForTaskToken])
+
+
+def test_is_integration_pattern_valid_with_non_supported_type_raises_value_error():
+    with pytest.raises(ValueError):
+        is_integration_pattern_valid(IntegrationPattern.WaitForTaskToken, [IntegrationPattern.WaitForCompletion])
