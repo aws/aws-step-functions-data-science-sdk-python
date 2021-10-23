@@ -82,7 +82,7 @@ that returns the placeholder output for that step.
   definition = Chain([lambda_state_first, lambda_state_second])
 
 
-The third and fourth mechanisms can be used to access context objects from the Map state.
+The third and fourth mechanisms can be used to access the context object from Map states.
 The SDK provides the :py:meth:`stepfunctions.inputs.MapItemIndex` class that allows you to get the index number of the
 array item that is being processed in the current iteration and the :py:meth:`stepfunctions.inputs.MapItemValue` class
 which is used for accessing the value of the array item that is currently being processed.
