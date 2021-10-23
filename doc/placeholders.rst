@@ -93,15 +93,15 @@ which is used for accessing the value of the array item that is currently being 
   # a schema is optional, but it is a good practice
   map_item_value = MapItemValue(schema={
       'name': str,
-      'age': str
+      'points': str
   })
 
   map_state = Map(
       'MapState',
       parameters={
-          "MapIndex": MapItemIndex(),
-          "Name": map_item_value['name'],
-          "Age": map_item_value['age']
+          "Ranking": MapItemIndex(),
+          "Contestant": map_item_value['name'],
+          "Score": map_item_value['points']
       }
   )
   iterator_state = Pass('TrainIterator')
@@ -117,51 +117,24 @@ which is used for accessing the value of the array item that is currently being 
   # Create the workflow on AWS Step Functions
   workflow.create()
 
-  # This creates a workflow with the following definition:
-  """
-  {
-    "StartAt": "MapState01",
-    "States": {
-        "MapState": {
-            "Parameters": {
-                "MapIndex.$": "$$.Map.Item.Index",
-                "Name.$": "$$.Map.Item.Value['name']",
-                "Age.$": "$$.Map.Item.Value['age']"
-            },
-            "Type": "Map",
-            "End": true,
-            "Iterator": {
-                "StartAt": "TrainIterator",
-                "States": {
-                    "TrainIterator": {
-                        "Type": "Pass",
-                        "End": true
-                    }
-                }
-            }
-        }
-    }
-  }
-  """
-
   # The placeholder is assigned a value during execution. The SDK will
   # verify that all placeholder values are assigned values, and that
   # these values are of the expected type based on the defined schema
   # before the execution starts.
-  workflow_input = execution_input = [{"name": "John", "age": 21}, {"name": "Snow", "age": 18}]
+  workflow_input = execution_input = [{"name": "John", "points": "101"}, {"name": "Snow", "points": "99"}]
   workflow.execute(inputs=workflow_input)
 
   # The execution output will be:
   [
     {
-        "MapIndex": 0,
-        "Age": 21,
-        "Name": "John"
+        "Ranking": 0,
+        "Contestant": "John",
+        "Score": "101",
     },
     {
-        "MapIndex": 1,
-        "Age": 18,
-        "Name": "Snow"
+        "Ranking": 1,
+        "Contestant": "Snow",
+        "Score": "99"
     }
   ]
 

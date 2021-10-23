@@ -18,25 +18,6 @@ from unittest.mock import patch
 
 from stepfunctions.inputs import ExecutionInput, StepInput
 from stepfunctions.steps import Pass, Succeed, Wait, Choice, Parallel, Task, Map
-from stepfunctions.steps.compute import LambdaStep, GlueStartJobRunStep, BatchSubmitJobStep, EcsRunTaskStep
-from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep,\
-    DynamoDBDeleteItemStep
-from stepfunctions.steps.service import (
-    EksCallStep,
-    EksCreateClusterStep,
-    EksCreateFargateProfileStep,
-    EksCreateNodeGroupStep,
-    EksDeleteClusterStep,
-    EksDeleteFargateProfileStep,
-    EksDeleteNodegroupStep,
-    EksRunJobStep,
-)
-from stepfunctions.steps.service import EmrCreateClusterStep, EmrTerminateClusterStep, EmrAddStepStep,\
-    EmrCancelStepStep, EmrSetClusterTerminationProtectionStep, EmrModifyInstanceFleetByNameStep,\
-    EmrModifyInstanceGroupByNameStep
-from stepfunctions.steps.service import EventBridgePutEventsStep
-from stepfunctions.steps.service import SnsPublishStep, SqsSendMessageStep
-from stepfunctions.steps.service import GlueDataBrewStartJobRunStep
 from stepfunctions.steps.states import State
 
 @pytest.mark.parametrize("state, state_id, extra_args", [
@@ -48,38 +29,7 @@ from stepfunctions.steps.states import State
     (Parallel, "ParallelState", {}),
     (Task, "TaskState", {}),
     (Wait, "WaitState", {'seconds': 10}),
-    (Map, "MapState", {'iterator': Pass('PassState')}),
-
-    # Compute steps
-    (LambdaStep, "LambdaStep", {}),
-    (EcsRunTaskStep, "EcsRunTaskStep", {}),
-    (BatchSubmitJobStep, "BatchSubmitJobStep", {}),
-    (GlueStartJobRunStep, "GlueStartJobRunStep", {}),
-
-    # Service steps
-    (DynamoDBGetItemStep, "DynamoDBGetItemStep", {}),
-    (DynamoDBPutItemStep, "DynamoDBPutItemStep", {}),
-    (DynamoDBUpdateItemStep, "DynamoDBUpdateItemStep", {}),
-    (DynamoDBDeleteItemStep, "DynamoDBDeleteItemStep", {}),
-    (EksCallStep, "EksCallStep", {}),
-    (EksCreateClusterStep, "EksCreateClusterStep", {}),
-    (EksCreateFargateProfileStep, "EksCreateFargateProfileStep", {}),
-    (EksCreateNodeGroupStep, "EksCreateNodeGroupStep", {}),
-    (EksDeleteClusterStep, "EksDeleteClusterStep", {}),
-    (EksDeleteFargateProfileStep, "EksDeleteFargateProfileStep", {}),
-    (EksDeleteNodegroupStep, "EksDeleteNodegroupStep", {}),
-    (EksRunJobStep, "EksRunJobStep", {}),
-    (EmrCreateClusterStep, "EmrCreateClusterStep", {}),
-    (EmrTerminateClusterStep, "EmrTerminateClusterStep", {}),
-    (EmrAddStepStep, "EmrAddStepStep", {}),
-    (EmrCancelStepStep, "EmrCancelStepStep", {}),
-    (EmrSetClusterTerminationProtectionStep, "EmrSetClusterTerminationProtectionStep", {}),
-    (EmrModifyInstanceFleetByNameStep, "EmrModifyInstanceFleetByNameStep", {}),
-    (EmrModifyInstanceGroupByNameStep, "EmrModifyInstanceGroupByNameStep", {}),
-    (EventBridgePutEventsStep, "EventBridgePutEventsStep", {}),
-    (SnsPublishStep, "SnsPublishStep", {}),
-    (SqsSendMessageStep, "SqsSendMessageStep", {}),
-    (GlueDataBrewStartJobRunStep, "GlueDataBrewStartJobRunStep", {})
+    (Map, "MapState", {'iterator': Pass('PassState')})
 ])
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_service_step_creation_with_placeholders(state, state_id, extra_args):
