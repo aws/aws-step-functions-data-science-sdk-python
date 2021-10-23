@@ -410,6 +410,7 @@ def test_schema_validation_for_step_input():
             }
         )
 
+
 def test_step_result_placeholder():
     step_result = StepResult()
 
@@ -432,8 +433,8 @@ def test_step_result_placeholder():
 
     assert test_step_01.to_dict() == expected_repr
 
-def test_schema_validation_for_step_result():
 
+def test_schema_validation_for_step_result():
     step_result = StepResult(
         schema={
             "Payload": {
@@ -460,21 +461,9 @@ def test_schema_validation_for_step_result():
             }
         )
 
-def test_schema_validation_success_for_step_result():
-    step_result = StepResult(
-        schema={
-            "Payload": {
-                "Key01": str
-            }
+    test_step_03 = Task(
+        state_id="StateOne",
+        result_selector={
+            "ParamA": step_result["Payload"]["Key01"]
         }
     )
-
-    try:
-        test_step = Task(
-            state_id="StateOne",
-            result_selector={
-                "ParamA": step_result["Payload"]["Key01"]
-            }
-        )
-    except:
-        pytest.fail("Step should fetch step result key successfully without raising an Exception")

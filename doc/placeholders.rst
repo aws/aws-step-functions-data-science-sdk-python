@@ -8,25 +8,6 @@ that you use in the **parameters** or **result_selector** fields of the steps in
 the AWS Step Functions Data Science SDK provides a way to define placeholders to pass around when you
 create your workflow. There are 3 mechanisms for passing dynamic values in a workflow.
 
-.. autoclass:: stepfunctions.inputs.Placeholder
-
-.. autoclass:: stepfunctions.inputs.ExecutionInput
-                :inherited-members:
-
-.. autoclass:: stepfunctions.inputs.StepInput
-                :inherited-members:
-
-.. autoclass:: stepfunctions.inputs.StepResult
-                :inherited-members:
-
-- `Execution Input <#execution-input>`__
-
-- `Step Input <#step-input>`__
-
-- `Step Result <#step-result>`__
-
-Execution Input
----------------
 The first mechanism is a global input to the workflow execution. This input is
 accessible to all the steps in the workflow. The SDK provides :py:meth:`stepfunctions.inputs.ExecutionInput`
 to define the schema for this input, and to access the values in your workflow.
@@ -71,8 +52,6 @@ to define the schema for this input, and to access the values in your workflow.
   workflow.execute(inputs={'myDynamicInput': "WorldHello"})
 
 
-Step Input
-----------
 The second mechanism is for passing dynamic values from one step to the next
 step. The output of one step becomes the input of the next step.
 The SDK provides the :py:meth:`stepfunctions.inputs.StepInput` class for this.
@@ -105,10 +84,10 @@ that returns the placeholder output for that step.
   definition = Chain([lambda_state_first, lambda_state_second])
 
 
-Step Result
------------
+
 The third mechanism is a placeholder for a step's result. The result of a step can be modified
 with the **result_selector** field to replace the step's result.
+The SDK provides :py:meth:`stepfunctions.inputs.StepResult` class for this.
 
 .. code-block:: python
 
@@ -125,3 +104,15 @@ with the **result_selector** field to replace the step's result.
           "Status": "Success"
       }
   )
+
+
+.. autoclass:: stepfunctions.inputs.Placeholder
+
+.. autoclass:: stepfunctions.inputs.ExecutionInput
+                :inherited-members:
+
+.. autoclass:: stepfunctions.inputs.StepInput
+                :inherited-members:
+
+.. autoclass:: stepfunctions.inputs.StepResult
+                :inherited-members:

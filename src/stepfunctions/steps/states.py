@@ -17,7 +17,7 @@ import logging
 
 from stepfunctions.exceptions import DuplicateStatesInChain
 from stepfunctions.steps.fields import Field
-from stepfunctions.inputs import Placeholder, StepInput, StepResult
+from stepfunctions.inputs import Placeholder, StepInput
 
 
 logger = logging.getLogger('stepfunctions.states')
