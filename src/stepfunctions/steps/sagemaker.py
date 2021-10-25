@@ -296,14 +296,17 @@ class ModelStep(Task):
             model (sagemaker.model.Model): The SageMaker model to use in the ModelStep. If :py:class:`TrainingStep` was used to train the model and saving the model is the next step in the workflow, the output of :py:func:`TrainingStep.get_expected_model()` can be passed here.
             model_name (str or Placeholder, optional): Specify a model name, this is required for creating the model. We recommend to use :py:class:`~stepfunctions.inputs.ExecutionInput` placeholder collection to pass the value dynamically in each execution.
             instance_type (str, optional): The EC2 instance type to deploy this Model to. For example, 'ml.p2.xlarge'.
-            tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            tags (list[dict] or Placeholders, optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            parameters(dict, optional): The value of this field is merged with other arguments to become the request payload for SageMaker `CreateModel<https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateModel.html>`_. (Default: None)
+                You can use `parameters` to override the value provided by other arguments and specify any field's value dynamically using `Placeholders<https://aws-step-functions-data-science-sdk.readthedocs.io/en/stable/placeholders.html?highlight=placeholder#stepfunctions.inputs.Placeholder>`_.
         """
+        model_type = "FrameworkModel" if isinstance(model, FrameworkModel) else "Model"
         if isinstance(model, FrameworkModel):
-            parameters = model_config(model=model, instance_type=instance_type, role=model.role, image_uri=model.image_uri)
+            model_parameters = model_config(model=model, instance_type=instance_type, role=model.role, image_uri=model.image_uri)
             if model_name:
-                parameters['ModelName'] = model_name
+                model_parameters['ModelName'] = model_name
         elif isinstance(model, Model):
-            parameters = {
+            model_parameters = {
                 'ExecutionRoleArn': model.role,
                 'ModelName': model_name or model.name,
                 'PrimaryContainer': {
@@ -315,13 +318,17 @@ class ModelStep(Task):
         else:
             raise ValueError("Expected 'model' parameter to be of type 'sagemaker.model.Model', but received type '{}'".format(type(model).__name__))
 
-        if 'S3Operations' in parameters:
-            del parameters['S3Operations']
+        if 'S3Operations' in model_parameters:
+            del model_parameters['S3Operations']
 
         if tags:
-            parameters['Tags'] = tags_dict_to_kv_list(tags)
+            model_parameters['Tags'] = tags if isinstance(tags, Placeholder) else tags_dict_to_kv_list(tags)
 
-        kwargs[Field.Parameters.value] = parameters
+        if Field.Parameters.value in kwargs and isinstance(kwargs[Field.Parameters.value], dict):
+            # Update model parameters with input parameters
+            merge_dicts(model_parameters, kwargs[Field.Parameters.value])
+
+        kwargs[Field.Parameters.value] = model_parameters
 
         """
         Example resource arn: arn:aws:states:::sagemaker:createModel
