@@ -335,68 +335,100 @@ def test_training_step_creation_with_placeholders(pca_estimator):
     execution_input = ExecutionInput(schema={
         'Data': str,
         'OutputPath': str,
-        'HyperParameters': str
+        'HyperParameters': str,
+        'ExperimentConfig': str,
+        'Tags': str,
+        'InstanceCount': int,
+        'InstanceType': str,
+        'MaxRun': int,
+        'MetricDefinitions': str,
+        'MaxWait': int,
+        'CheckpointS3Uri': str,
+        'CheckpointLocalPath': str,
+        'EnableSagemakerMetrics': bool,
+        'EnableNetworkIsolation': bool,
+        'Environment': str
     })
 
     step_input = StepInput(schema={
         'JobName': str,
     })
 
+    parameters = {
+            'AlgorithmSpecification': {
+                'TrainingImage': PCA_IMAGE,
+                'TrainingInputMode': 'File',
+                'MetricDefinitions': execution_input['MetricDefinitions'],
+                'EnableSageMakerMetricsTimeSeries': execution_input['EnableSagemakerMetrics']
+            },
+            'CheckpointConfig': {
+                'S3Uri': execution_input['CheckpointS3Uri'],
+                'LocalPath': execution_input['CheckpointLocalPath']
+            },
+            'EnableNetworkIsolation': execution_input['EnableNetworkIsolation'],
+            'StoppingCondition': {
+                'MaxRuntimeInSeconds': execution_input['MaxRun'],
+                'MaxWaitTimeInSeconds': execution_input['MaxWait']
+            },
+            'ResourceConfig': {
+                'InstanceCount': execution_input['InstanceCount'],
+                'InstanceType': execution_input['InstanceType']
+            },
+            'Environment': execution_input['Environment'],
+            'ExperimentConfig': execution_input['ExperimentConfig']
+        }
+
     step = TrainingStep('Training',
         estimator=pca_estimator,
         job_name=step_input['JobName'],
         data=execution_input['Data'],
         output_data_config_path=execution_input['OutputPath'],
-        experiment_config={
-            'ExperimentName': 'pca_experiment',
-            'TrialName': 'pca_trial',
-            'TrialComponentDisplayName': 'Training'
-        },
-        tags=DEFAULT_TAGS,
-        hyperparameters=execution_input['HyperParameters']
+        experiment_config=execution_input['ExperimentConfig'],
+        tags=execution_input['Tags'],
+        mini_batch_size=1000,
+        hyperparameters=execution_input['HyperParameters'],
+        parameters=parameters
     )
-    assert step.to_dict() == {
-        'Type': 'Task',
-        'Parameters': {
-            'AlgorithmSpecification': {
-                'TrainingImage': PCA_IMAGE,
-                'TrainingInputMode': 'File'
-            },
-            'OutputDataConfig': {
-                'S3OutputPath.$': "$$.Execution.Input['OutputPath']"
-            },
-            'StoppingCondition': {
-                'MaxRuntimeInSeconds': 86400
-            },
-            'ResourceConfig': {
-                'InstanceCount': 1,
-                'InstanceType': 'ml.c4.xlarge',
-                'VolumeSizeInGB': 30
-            },
-            'RoleArn': EXECUTION_ROLE,
-            'HyperParameters.$': "$$.Execution.Input['HyperParameters']",
-            'InputDataConfig': [
-                {
-                    'ChannelName': 'training',
-                    'DataSource': {
-                        'S3DataSource': {
-                            'S3DataDistributionType': 'FullyReplicated',
-                            'S3DataType': 'S3Prefix',
-                            'S3Uri.$': "$$.Execution.Input['Data']"
-                        }
+    assert step.to_dict()['Parameters'] == {
+        'AlgorithmSpecification': {
+            'EnableSageMakerMetricsTimeSeries.$': "$$.Execution.Input['EnableSagemakerMetrics']",
+            'MetricDefinitions.$': "$$.Execution.Input['MetricDefinitions']",
+            'TrainingImage': PCA_IMAGE,
+            'TrainingInputMode': 'File'
+        },
+        'CheckpointConfig': {'LocalPath.$': "$$.Execution.Input['CheckpointLocalPath']",
+                             'S3Uri.$': "$$.Execution.Input['CheckpointS3Uri']"},
+        'EnableNetworkIsolation.$': "$$.Execution.Input['EnableNetworkIsolation']",
+        'Environment.$': "$$.Execution.Input['Environment']",
+        'OutputDataConfig': {
+            'S3OutputPath.$': "$$.Execution.Input['OutputPath']"
+        },
+        'StoppingCondition': {
+            'MaxRuntimeInSeconds.$': "$$.Execution.Input['MaxRun']",
+            'MaxWaitTimeInSeconds.$': "$$.Execution.Input['MaxWait']"
+        },
+        'ResourceConfig': {
+            'InstanceCount.$': "$$.Execution.Input['InstanceCount']",
+            'InstanceType.$': "$$.Execution.Input['InstanceType']",
+            'VolumeSizeInGB': 30
+        },
+        'RoleArn': EXECUTION_ROLE,
+        'HyperParameters.$': "$$.Execution.Input['HyperParameters']",
+        'InputDataConfig': [
+            {
+                'ChannelName': 'training',
+                'DataSource': {
+                    'S3DataSource': {
+                        'S3DataDistributionType': 'FullyReplicated',
+                        'S3DataType': 'S3Prefix',
+                        'S3Uri.$': "$$.Execution.Input['Data']"
                     }
                 }
-            ],
-            'ExperimentConfig': {
-                'ExperimentName': 'pca_experiment',
-                'TrialName': 'pca_trial',
-                'TrialComponentDisplayName': 'Training'
-            },
-            'TrainingJobName.$': "$['JobName']",
-            'Tags': DEFAULT_TAGS_LIST
-        },
-        'Resource': 'arn:aws:states:::sagemaker:createTrainingJob.sync',
-        'End': True
+            }
+        ],
+        'ExperimentConfig.$': "$$.Execution.Input['ExperimentConfig']",
+        'TrainingJobName.$': "$['JobName']",
+        'Tags.$': "$$.Execution.Input['Tags']"
     }
 
 
