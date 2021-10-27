@@ -74,11 +74,13 @@ class TrainingStep(Task):
                     If there are duplicate entries, the value provided through this property will be used. (Default: Hyperparameters specified in the estimator.)
                 * (Placeholder, optional) - The TrainingStep will use the hyperparameters specified by the Placeholder's value instead of the hyperparameters specified in the estimator.
             mini_batch_size (int): Specify this argument only when estimator is a built-in estimator of an Amazon algorithm. For other estimators, batch size should be specified in the estimator.
-            experiment_config (dict, optional): Specify the experiment config for the training. (Default: None)
+            experiment_config (dict or Placeholder, optional): Specify the experiment config for the training. (Default: None)
             wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait for the training job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the training job and proceed to the next step. (default: True)
-            tags (list[dict], optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
+            tags (list[dict] or Placeholder, optional): `List to tags <https://docs.aws.amazon.com/sagemaker/latest/dg/API_Tag.html>`_ to associate with the resource.
             output_data_config_path (str or Placeholder, optional): S3 location for saving the training result (model
                 artifacts and output files). If specified, it overrides the `output_path` property of `estimator`.
+            parameters(dict, optional): The value of this field is merged with other arguments to become the request payload for SageMaker `CreateTrainingJob<https://docs.aws.amazon.com/sagemaker/latest/APIReference/API_CreateTrainingJob.html>`_. (Default: None)
+                You can use `parameters` to override the value provided by other arguments and specify any field's value dynamically using `Placeholders<https://aws-step-functions-data-science-sdk.readthedocs.io/en/stable/placeholders.html?highlight=placeholder#stepfunctions.inputs.Placeholder>`_.
         """
         self.estimator = estimator
         self.job_name = job_name
@@ -105,44 +107,48 @@ class TrainingStep(Task):
             data = data.to_jsonpath()
 
         if isinstance(job_name, str):
-            parameters = training_config(estimator=estimator, inputs=data, job_name=job_name, mini_batch_size=mini_batch_size)
+            training_parameters = training_config(estimator=estimator, inputs=data, job_name=job_name, mini_batch_size=mini_batch_size)
         else:
-            parameters = training_config(estimator=estimator, inputs=data, mini_batch_size=mini_batch_size)
+            training_parameters = training_config(estimator=estimator, inputs=data, mini_batch_size=mini_batch_size)
 
         if estimator.debugger_hook_config != None and estimator.debugger_hook_config is not False:
-            parameters['DebugHookConfig'] = estimator.debugger_hook_config._to_request_dict()
+            training_parameters['DebugHookConfig'] = estimator.debugger_hook_config._to_request_dict()
 
         if estimator.rules != None:
-            parameters['DebugRuleConfigurations'] = [rule.to_debugger_rule_config_dict() for rule in estimator.rules]
+            training_parameters['DebugRuleConfigurations'] = [rule.to_debugger_rule_config_dict() for rule in estimator.rules]
 
         if isinstance(job_name, Placeholder):
-            parameters['TrainingJobName'] = job_name
+            training_parameters['TrainingJobName'] = job_name
 
         if output_data_config_path is not None:
-            parameters['OutputDataConfig']['S3OutputPath'] = output_data_config_path
+            training_parameters['OutputDataConfig']['S3OutputPath'] = output_data_config_path
 
         if data is not None and is_data_placeholder:
             # Replace the 'S3Uri' key with one that supports JSONpath value.
             # Support for uri str only: The list will only contain 1 element
-            data_uri = parameters['InputDataConfig'][0]['DataSource']['S3DataSource'].pop('S3Uri', None)
-            parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = data_uri
+            data_uri = training_parameters['InputDataConfig'][0]['DataSource']['S3DataSource'].pop('S3Uri', None)
+            training_parameters['InputDataConfig'][0]['DataSource']['S3DataSource']['S3Uri.$'] = data_uri
 
         if hyperparameters is not None:
             if not isinstance(hyperparameters, Placeholder):
                 if estimator.hyperparameters() is not None:
                     hyperparameters = self.__merge_hyperparameters(hyperparameters, estimator.hyperparameters())
-            parameters['HyperParameters'] = hyperparameters
+            training_parameters['HyperParameters'] = hyperparameters
 
         if experiment_config is not None:
-            parameters['ExperimentConfig'] = experiment_config
+            training_parameters['ExperimentConfig'] = experiment_config
 
-        if 'S3Operations' in parameters:
-            del parameters['S3Operations']
+        if 'S3Operations' in training_parameters:
+            del training_parameters['S3Operations']
 
         if tags:
-            parameters['Tags'] = tags_dict_to_kv_list(tags)
+            training_parameters['Tags'] = tags if isinstance(tags, Placeholder) else tags_dict_to_kv_list(tags)
 
-        kwargs[Field.Parameters.value] = parameters
+        if Field.Parameters.value in kwargs and isinstance(kwargs[Field.Parameters.value], dict):
+            # Update training parameters with input parameters
+            merge_dicts(training_parameters, kwargs[Field.Parameters.value])
+
+        kwargs[Field.Parameters.value] = training_parameters
         super(TrainingStep, self).__init__(state_id, **kwargs)
 
     def get_expected_model(self, model_name=None):
