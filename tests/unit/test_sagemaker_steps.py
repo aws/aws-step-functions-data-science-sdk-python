@@ -1449,7 +1449,7 @@ def test_processing_step_creation_with_placeholders(sklearn_processor):
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_tuning_step_creation_with_framework(tensorflow_estimator):
+def test_tuning_step_creation_with_framework_estimator(tensorflow_estimator):
     hyperparameter_ranges = {
         "extra_center_factor": IntegerParameter(4, 10),
         "epochs": IntegerParameter(1, 2),
