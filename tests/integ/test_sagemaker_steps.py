@@ -188,7 +188,6 @@ def test_model_step_with_placeholders(trained_estimator, sfn_client, sagemaker_s
         state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
         model_name = get_resource_name_from_arn(execution_output.get("ModelArn")).split("/")[1]
         delete_sagemaker_model(model_name, sagemaker_session)
-        # End of Cleanup
 
 
 def test_transform_step(trained_estimator, sfn_client, sfn_role_arn):
