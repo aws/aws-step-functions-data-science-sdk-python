@@ -1146,6 +1146,36 @@ def test_model_step_creation(pca_model):
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_model_step_creation_with_placeholders(pca_model):
+    execution_input = ExecutionInput(schema={
+        'Environment': str,
+        'Tags': str
+    })
+
+    step_input = StepInput(schema={
+        'ModelName': str
+    })
+
+    parameters = {
+        'PrimaryContainer': {
+            'Environment': execution_input['Environment']
+        }
+    }
+    step = ModelStep('Create model', model=pca_model, model_name=step_input['ModelName'], tags=execution_input['Tags'],
+                     parameters=parameters)
+    assert step.to_dict()['Parameters'] == {
+        'ExecutionRoleArn': EXECUTION_ROLE,
+        'ModelName.$': "$['ModelName']",
+        'PrimaryContainer': {
+            'Environment.$': "$$.Execution.Input['Environment']",
+            'Image': pca_model.image_uri,
+            'ModelDataUrl': pca_model.model_data
+        },
+        'Tags.$': "$$.Execution.Input['Tags']"
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_model_step_creation_with_env(pca_model_with_env):
     step = ModelStep('Create model', model=pca_model_with_env, model_name='pca-model', tags=DEFAULT_TAGS)
     assert step.to_dict() == {

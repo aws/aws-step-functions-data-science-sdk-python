@@ -194,6 +194,59 @@ def test_model_step(trained_estimator, sfn_client, sagemaker_session, sfn_role_a
         delete_sagemaker_model(model_name, sagemaker_session)
 
 
+
+def test_model_step_with_placeholders(trained_estimator, sfn_client, sagemaker_session, sfn_role_arn):
+    # Build workflow definition
+    execution_input = ExecutionInput(schema={
+        'ModelName': str,
+        'Mode': str,
+        'Tags': list
+    })
+
+    parameters = {
+        'PrimaryContainer': {
+            'Mode': execution_input['Mode']
+        },
+        'Tags': execution_input['Tags']
+    }
+
+    model_step = ModelStep('create_model_step', model=trained_estimator.create_model(),
+                           model_name=execution_input['ModelName'], parameters=parameters)
+    model_step.add_retry(SAGEMAKER_RETRY_STRATEGY)
+    workflow_graph = Chain([model_step])
+
+    with timeout(minutes=DEFAULT_TIMEOUT_MINUTES):
+        # Create workflow and check definition
+        workflow = create_workflow_and_check_definition(
+            workflow_graph=workflow_graph,
+            workflow_name=unique_name_from_base("integ-test-model-step-workflow"),
+            sfn_client=sfn_client,
+            sfn_role_arn=sfn_role_arn
+        )
+
+        inputs = {
+            'ModelName': generate_job_name(),
+            'Mode': 'SingleModel',
+            'Tags': [{
+                'Key': 'Environment',
+                'Value': 'test'
+            }]
+        }
+
+        # Execute workflow
+        execution = workflow.execute(inputs=inputs)
+        execution_output = execution.get_output(wait=True)
+
+        # Check workflow output
+        assert execution_output.get("ModelArn") is not None
+        assert execution_output["SdkHttpMetadata"]["HttpStatusCode"] == 200
+
+        # Cleanup
+        state_machine_delete_wait(sfn_client, workflow.state_machine_arn)
+        model_name = get_resource_name_from_arn(execution_output.get("ModelArn")).split("/")[1]
+        delete_sagemaker_model(model_name, sagemaker_session)
+
+
 def test_transform_step(trained_estimator, sfn_client, sfn_role_arn):
     # Create transformer from previously created estimator
     job_name = generate_job_name()
@@ -349,7 +402,7 @@ def test_endpoint_config_step(trained_estimator, sfn_client, sagemaker_session, 
         # Execute workflow
         execution = workflow.execute()
         execution_output = execution.get_output(wait=True)
-        
+
         # Check workflow output
         assert execution_output.get("EndpointConfigArn") is not None
         assert execution_output["SdkHttpMetadata"]["HttpStatusCode"] == 200
@@ -390,7 +443,7 @@ def test_create_endpoint_step(trained_estimator, record_set_fixture, sfn_client,
         # Execute workflow
         execution = workflow.execute()
         execution_output = execution.get_output(wait=True)
-        
+
         # Check workflow output 
         endpoint_arn = execution_output.get("EndpointArn")
         assert execution_output.get("EndpointArn") is not None
@@ -428,7 +481,7 @@ def test_tuning_step(sfn_client, record_set_for_hyperparameter_tuning, sagemaker
         max_jobs=2,
         max_parallel_jobs=2,
     )
-    
+
     # Build workflow definition
     tuning_step = TuningStep('Tuning', tuner=tuner, job_name=job_name, data=record_set_for_hyperparameter_tuning)
     tuning_step.add_retry(SAGEMAKER_RETRY_STRATEGY)
@@ -446,7 +499,7 @@ def test_tuning_step(sfn_client, record_set_for_hyperparameter_tuning, sagemaker
         # Execute workflow
         execution = workflow.execute()
         execution_output = execution.get_output(wait=True)
-        
+
         # Check workflow output 
         assert execution_output.get("HyperParameterTuningJobStatus") == "Completed"
 
@@ -586,7 +639,7 @@ def test_processing_step(sklearn_processor_fixture, sagemaker_session, sfn_clien
             sfn_client=sfn_client,
             sfn_role_arn=sfn_role_arn
         )
-        
+
         # Execute workflow
         execution = workflow.execute()
         execution_output = execution.get_output(wait=True)
