@@ -23,6 +23,8 @@ information to effectively respond to your bug report or contribution.
 * [Setting Up Your Development Environment](#setting-up-your-development-environment)
   * [Setting Up Your Environment for Debugging](#setting-up-your-environment-for-debugging)
     * [PyCharm](#pycharm)
+ * [Setting Up Your Environment for Sphinx Reference Documentation Generation](#setting-up-your-environment-for-sphinx-reference-documentation-generation)
+    * [PyCharm](#pycharm) 
 * [Code of Conduct](#code-of-conduct)
 * [Security Issue Notifications](#security-issue-notifications)
 * [Licensing](#licensing)
@@ -203,6 +205,33 @@ follow the steps described in this section.
 
 _Note: This setup was tested and confirmed to work with
 `PyCharm 2020.3.5 (Professional Edition)` and `PyCharm 2021.1.1 (Professional Edition)`_
+
+### Setting Up Your Environment for Sphinx Reference Documentation Generation
+
+To view and validate Sphinx reference documentation changes, you will need to generate the documentation locally.
+Follow the instructions in this section to generate them from your IDE.
+
+#### PyCharm
+1. Install Sphinx package with the Python Interpreter
+1. Freeze Jinja2 package to `3.0.0rc2` - using version 3.0.0 or higher with Python 3.6 will result, when generating the docs, in errors such as :
+    ```
+    Theme error:
+    An error happened in rendering the page compute.
+    Reason: AttributeError("'Token' object has no attribute 'test'",)
+    ```
+    ```
+    AttributeError: module 'typing' has no attribute 'NoReturn'
+    ```
+1. Set your Run/Debug Configurations 
+    1. Open the Run/Debug Configurations dialog from Run|Edit Configurations
+    1. Click on `+` and select `Sphinx task` template under `Python docs`
+    1. Fill in the template. For the `Input` directory, use the path to `doc`
+
+To generate the docs, launch the run/debug config.
+For more info, go to PyCharm's documentation on [Generating Reference documentation with Sphinx](https://www.jetbrains.com/help/pycharm/generating-reference-documentation.html#sphinx)
+
+_Note: This setup was tested and confirmed to work with
+`PyCharm 2020.3.5 (Professional Edition)`_
 
 ## Code of Conduct
 
