@@ -566,8 +566,8 @@ class GlueDataBrewStartJobRunStep(Task):
 
         is_integration_pattern_valid(integration_pattern, supported_integ_patterns)
         kwargs[Field.Resource.value] = get_service_integration_arn(GLUE_DATABREW_SERVICE_NAME,
-                                                                       GlueDataBrewApi.StartJobRun,
-                                                                       integration_pattern)
+                                                                   GlueDataBrewApi.StartJobRun,
+                                                                   integration_pattern)
         """
         Example resource arns:
             - CallAndContinue: arn: arn:aws:states:::databrew:startJobRun
