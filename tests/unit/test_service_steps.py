@@ -939,6 +939,7 @@ def test_eks_create_fargate_profile_step_creation_wait_for_completion():
             'Selectors': [{
                 'Namespace': 'my-namespace',
                 'Labels': {'my-label': 'my-value'}
+
             }],
             'subnets': ['subnet-00000000000000000']
         },
