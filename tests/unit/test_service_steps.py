@@ -969,7 +969,7 @@ def test_eks_delete_fargate_profile_step_creation_call_and_continue():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_fargate_profile_step_creation_default():
-    step = EksDeleteFargateProfileStep("Delete Fargate profile Default", parameters={
+    step = EksDeleteFargateProfileStep("Delete Fargate profile - default", parameters={
         'ClusterName': 'MyCluster',
         'FargateProfileName': 'MyFargateProfile'
     })
