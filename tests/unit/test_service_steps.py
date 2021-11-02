@@ -728,6 +728,13 @@ def test_databrew_start_job_run_step_creation_call_and_continue():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_databrew_start_job_run_step_creation_wait_for_task_token_raises_error():
+    with pytest.raises(ValueError):
+        GlueDataBrewStartJobRunStep('Start Glue DataBrew Job Run - WaitForTaskToken',
+                                    integration_pattern=IntegrationPattern.WaitForTaskToken)
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_cluster_step_creation():
     step = EksCreateClusterStep("Create Eks cluster", wait_for_completion=False, parameters={
         'Name': 'MyCluster',
