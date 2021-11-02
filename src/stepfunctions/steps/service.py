@@ -513,10 +513,13 @@ class EksCallStep(Task):
     Creates a Task state that allows you to use the Kubernetes API to read and write Kubernetes resource objects via a Kubernetes API endpoint. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
-    def __init__(self, state_id, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.CallAndContinue, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. (default: CallAndContinue)
+                Supported integration pattern:
+                    CallAndContinue: Call Kubernetes API and progress to the next state (See `Request Response <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-default`_ for more details.)
             comment (str, optional): Human-readable comment or description. (default: None)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
@@ -531,9 +534,12 @@ class EksCallStep(Task):
         """
         Example resource arn: arn:aws:states:::eks:call
         """
+        supported_integ_patterns = [IntegrationPattern.CallAndContinue]
 
+        is_integration_pattern_valid(integration_pattern, supported_integ_patterns)
         kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                   EksApi.Call)
+                                                                   EksApi.Call,
+                                                                   integration_pattern)
 
         super(EksCallStep, self).__init__(state_id, **kwargs)
 

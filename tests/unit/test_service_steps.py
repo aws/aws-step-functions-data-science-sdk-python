@@ -709,7 +709,7 @@ def test_databrew_start_job_run_step_creation():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_cluster_step_creation_call_and_continue():
-    step = EksCreateClusterStep("Create Eks cluster CallAndContinue", integration_pattern=IntegrationPattern.CallAndContinue,
+    step = EksCreateClusterStep("Create Eks cluster - CallAndContinue", integration_pattern=IntegrationPattern.CallAndContinue,
                                 parameters={
                                     'Name': 'MyCluster',
                                     'ResourcesVpcConfig': {
@@ -740,7 +740,7 @@ def test_eks_create_cluster_step_creation_call_and_continue():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_cluster_step_creation_default():
-    step = EksCreateClusterStep("Create Eks cluster Default", parameters={
+    step = EksCreateClusterStep("Create Eks cluster - default", parameters={
         'Name': 'MyCluster',
         'ResourcesVpcConfig': {
           'SubnetIds': [
@@ -770,7 +770,7 @@ def test_eks_create_cluster_step_creation_default():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_cluster_step_creation_wait_for_completion():
-    step = EksCreateClusterStep("Create Eks cluster WaitForCompletion",
+    step = EksCreateClusterStep("Create Eks cluster - WaitForCompletion",
                                 integration_pattern=IntegrationPattern.WaitForCompletion,
                                 parameters={
                                     'Name': 'MyCluster',
@@ -801,8 +801,15 @@ def test_eks_create_cluster_step_creation_wait_for_completion():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_create_cluster_step_creation_wait_for_task_token_raises_error():
+    with pytest.raises(ValueError):
+        EksCreateClusterStep("Create Eks cluster - WaitForTaskToken",
+                             integration_pattern=IntegrationPattern.WaitForTaskToken)
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_cluster_step_creation_call_and_continue():
-    step = EksDeleteClusterStep("Delete Eks cluster CallAndContinue",
+    step = EksDeleteClusterStep("Delete Eks cluster - CallAndContinue",
                                 integration_pattern=IntegrationPattern.CallAndContinue,
                                 parameters={
                                     'Name': 'MyCluster'
@@ -820,7 +827,7 @@ def test_eks_delete_cluster_step_creation_call_and_continue():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_cluster_step_creation_default():
-    step = EksDeleteClusterStep("Delete Eks cluster Default", parameters={
+    step = EksDeleteClusterStep("Delete Eks cluster - default", parameters={
         'Name': 'MyCluster'
     })
 
@@ -836,7 +843,7 @@ def test_eks_delete_cluster_step_creation_default():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_cluster_step_creation_wait_for_completion():
-    step = EksDeleteClusterStep("Delete Eks cluster WaitForCompletion",
+    step = EksDeleteClusterStep("Delete Eks cluster - WaitForCompletion",
                                 integration_pattern=IntegrationPattern.WaitForCompletion,
                                 parameters={
                                     'Name': 'MyCluster'
@@ -853,8 +860,15 @@ def test_eks_delete_cluster_step_creation_wait_for_completion():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_delete_cluster_step_creation_wait_for_task_token_raises_error():
+    with pytest.raises(ValueError):
+        EksDeleteClusterStep("Delete Eks cluster - WaitForTaskToken",
+                             integration_pattern=IntegrationPattern.WaitForTaskToken)
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_fargate_profile_step_creation_call_and_continue():
-    step = EksCreateFargateProfileStep("Create Fargate profile CAllAndContinue",
+    step = EksCreateFargateProfileStep("Create Fargate profile - CallAndContinue",
                                        integration_pattern=IntegrationPattern.CallAndContinue,
                                        parameters={
                                            'ClusterName': 'MyCluster',
@@ -886,7 +900,7 @@ def test_eks_create_fargate_profile_step_creation_call_and_continue():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_fargate_profile_step_creation_default():
-    step = EksCreateFargateProfileStep("Create Fargate profile Default", parameters={
+    step = EksCreateFargateProfileStep("Create Fargate profile - default", parameters={
         'ClusterName': 'MyCluster',
         'FargateProfileName': 'MyFargateProfile',
         'PodExecutionRoleArn': 'arn:aws:iam::123456789012:role/MyFargatePodExecutionRole',
@@ -916,7 +930,7 @@ def test_eks_create_fargate_profile_step_creation_default():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_fargate_profile_step_creation_wait_for_completion():
-    step = EksCreateFargateProfileStep("Create Fargate profile WaitForCompletion",
+    step = EksCreateFargateProfileStep("Create Fargate profile - WaitForCompletion",
                                        integration_pattern=IntegrationPattern.WaitForCompletion,
                                        parameters={
                                            'ClusterName': 'MyCluster',
@@ -948,8 +962,15 @@ def test_eks_create_fargate_profile_step_creation_wait_for_completion():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_create_fargate_profile_step_creation_wait_for_task_token_raises_error():
+    with pytest.raises(ValueError):
+        EksCreateFargateProfileStep("Create Fargate profile - WaitForTaskToken",
+                                    integration_pattern=IntegrationPattern.WaitForTaskToken)
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_fargate_profile_step_creation_call_and_continue():
-    step = EksDeleteFargateProfileStep("Delete Fargate profile CallAndContinue",
+    step = EksDeleteFargateProfileStep("Delete Fargate profile - CallAndContinue",
                                        integration_pattern=IntegrationPattern.CallAndContinue,
                                        parameters={
                                            'ClusterName': 'MyCluster',
@@ -987,7 +1008,7 @@ def test_eks_delete_fargate_profile_step_creation_default():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_fargate_profile_step_creation_wait_for_completion():
-    step = EksDeleteFargateProfileStep("Delete Fargate profile WaitForCompletion",
+    step = EksDeleteFargateProfileStep("Delete Fargate profile - WaitForCompletion",
                                        integration_pattern=IntegrationPattern.WaitForCompletion,
                                        parameters={
                                            'ClusterName': 'MyCluster',
@@ -1006,8 +1027,15 @@ def test_eks_delete_fargate_profile_step_creation_wait_for_completion():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_eks_create_node_group_step_creation_call_and_continue():
-    step = EksCreateNodegroupStep("Create Node Group CallAndContinue",
+def test_eks_delete_fargate_profile_step_creation_wait_for_task_token_raises_error():
+    with pytest.raises(ValueError):
+        EksDeleteFargateProfileStep("Delete Fargate profile - WaitForTaskToken",
+                                    integration_pattern=IntegrationPattern.WaitForTaskToken)
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_create_nodegroup_step_creation_call_and_continue():
+    step = EksCreateNodegroupStep("Create Nodegroup - CallAndContinue",
                                   integration_pattern=IntegrationPattern.CallAndContinue,
                                   parameters={
                                       'ClusterName': 'MyCluster',
@@ -1036,8 +1064,8 @@ def test_eks_create_node_group_step_creation_call_and_continue():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_eks_create_node_group_step_creation_wait_for_completion():
-    step = EksCreateNodegroupStep("Create Node Group WaitForCompletion",
+def test_eks_create_nodegroup_step_creation_wait_for_completion():
+    step = EksCreateNodegroupStep("Create Nodegroup - WaitForCompletion",
                                   integration_pattern=IntegrationPattern.WaitForCompletion,
                                   parameters={
                                       'ClusterName': 'MyCluster',
@@ -1066,8 +1094,8 @@ def test_eks_create_node_group_step_creation_wait_for_completion():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_eks_create_node_group_step_creation_default():
-    step = EksCreateNodegroupStep("Create Node Group Default", parameters={
+def test_eks_create_nodegroup_step_creation_default():
+    step = EksCreateNodegroupStep("Create Nodegroup - default", parameters={
         'ClusterName': 'MyCluster',
         'NodegroupName': 'MyNodegroup',
         'NodeRole': 'arn:aws:iam::123456789012:role/MyNodeInstanceRole',
@@ -1094,8 +1122,15 @@ def test_eks_create_node_group_step_creation_default():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_eks_delete_node_group_step_creation_call_and_continue():
-    step = EksDeleteNodegroupStep("Delete Node Group CallAndContinue",
+def test_eks_create_nodegroup_step_creation_wait_for_task_token_raises_error():
+    with pytest.raises(ValueError):
+        EksCreateNodegroupStep("Create Nodegroup - WaitForTaskToken",
+                               integration_pattern=IntegrationPattern.WaitForTaskToken)
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_delete_nodegroup_step_creation_call_and_continue():
+    step = EksDeleteNodegroupStep("Delete Nodegroup - CallAndContinue",
                                   integration_pattern=IntegrationPattern.CallAndContinue,
                                   parameters={
                                       'ClusterName': 'MyCluster',
@@ -1114,8 +1149,8 @@ def test_eks_delete_node_group_step_creation_call_and_continue():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_eks_delete_node_group_step_creation_default():
-    step = EksDeleteNodegroupStep("Delete Node Group Default", parameters={
+def test_eks_delete_nodegroup_step_creation_default():
+    step = EksDeleteNodegroupStep("Delete Nodegroup - default", parameters={
         'ClusterName': 'MyCluster',
         'NodegroupName': 'MyNodegroup'
     })
@@ -1132,8 +1167,8 @@ def test_eks_delete_node_group_step_creation_default():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_eks_delete_node_group_step_creation_wait_for_completion():
-    step = EksDeleteNodegroupStep("Delete Node Group WaitForCompletion",
+def test_eks_delete_nodegroup_step_creation_wait_for_completion():
+    step = EksDeleteNodegroupStep("Delete Nodegroup - WaitForCompletion",
                                   integration_pattern=IntegrationPattern.WaitForCompletion,
                                   parameters={
                                       'ClusterName': 'MyCluster',
@@ -1152,8 +1187,15 @@ def test_eks_delete_node_group_step_creation_wait_for_completion():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_delete_nodegroup_step_creation_wait_for_task_token_raises_error():
+    with pytest.raises(ValueError):
+        EksDeleteNodegroupStep("Delete Nodegroup - WaitForTaskToken",
+                               integration_pattern=IntegrationPattern.WaitForTaskToken)
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_run_job_step_creation_call_and_continue():
-    step = EksRunJobStep("Run Job CallAndContinue", integration_pattern=IntegrationPattern.CallAndContinue, parameters={
+    step = EksRunJobStep("Run Job - CallAndContinue", integration_pattern=IntegrationPattern.CallAndContinue, parameters={
         'ClusterName': 'MyCluster',
         'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
         'Endpoint': 'https://AKIAIOSFODNN7EXAMPLE.yl4.us-east-1.eks.amazonaws.com',
@@ -1224,7 +1266,7 @@ def test_eks_run_job_step_creation_call_and_continue():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_run_job_step_creation_default():
-    step = EksRunJobStep("Run Job default", parameters={
+    step = EksRunJobStep("Run Job - default", parameters={
         'ClusterName': 'MyCluster',
         'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
         'Endpoint': 'https://AKIAIOSFODNN7EXAMPLE.yl4.us-east-1.eks.amazonaws.com',
@@ -1301,7 +1343,7 @@ def test_eks_run_job_step_creation_default():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_run_job_step_creation_wait_for_completion():
-    step = EksRunJobStep("Run Job WaitForCompletion", integration_pattern=IntegrationPattern.WaitForCompletion,
+    step = EksRunJobStep("Run Job - WaitForCompletion", integration_pattern=IntegrationPattern.WaitForCompletion,
                          parameters={
                              'ClusterName': 'MyCluster',
                              'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
@@ -1378,8 +1420,14 @@ def test_eks_run_job_step_creation_wait_for_completion():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_eks_call_step_creation():
-    step = EksCallStep("Call", parameters={
+def test_eks_run_job_step_creation_wait_for_task_token_raises_error():
+    with pytest.raises(ValueError):
+        EksRunJobStep("Run Job - WaitForTaskToken", integration_pattern=IntegrationPattern.WaitForTaskToken)
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_call_step_creation_default():
+    step = EksCallStep("Call - default", parameters={
         'ClusterName': 'MyCluster',
         'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
         'Endpoint': 'https://444455556666.yl4.us-east-1.eks.amazonaws.com',
@@ -1409,6 +1457,50 @@ def test_eks_call_step_creation():
         },
         'End': True
     }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_call_step_creation_call_and_continue():
+    step = EksCallStep("Call - default", integration_pattern=IntegrationPattern.CallAndContinue, parameters={
+        'ClusterName': 'MyCluster',
+        'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
+        'Endpoint': 'https://444455556666.yl4.us-east-1.eks.amazonaws.com',
+        'Method': 'GET',
+        'Path': '/api/v1/namespaces/default/pods',
+        'QueryParameters': {
+            'labelSelector': [
+                'job-name=example-job'
+            ]
+        }
+    })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::eks:call',
+        'Parameters': {
+            'ClusterName': 'MyCluster',
+            'CertificateAuthority': 'ANPAJ2UCCR6DPCEXAMPLE',
+            'Endpoint': 'https://444455556666.yl4.us-east-1.eks.amazonaws.com',
+            'Method': 'GET',
+            'Path': '/api/v1/namespaces/default/pods',
+            'QueryParameters': {
+                'labelSelector': [
+                    'job-name=example-job'
+                ]
+            }
+        },
+        'End': True
+    }
+
+
+@pytest.mark.parametrize("integration_pattern", [
+    IntegrationPattern.WaitForTaskToken,
+    IntegrationPattern.WaitForCompletion
+])
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_eks_call_step_creation_with_unsupported_integration_pattern_raises_error(integration_pattern):
+    with pytest.raises(ValueError):
+        EksCallStep("Call with unsupported integration pattern", integration_pattern=integration_pattern)
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
