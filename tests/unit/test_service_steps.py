@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 import boto3
 import pytest
+import re
 
 from unittest.mock import patch
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
@@ -802,7 +803,10 @@ def test_eks_create_cluster_step_creation_wait_for_completion():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_cluster_step_creation_wait_for_task_token_raises_error():
-    with pytest.raises(ValueError):
+    error_message = re.escape(f"Integration Pattern ({IntegrationPattern.WaitForTaskToken.name}) is not supported for this step - "
+                              f"Please use one of the following: "
+                              f"{[IntegrationPattern.WaitForCompletion.name, IntegrationPattern.CallAndContinue.name]}")
+    with pytest.raises(ValueError, match=error_message):
         EksCreateClusterStep("Create Eks cluster - WaitForTaskToken",
                              integration_pattern=IntegrationPattern.WaitForTaskToken)
 
@@ -861,7 +865,10 @@ def test_eks_delete_cluster_step_creation_wait_for_completion():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_cluster_step_creation_wait_for_task_token_raises_error():
-    with pytest.raises(ValueError):
+    error_message = re.escape(f"Integration Pattern ({IntegrationPattern.WaitForTaskToken.name}) is not supported for this step - "
+                              f"Please use one of the following: "
+                              f"{[IntegrationPattern.WaitForCompletion.name, IntegrationPattern.CallAndContinue.name]}")
+    with pytest.raises(ValueError, match=error_message):
         EksDeleteClusterStep("Delete Eks cluster - WaitForTaskToken",
                              integration_pattern=IntegrationPattern.WaitForTaskToken)
 
@@ -963,7 +970,10 @@ def test_eks_create_fargate_profile_step_creation_wait_for_completion():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_fargate_profile_step_creation_wait_for_task_token_raises_error():
-    with pytest.raises(ValueError):
+    error_message = re.escape(f"Integration Pattern ({IntegrationPattern.WaitForTaskToken.name}) is not supported for this step - "
+                              f"Please use one of the following: "
+                              f"{[IntegrationPattern.WaitForCompletion.name, IntegrationPattern.CallAndContinue.name]}")
+    with pytest.raises(ValueError, match=error_message):
         EksCreateFargateProfileStep("Create Fargate profile - WaitForTaskToken",
                                     integration_pattern=IntegrationPattern.WaitForTaskToken)
 
@@ -1028,7 +1038,10 @@ def test_eks_delete_fargate_profile_step_creation_wait_for_completion():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_fargate_profile_step_creation_wait_for_task_token_raises_error():
-    with pytest.raises(ValueError):
+    error_message = re.escape(f"Integration Pattern ({IntegrationPattern.WaitForTaskToken.name}) is not supported for this step - "
+                              f"Please use one of the following: "
+                              f"{[IntegrationPattern.WaitForCompletion.name, IntegrationPattern.CallAndContinue.name]}")
+    with pytest.raises(ValueError, match=error_message):
         EksDeleteFargateProfileStep("Delete Fargate profile - WaitForTaskToken",
                                     integration_pattern=IntegrationPattern.WaitForTaskToken)
 
@@ -1123,7 +1136,10 @@ def test_eks_create_nodegroup_step_creation_default():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_create_nodegroup_step_creation_wait_for_task_token_raises_error():
-    with pytest.raises(ValueError):
+    error_message = re.escape(f"Integration Pattern ({IntegrationPattern.WaitForTaskToken.name}) is not supported for this step - "
+                              f"Please use one of the following: "
+                              f"{[IntegrationPattern.WaitForCompletion.name, IntegrationPattern.CallAndContinue.name]}")
+    with pytest.raises(ValueError, match=error_message):
         EksCreateNodegroupStep("Create Nodegroup - WaitForTaskToken",
                                integration_pattern=IntegrationPattern.WaitForTaskToken)
 
@@ -1188,7 +1204,10 @@ def test_eks_delete_nodegroup_step_creation_wait_for_completion():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_delete_nodegroup_step_creation_wait_for_task_token_raises_error():
-    with pytest.raises(ValueError):
+    error_message = re.escape(f"Integration Pattern ({IntegrationPattern.WaitForTaskToken.name}) is not supported for this step - "
+                              f"Please use one of the following: "
+                              f"{[IntegrationPattern.WaitForCompletion.name, IntegrationPattern.CallAndContinue.name]}")
+    with pytest.raises(ValueError, match=error_message):
         EksDeleteNodegroupStep("Delete Nodegroup - WaitForTaskToken",
                                integration_pattern=IntegrationPattern.WaitForTaskToken)
 
@@ -1421,7 +1440,10 @@ def test_eks_run_job_step_creation_wait_for_completion():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_run_job_step_creation_wait_for_task_token_raises_error():
-    with pytest.raises(ValueError):
+    error_message = re.escape(f"Integration Pattern ({IntegrationPattern.WaitForTaskToken.name}) is not supported for this step - "
+                              f"Please use one of the following: "
+                              f"{[IntegrationPattern.WaitForCompletion.name, IntegrationPattern.CallAndContinue.name]}")
+    with pytest.raises(ValueError, match=error_message):
         EksRunJobStep("Run Job - WaitForTaskToken", integration_pattern=IntegrationPattern.WaitForTaskToken)
 
 
@@ -1499,7 +1521,10 @@ def test_eks_call_step_creation_call_and_continue():
 ])
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_eks_call_step_creation_with_unsupported_integration_pattern_raises_error(integration_pattern):
-    with pytest.raises(ValueError):
+    error_message = re.escape(f"Integration Pattern ({integration_pattern.name}) is not supported for this step - "
+                              f"Please use one of the following: "
+                              f"{[IntegrationPattern.CallAndContinue.name]}")
+    with pytest.raises(ValueError, match=error_message):
         EksCallStep("Call with unsupported integration pattern", integration_pattern=integration_pattern)
 
 
