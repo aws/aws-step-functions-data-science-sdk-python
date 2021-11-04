@@ -14,6 +14,7 @@ from __future__ import absolute_import
 
 import boto3
 import pytest
+import re
 
 from unittest.mock import patch
 from stepfunctions.steps.service import DynamoDBGetItemStep, DynamoDBPutItemStep, DynamoDBUpdateItemStep, DynamoDBDeleteItemStep
@@ -729,7 +730,10 @@ def test_databrew_start_job_run_step_creation_call_and_continue():
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_databrew_start_job_run_step_creation_wait_for_task_token_raises_error():
-    with pytest.raises(ValueError):
+    error_message = re.escape(f"Integration Pattern ({IntegrationPattern.WaitForTaskToken.name}) is not supported for this step - "
+                              f"Please use one of the following: "
+                              f"{[IntegrationPattern.WaitForCompletion.name, IntegrationPattern.CallAndContinue.name]}")
+    with pytest.raises(ValueError, match=error_message):
         GlueDataBrewStartJobRunStep('Start Glue DataBrew Job Run - WaitForTaskToken',
                                     integration_pattern=IntegrationPattern.WaitForTaskToken)
 
