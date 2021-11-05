@@ -19,6 +19,7 @@ import boto3
 from sagemaker.sklearn.estimator import SKLearn
 from unittest.mock import MagicMock, patch
 from stepfunctions.template import TrainingPipeline, InferencePipeline
+from stepfunctions.steps import Retry
 from sagemaker.debugger import DebuggerHookConfig
 
 from tests.unit.utils import mock_boto_api_call
@@ -27,6 +28,16 @@ SAGEMAKER_EXECUTION_ROLE = 'SageMakerExecutionRole'
 STEPFUNCTIONS_EXECUTION_ROLE = 'StepFunctionsExecutionRole'
 PCA_IMAGE = '382416733822.dkr.ecr.us-east-1.amazonaws.com/pca:1'
 LINEAR_LEARNER_IMAGE = '382416733822.dkr.ecr.us-east-1.amazonaws.com/linear-learner:1'
+SAGEMAKER_RETRY_STRATEGY = Retry(
+    error_equals=["SageMaker.AmazonSageMakerException"],
+    interval_seconds=5,
+    max_attempts=5,
+    backoff_rate=2
+)
+EXPECTED_RETRY = [{'BackoffRate': 2,
+                   'ErrorEquals': ['SageMaker.AmazonSageMakerException'],
+                   'IntervalSeconds': 5,
+                   'MaxAttempts': 5}]
 
 
 @pytest.fixture
@@ -233,6 +244,25 @@ def test_pca_training_pipeline(pca_estimator):
     }
 
     workflow.execute.assert_called_with(name=job_name, inputs=inputs)
+
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_pca_training_pipeline_with_retry_adds_retry_to_each_step(pca_estimator):
+    s3_inputs = {
+        'train': 's3://sagemaker/pca/train'
+    }
+    s3_bucket = 'sagemaker-us-east-1'
+
+    pipeline = TrainingPipeline(pca_estimator, STEPFUNCTIONS_EXECUTION_ROLE, s3_inputs, s3_bucket,
+                                retry=SAGEMAKER_RETRY_STRATEGY)
+    result = pipeline.workflow.definition.to_dict()
+
+    assert result['States']['Training']['Retry'] == EXPECTED_RETRY
+    assert result['States']['Create Model']['Retry'] == EXPECTED_RETRY
+    assert result['States']['Configure Endpoint']['Retry'] == EXPECTED_RETRY
+    assert result['States']['Deploy']['Retry'] == EXPECTED_RETRY
+
 
 
 @patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
@@ -474,3 +504,29 @@ def test_inference_pipeline(sklearn_preprocessor, linear_learner_estimator):
     }
     
     workflow.execute.assert_called_with(name=job_name, inputs=inputs)
+
+
+@patch('botocore.client.BaseClient._make_api_call', new=mock_boto_api_call)
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_inference_pipeline(sklearn_preprocessor, linear_learner_estimator):
+    s3_inputs = {
+        'train': 's3://sagemaker-us-east-1/inference/train'
+    }
+    s3_bucket = 'sagemaker-us-east-1'
+
+    pipeline = InferencePipeline(
+        preprocessor=sklearn_preprocessor,
+        estimator=linear_learner_estimator,
+        inputs=s3_inputs,
+        s3_bucket=s3_bucket,
+        role=STEPFUNCTIONS_EXECUTION_ROLE,
+        retry=SAGEMAKER_RETRY_STRATEGY
+    )
+    result = pipeline.get_workflow().definition.to_dict()
+
+    assert result['States']['Train Preprocessor']['Retry'] == EXPECTED_RETRY
+    assert result['States']['Create Preprocessor Model']['Retry'] == EXPECTED_RETRY
+    assert result['States']['Transform Input']['Retry'] == EXPECTED_RETRY
+    assert result['States']['Create Pipeline Model']['Retry'] == EXPECTED_RETRY
+    assert result['States']['Configure Endpoint']['Retry'] == EXPECTED_RETRY
+    assert result['States']['Deploy']['Retry'] == EXPECTED_RETRY
