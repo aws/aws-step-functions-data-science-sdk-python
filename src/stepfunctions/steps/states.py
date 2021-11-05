@@ -73,10 +73,30 @@ class Block(object):
                 k = to_pascalcase(k)
                 if k == to_pascalcase(Field.Parameters.value):
                     result[k] = self._replace_placeholders(v)
+                elif self._is_placeholder_compatible(k) and isinstance(v, Placeholder):
+                    result[k] = v.to_jsonpath()
+
                 else:
                     result[k] = v
 
         return result
+
+    @staticmethod
+    def _is_placeholder_compatible(field):
+        """
+        Check if the field is placeholder compatible
+        Args:
+            field: Field against which to verify placeholder compatibility
+        """
+        return field in [
+            # Common fields
+            to_pascalcase(Field.InputPath.value),
+            to_pascalcase(Field.OutputPath.value),
+
+            # Map
+            to_pascalcase(Field.ItemsPath.value)
+        ]
+
 
     def to_json(self, pretty=False):
         """Serialize to a JSON formatted string.
@@ -169,10 +189,10 @@ class State(Block):
             state_type (str): Type of the state. (Allowed values: `'Pass'`, `'Succeed'`, `'Fail'`, `'Wait'`, `'Task'`, `'Choice'`, `'Parallel'`, `'Map'`).
             output_schema (dict): Expected output schema for the State. This is used to validate placeholder inputs used by the next state in the state machine. (default: None)
             comment (str, optional): Human-readable comment or description. (default: None)
-            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            input_path (str or Placeholder, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
-            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            output_path (str or Placeholder, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         super(State, self).__init__(**kwargs)
         self.fields['type'] = state_type
@@ -306,11 +326,11 @@ class Pass(State):
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             comment (str, optional): Human-readable comment or description. (default: None)
-            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            input_path (str or Placeholder, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             result (str, optional): If present, its value is treated as the output of a virtual task, and placed as prescribed by the `result_path` field, if any, to be passed on to the next state. If `result` is not provided, the output is the input.
-            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            output_path (str or Placeholder, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
 
         super(Pass, self).__init__(state_id, 'Pass', **kwargs)
@@ -337,8 +357,8 @@ class Succeed(State):
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             comment (str, optional): Human-readable comment or description. (default: None)
-            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
-            output_path (str, optional): Path applied to the state’s output, producing the effective output which serves as the raw input for the next state. (default: '$')
+            input_path (str or Placeholder, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            output_path (str or Placeholder, optional): Path applied to the state’s output, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         super(Succeed, self).__init__(state_id, 'Succeed', **kwargs)
 
@@ -391,8 +411,8 @@ class Wait(State):
             timestamp (str): Absolute expiry time, specified as an ISO-8601 extended offset date-time format string.
             timestamp_path (str): Path applied to the state's input to select the timestamp to be used for wait duration.
             comment (str, optional): Human-readable comment or description. (default: None)
-            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
-            output_path (str, optional): Path applied to the state’s output, producing the effective output which serves as the raw input for the next state. (default: '$')
+            input_path (str or Placeholder, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            output_path (str or Placeholder, optional): Path applied to the state’s output, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         super(Wait, self).__init__(state_id, 'Wait', **kwargs)
         if len([v for v in (self.seconds, self.timestamp, self.timestamp_path, self.seconds_path) if v is not None]) != 1:
@@ -421,8 +441,8 @@ class Choice(State):
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             comment (str, optional): Human-readable comment or description. (default: None)
-            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
-            output_path (str, optional): Path applied to the state’s output, producing the effective output which serves as the raw input for the next state. (default: '$')
+            input_path (str or Placeholder, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            output_path (str or Placeholder, optional): Path applied to the state’s output, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         super(Choice, self).__init__(state_id, 'Choice', **kwargs)
         self.choices = []
@@ -496,10 +516,10 @@ class Parallel(State):
             retry (Retry or list(Retry), optional): A retrier or list of retriers that define the state's retry policy. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error>`_ for more details.
             catch (Catch or list(Catch), optional): A catcher or list of catchers that define a fallback state. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-fallback-states>`_ for more details.
             comment (str, optional): Human-readable comment or description. (default: None)
-            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            input_path (str or Placeholder, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
-            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            output_path (str or Placeholder, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         super(Parallel, self).__init__(state_id, 'Parallel', **kwargs)
         self.branches = []
@@ -553,13 +573,13 @@ class Map(State):
             iterator (State or Chain): State or chain to execute for each of the items in `items_path`.
             retry (Retry or list(Retry), optional): A retrier or list of retriers that define the state's retry policy. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error>`_ for more details.
             catch (Catch or list(Catch), optional): A catcher or list of catchers that define a fallback state. See `Error handling in Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-fallback-states>`_ for more details.
-            items_path (str, optional): Path in the input for items to iterate over. (default: '$')
+            items_path (str or Placeholder, optional): Path in the input for items to iterate over. (default: '$')
             max_concurrency (int, optional): Maximum number of iterations to have running at any given point in time. (default: 0)
             comment (str, optional): Human-readable comment or description. (default: None)
-            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            input_path (str or Placeholder, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
-            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            output_path (str or Placeholder, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         super(Map, self).__init__(state_id, 'Map', **kwargs)
 
@@ -616,10 +636,10 @@ class Task(State):
             heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
             heartbeat_seconds_path (str, optional): Path specifying the state's heartbeat value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
             comment (str, optional): Human-readable comment or description. (default: None)
-            input_path (str, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
+            input_path (str or Placeholder, optional): Path applied to the state’s raw input to select some or all of it; that selection is used by the state. (default: '$')
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
-            output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
+            output_path (str or Placeholder, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
         super(Task, self).__init__(state_id, 'Task', **kwargs)
         if self.timeout_seconds is not None and self.timeout_seconds_path is not None:

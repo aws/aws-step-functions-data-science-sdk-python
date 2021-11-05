@@ -18,6 +18,7 @@ import json
 from sagemaker.utils import unique_name_from_base
 from sagemaker.image_uris import retrieve
 from stepfunctions import steps
+from stepfunctions.inputs import ExecutionInput, MapItemIndex, MapItemValue
 from stepfunctions.workflow import Workflow
 from stepfunctions.steps.utils import get_aws_partition
 from tests.integ.utils import state_machine_delete_wait
@@ -281,6 +282,80 @@ def test_map_state_machine_creation(sfn_client, sfn_role_arn):
 
     workflow = Workflow(
         unique_name_from_base('Test_Map_Workflow'),
+        definition=definition,
+        role=sfn_role_arn
+    )
+
+    workflow_test_suite(sfn_client, workflow, asl_state_machine_definition, map_state_result, state_machine_input)
+
+
+def test_map_state_machine_creation_with_placeholders(sfn_client, sfn_role_arn):
+    map_item_value = MapItemValue(schema={
+        'name': str,
+        'age': str
+    })
+
+    execution_input = ExecutionInput()
+
+    map_state_name = "Map State"
+    iterated_state_name = "Pass State"
+    final_state_name = "Final State"
+    max_concurrency = 0
+    map_state_result = "Map Result"
+    state_machine_input = {
+        "items_path": [{"name": "John", "age": 21}, {"name": "Snow", "age": 18}]
+    }
+
+    asl_state_machine_definition = {
+        "StartAt": map_state_name,
+        "States": {
+            map_state_name: {
+                "ItemsPath": "$$.Execution.Input['items_path']",
+                "Iterator": {
+                    "StartAt": iterated_state_name,
+                    "States": {
+                        iterated_state_name: {
+                            "Type": "Pass",
+                            "End": True
+                        }
+                    }
+                },
+                "MaxConcurrency": max_concurrency,
+                "Type": "Map",
+                "Next": final_state_name,
+                "Parameters": {
+                    "Age.$": "$$.Map.Item.Value['age']",
+                    "MapIndex.$": "$$.Map.Item.Index",
+                    "Name.$": "$$.Map.Item.Value['name']"
+                },
+            },
+            final_state_name: {
+                "Type": "Pass",
+                "Result": map_state_result,
+                "End": True
+            }
+        }
+    }
+
+    map_state = steps.Map(
+        map_state_name,
+        items_path=execution_input['items_path'],
+        iterator=steps.Pass(iterated_state_name),
+        max_concurrency=max_concurrency,
+        parameters={
+            "MapIndex": MapItemIndex(),
+            "Name": map_item_value['name'],
+            "Age": map_item_value['age']
+        }
+    )
+
+    definition = steps.Chain([
+        map_state,
+        steps.Pass(final_state_name, result=map_state_result)
+    ])
+
+    workflow = Workflow(
+        unique_name_from_base('Test_Map_Workflow_With_Placeholders'),
         definition=definition,
         role=sfn_role_arn
     )

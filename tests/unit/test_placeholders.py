@@ -15,7 +15,7 @@ from __future__ import absolute_import
 import pytest
 import json
 
-from stepfunctions.inputs import ExecutionInput, StepInput
+from stepfunctions.inputs import ExecutionInput, MapItemIndex, MapItemValue, StepInput
 
 def test_placeholder_creation_with_subscript_operator():
     step_input = StepInput()
@@ -179,3 +179,188 @@ def check_immutable(placeholder):
                 return check_immutable(v)
     else:
         return False
+
+
+def test_map_item_value_creation_with_subscript_operator():
+    map_item_placeholder = MapItemValue()
+    map_item_placeholder = map_item_placeholder["A"]
+    assert map_item_placeholder.name == "A"
+    assert map_item_placeholder.type is None
+
+
+def test_map_item_index_creation_with_subscript_operator():
+    map_item_placeholder = MapItemIndex()
+    with pytest.raises(AttributeError):
+        map_item_placeholder["A"]
+    assert not map_item_placeholder.get_schema_as_dict()
+    assert not map_item_placeholder.immutable
+
+
+def test_map_item_value_creation_with_type():
+    map_item_placeholder = MapItemValue()
+    map_item_variable = map_item_placeholder["A"]["b"].get("C", float)
+    assert map_item_variable.name == "C"
+    assert map_item_variable.type == float
+
+
+def test_map_item_value_creation_with_int_key():
+    map_item_placeholder = MapItemValue()
+    map_item_variable = map_item_placeholder["A"][0]
+    assert map_item_variable.name == 0
+    assert map_item_variable.type is None
+
+
+def test_map_item_value_creation_with_invalid_key():
+    map_item_placeholder = MapItemValue()
+    with pytest.raises(ValueError):
+        map_item_placeholder["A"][1.3]
+    with pytest.raises(ValueError):
+        map_item_placeholder["A"].get(1.2, str)
+
+
+def test_map_item_value_creation_failure_with_type():
+    map_item_placeholder = MapItemValue()
+    map_item_placeholder["A"]["b"].get("C", float)
+    with pytest.raises(ValueError):
+        map_item_placeholder["A"]["b"].get("C", int)
+
+
+def test_map_item_value_path():
+    map_item_placeholder = MapItemValue()
+    placeholder_variable = map_item_placeholder["A"]["b"]["C"]
+    expected_path = ["A", "b", "C"]
+    assert placeholder_variable._get_path() == expected_path
+
+
+def test_map_item_value_contains():
+    map_item_placeholder = MapItemValue()
+    var_three = map_item_placeholder["Key01"]["Key04"]
+
+    map_item_placeholder_two = StepInput()
+    var_five = map_item_placeholder_two["Key07"]
+
+    assert map_item_placeholder.contains(var_three) == True
+    assert map_item_placeholder.contains(var_five) == False
+    assert map_item_placeholder_two.contains(var_three) == False
+    assert map_item_placeholder_two.contains(var_five) == True
+
+
+def test_map_item_value_schema_as_dict():
+    map_item_placeholder = MapItemValue()
+    map_item_placeholder["A"]["b"].get("C", float)
+    map_item_placeholder["Message"]
+    map_item_placeholder["Key01"]["Key02"]
+    map_item_placeholder["Key03"]
+    map_item_placeholder["Key03"]["Key04"]
+
+    expected_schema = {
+        "A": {
+            "b": {
+                "C": float
+            }
+        },
+        "Message": str,
+        "Key01": {
+            "Key02": str
+        },
+        "Key03": {
+            "Key04": str
+        }
+    }
+
+    assert map_item_placeholder.get_schema_as_dict() == expected_schema
+
+
+def test_map_item_value_schema_as_json():
+    map_item_placeholder = MapItemValue()
+    map_item_placeholder["Response"].get("StatusCode", int)
+    map_item_placeholder["Hello"]["World"]
+    map_item_placeholder["A"]
+    map_item_placeholder["Hello"]["World"].get("Test", str)
+
+    expected_schema = {
+        "Response": {
+            "StatusCode": "int"
+        },
+        "Hello": {
+            "World": {
+                "Test": "str"
+            }
+        },
+        "A": "str"
+    }
+
+    assert map_item_placeholder.get_schema_as_json() == json.dumps(expected_schema)
+
+
+def test_map_item_value_is_empty():
+    workflow_input = MapItemValue()
+    placeholder_variable = workflow_input["A"]["B"]["C"]
+    assert placeholder_variable._is_empty() == True
+    workflow_input["A"]["B"]["C"]["D"]
+    assert placeholder_variable._is_empty() == False
+
+
+def test_map_item_value_make_immutable():
+    workflow_input = MapItemValue()
+    workflow_input["A"]["b"].get("C", float)
+    workflow_input["Message"]
+    workflow_input["Key01"]["Key02"]
+    workflow_input["Key03"]
+    workflow_input["Key03"]["Key04"]
+
+    assert check_immutable(workflow_input) == False
+
+    workflow_input._make_immutable()
+    assert check_immutable(workflow_input) == True
+
+
+def test_map_item_value_with_schema():
+    test_schema = {
+        "A": {
+            "B": {
+                "C": int
+            }
+        },
+        "Request": {
+            "Status": str
+        },
+        "Hello": float
+    }
+    workflow_input = MapItemValue(schema=test_schema)
+    assert workflow_input.get_schema_as_dict() == test_schema
+    assert workflow_input.immutable == True
+    assert workflow_input['A']['B'].get("C", int)
+
+    with pytest.raises(ValueError):
+        workflow_input["A"]["B"]["D"]
+
+    with pytest.raises(ValueError):
+        workflow_input["A"]["B"].get("C", float)
+
+
+def test_map_item_index_with_schema():
+    test_schema = {
+        "A": {
+            "B": {
+                "C": int
+            }
+        },
+        "Request": {
+            "Status": str
+        },
+        "Hello": float
+    }
+    with pytest.raises(AttributeError):
+        workflow_input = MapItemIndex(schema=test_schema)
+
+
+def test_map_item_value_jsonpath():
+    map_item_value = MapItemValue()
+    map_item_value_variable = map_item_value["A"]["b"].get(0, float)
+    assert map_item_value_variable.to_jsonpath() == "$$.Map.Item.Value['A']['b'][0]"
+
+
+def test_map_item_index_jsonpath():
+    map_item_index = MapItemIndex()
+    assert map_item_index.to_jsonpath() == "$$.Map.Item.Index"

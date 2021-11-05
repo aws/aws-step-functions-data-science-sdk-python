@@ -279,7 +279,7 @@ class StepInput(Placeholder):
     def __init__(self, schema=None, **kwargs):
         super(StepInput, self).__init__(schema, **kwargs)
         self.json_str_template = '${}'
-        
+
     def _create_variable(self, name, parent, type=None):
         """
             Creates a placeholder variable for Step Input.
@@ -291,3 +291,44 @@ class StepInput(Placeholder):
             return StepInput(name=name, parent=parent, type=type)
         else:
             return StepInput(name=name, parent=parent)
+
+
+class MapItemValue(Placeholder):
+    """
+        Top-level class for map item value placeholders.
+    """
+
+    def __init__(self, schema=None, **kwargs):
+        super(MapItemValue, self).__init__(schema, **kwargs)
+        self.json_str_template = '$$.Map.Item.Value{}'
+
+    def _create_variable(self, name, parent, type=None):
+        """
+            Creates a placeholder variable for Map Item Value.
+            A placeholder variable can only be created if the collection is not immutable due to a pre-specified schema.
+        """
+        if self.immutable:
+            raise ValueError("Placeholder variable does not conform to schema set for the placeholder collection: "
+                             f" {self.schema}")
+        if type:
+            return MapItemValue(name=name, parent=parent, type=type)
+        else:
+            return MapItemValue(name=name, parent=parent)
+
+
+class MapItemIndex(Placeholder):
+    """
+        Top-level class for map item index placeholders.
+    """
+
+    def __init__(self, **kwargs):
+        if kwargs.get('schema'):
+            raise AttributeError("MapItemIndex does not support schema object")
+        super(MapItemIndex, self).__init__(**kwargs)
+        self.json_str_template = '$$.Map.Item.Index'
+
+    def _create_variable(self, name, parent, type=None):
+        raise AttributeError("MapItemIndex has no _create_variable object")
+
+    def __getitem__(self, item):
+        raise AttributeError("MapItemIndex has no __getitem__ object")
