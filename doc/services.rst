@@ -42,7 +42,7 @@ Amazon EKS
 
 .. autoclass:: stepfunctions.steps.service.EksCreateFargateProfileStep
 
-.. autoclass:: stepfunctions.steps.service.EksCreateNodeGroupStep
+.. autoclass:: stepfunctions.steps.service.EksCreateNodegroupStep
 
 .. autoclass:: stepfunctions.steps.service.EksDeleteClusterStep
 
