@@ -24,7 +24,7 @@ from stepfunctions.steps.service import (
     EksCallStep,
     EksCreateClusterStep,
     EksCreateFargateProfileStep,
-    EksCreateNodeGroupStep,
+    EksCreateNodegroupStep,
     EksDeleteClusterStep,
     EksDeleteFargateProfileStep,
     EksDeleteNodegroupStep,
