@@ -240,10 +240,14 @@ class EksCreateClusterStep(Task):
     Creates a Task state that creates an Amazon EKS cluster. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.WaitForCompletion, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. Supported integration patterns (default: WaitForCompletion):
+
+                * WaitForCompletion: Wait for the cluster to be created before going to the next state. (See `Run A Job <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-sync>`_ for more details.)
+                * CallAndContinue: Call CreateCluster and progress to the next state (See `Request Response <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-default>`_ for more details.)
             comment (str, optional): Human-readable comment or description. (default: None)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
@@ -253,23 +257,19 @@ class EksCreateClusterStep(Task):
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
         """
-        if wait_for_completion:
-            """
-            Example resource arn: arn:aws:states:::eks:createCluster.sync
-            """
+        supported_integ_patterns = [IntegrationPattern.WaitForCompletion, IntegrationPattern.CallAndContinue]
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.CreateCluster,
-                                                                       IntegrationPattern.WaitForCompletion)
-        else:
-            """
-            Example resource arn: arn:aws:states:::eks:createCluster
-            """
-
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.CreateCluster)
+        is_integration_pattern_valid(integration_pattern, supported_integ_patterns)
+        kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                   EksApi.CreateCluster,
+                                                                   integration_pattern)
+        """
+        Example resource arns:
+            - CallAndContinue: arn:aws:states:::eks:createCluster
+            - WaitForCompletion: arn:aws:states:::eks:createCluster.sync
+        
+        """
 
         super(EksCreateClusterStep, self).__init__(state_id, **kwargs)
 
@@ -279,10 +279,14 @@ class EksCreateFargateProfileStep(Task):
     Creates a Task state that creates an AWS Fargate profile for your Amazon EKS cluster. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.WaitForCompletion, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. Supported integration patterns (default: WaitForCompletion):
+
+                * WaitForCompletion: Wait for the Fargate profile to be created before going to the next state. (See `Run A Job <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-sync>`_ for more details.)
+                * CallAndContinue: Call CreateFargateProfile and progress to the next state (See `Request Response <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-default>`_ for more details.)
             comment (str, optional): Human-readable comment or description. (default: None)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
@@ -292,23 +296,19 @@ class EksCreateFargateProfileStep(Task):
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
         """
-        if wait_for_completion:
-            """
-            Example resource arn: arn:aws:states:::eks:createFargateProfile.sync
-            """
+        supported_integ_patterns = [IntegrationPattern.WaitForCompletion, IntegrationPattern.CallAndContinue]
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.CreateFargateProfile,
-                                                                       IntegrationPattern.WaitForCompletion)
-        else:
-            """
-            Example resource arn: arn:aws:states:::eks:createFargateProfile
-            """
+        is_integration_pattern_valid(integration_pattern, supported_integ_patterns)
+        kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                   EksApi.CreateFargateProfile,
+                                                                   integration_pattern)
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.CreateFargateProfile)
+        """
+        Example resource arns:
+            - CallAndContinue: arn:aws:states:::eks:createFargateProfile
+            - WaitForCompletion: arn:aws:states:::eks:createFargateProfile.sync
+        """
 
         super(EksCreateFargateProfileStep, self).__init__(state_id, **kwargs)
 
@@ -318,10 +318,14 @@ class EksDeleteFargateProfileStep(Task):
     Creates a Task state that deletes an AWS Fargate profile. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.WaitForCompletion, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. Supported integration patterns (default: WaitForCompletion):
+
+                * WaitForCompletion: Wait for the Fargate profile to be deleted before going to the next state. (See `Run A Job <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-sync>`_ for more details.)
+                * CallAndContinue: Call DeleteFargateProfile and progress to the next state (See `Request Response <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-default>`_ for more details.)
             comment (str, optional): Human-readable comment or description. (default: None)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
@@ -331,36 +335,36 @@ class EksDeleteFargateProfileStep(Task):
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
         """
-        if wait_for_completion:
-            """
-            Example resource arn: arn:aws:states:::eks:deleteFargateProfile.sync
-            """
+        supported_integ_patterns = [IntegrationPattern.WaitForCompletion, IntegrationPattern.CallAndContinue]
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.DeleteFargateProfile,
-                                                                       IntegrationPattern.WaitForCompletion)
-        else:
-            """
-            Example resource arn: arn:aws:states:::eks:deleteFargateProfile
-            """
+        is_integration_pattern_valid(integration_pattern, supported_integ_patterns)
+        kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                   EksApi.DeleteFargateProfile,
+                                                                   integration_pattern)
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.DeleteFargateProfile)
+        """
+        Example resource arns:
+            - CallAndContinue: arn:aws:states:::eks:deleteFargateProfile
+            - WaitForCompletion: arn:aws:states:::eks:deleteFargateProfile.sync
+        """
 
         super(EksDeleteFargateProfileStep, self).__init__(state_id, **kwargs)
 
 
-class EksCreateNodeGroupStep(Task):
+class EksCreateNodegroupStep(Task):
     """
     Creates a Task state that creates a node group for an Amazon EKS cluster. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.WaitForCompletion, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. Supported integration patterns (default: WaitForCompletion):
+
+                * WaitForCompletion: Wait for the node group to be created before going to the next state. (See `Run A Job <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-sync>`_ for more details.)
+                * CallAndContinue: Call CreateNodegroup and progress to the next state (See `Request Response <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-default>`_ for more details.)
             comment (str, optional): Human-readable comment or description. (default: None)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
@@ -370,25 +374,21 @@ class EksCreateNodeGroupStep(Task):
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
         """
-        if wait_for_completion:
-            """
-            Example resource arn: arn:aws:states:::eks:createNodegroup.sync
-            """
+        supported_integ_patterns = [IntegrationPattern.WaitForCompletion, IntegrationPattern.CallAndContinue]
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.CreateNodegroup,
-                                                                       IntegrationPattern.WaitForCompletion)
-        else:
-            """
-            Example resource arn: arn:aws:states:::eks:createNodegroup
-            """
+        is_integration_pattern_valid(integration_pattern, supported_integ_patterns)
+        kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                   EksApi.CreateNodegroup,
+                                                                   integration_pattern)
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.CreateNodegroup)
+        """
+        Example resource arns:
+            - CallAndContinue: arn:aws:states:::eks:createNodegroup
+            - WaitForCompletion: arn:aws:states:::eks:createNodegroup.sync
+        """
 
-        super(EksCreateNodeGroupStep, self).__init__(state_id, **kwargs)
+        super(EksCreateNodegroupStep, self).__init__(state_id, **kwargs)
 
 
 class EksDeleteNodegroupStep(Task):
@@ -396,10 +396,14 @@ class EksDeleteNodegroupStep(Task):
     Creates a Task state that deletes an Amazon EKS node group for a cluster. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.WaitForCompletion, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. Supported integration patterns (default: WaitForCompletion):
+
+                * WaitForCompletion: Wait for the node group to be deleted before going to the next state. (See `Run A Job <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-sync>`_ for more details.)
+                * CallAndContinue: Call DeleteNodegroup and progress to the next state (See `Request Response <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-default>`_ for more details.)
             comment (str, optional): Human-readable comment or description. (default: None)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
@@ -409,23 +413,19 @@ class EksDeleteNodegroupStep(Task):
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
         """
-        if wait_for_completion:
-            """
-            Example resource arn: arn:aws:states:::eks:deleteNodegroup.sync
-            """
+        supported_integ_patterns = [IntegrationPattern.WaitForCompletion, IntegrationPattern.CallAndContinue]
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.DeleteNodegroup,
-                                                                       IntegrationPattern.WaitForCompletion)
-        else:
-            """
-            Example resource arn: arn:aws:states:::eks:deleteNodegroup
-            """
+        is_integration_pattern_valid(integration_pattern, supported_integ_patterns)
+        kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                   EksApi.DeleteNodegroup,
+                                                                   integration_pattern)
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.DeleteNodegroup)
+        """
+        Example resource arns:
+            - CallAndContinue: arn:aws:states:::eks:deleteNodegroup
+            - WaitForCompletion: arn:aws:states:::eks:deleteNodegroup.sync
+        """
 
         super(EksDeleteNodegroupStep, self).__init__(state_id, **kwargs)
 
@@ -435,10 +435,14 @@ class EksDeleteClusterStep(Task):
     Creates a Task state that deletes an Amazon EKS cluster. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.WaitForCompletion, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. Supported integration patterns (default: WaitForCompletion):
+
+                * WaitForCompletion: Wait for the cluster to be deleted before going to the next state. (See `Run A Job <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-sync>`_ for more details.)
+                * CallAndContinue: Call DeleteCluster and progress to the next state (See `Request Response <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-default>`_ for more details.)
             comment (str, optional): Human-readable comment or description. (default: None)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
@@ -448,23 +452,19 @@ class EksDeleteClusterStep(Task):
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
         """
-        if wait_for_completion:
-            """
-            Example resource arn: arn:aws:states:::eks:deleteCluster.sync
-            """
+        supported_integ_patterns = [IntegrationPattern.WaitForCompletion, IntegrationPattern.CallAndContinue]
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.DeleteCluster,
-                                                                       IntegrationPattern.WaitForCompletion)
-        else:
-            """
-            Example resource arn: arn:aws:states:::eks:deleteCluster
-            """
+        is_integration_pattern_valid(integration_pattern, supported_integ_patterns)
+        kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                   EksApi.DeleteCluster,
+                                                                   integration_pattern)
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.DeleteCluster)
+        """
+        Example resource arns:
+            - CallAndContinue: arn:aws:states:::eks:deleteCluster
+            - WaitForCompletion: arn:aws:states:::eks:deleteCluster.sync
+        """
 
         super(EksDeleteClusterStep, self).__init__(state_id, **kwargs)
 
@@ -474,10 +474,14 @@ class EksRunJobStep(Task):
     Creates a Task state that allows you to run a job on your Amazon EKS cluster. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.WaitForCompletion, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. Supported integration patterns (default: WaitForCompletion):
+
+                * WaitForCompletion: Wait for the job to be complete before going to the next state. (See `Run A Job <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-sync>`_ for more details.)
+                * CallAndContinue: Call RunJob and progress to the next state (See `Request Response <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-default>`_ for more details.)
             comment (str, optional): Human-readable comment or description. (default: None)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
@@ -487,23 +491,19 @@ class EksRunJobStep(Task):
             parameters (dict, optional): The value of this field becomes the effective input for the state.
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
-            wait_for_completion (bool, optional): Boolean value set to `True` if the Task state should wait to complete before proceeding to the next step in the workflow. (default: True)
         """
-        if wait_for_completion:
-            """
-            Example resource arn: arn:aws:states:::eks:runJob.sync
-            """
+        supported_integ_patterns = [IntegrationPattern.WaitForCompletion, IntegrationPattern.CallAndContinue]
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.RunJob,
-                                                                       IntegrationPattern.WaitForCompletion)
-        else:
-            """
-            Example resource arn: arn:aws:states:::eks:runJob
-            """
+        is_integration_pattern_valid(integration_pattern, supported_integ_patterns)
+        kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
+                                                                   EksApi.RunJob,
+                                                                   integration_pattern)
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                       EksApi.RunJob)
+        """
+        Example resource arns:
+            - CallAndContinue: arn:aws:states:::eks:runJob
+            - WaitForCompletion: arn:aws:states:::eks:runJob.sync
+        """
 
         super(EksRunJobStep, self).__init__(state_id, **kwargs)
 
@@ -513,10 +513,13 @@ class EksCallStep(Task):
     Creates a Task state that allows you to use the Kubernetes API to read and write Kubernetes resource objects via a Kubernetes API endpoint. See `Call Amazon EKS with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-eks.html>`_ for more details.
     """
 
-    def __init__(self, state_id, **kwargs):
+    def __init__(self, state_id, integration_pattern=IntegrationPattern.CallAndContinue, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
+            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. Supported integration patterns (default: CallAndContinue):
+
+                * CallAndContinue: Call Kubernetes API and progress to the next state (See `Request Response <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-default>`_ for more details.)
             comment (str, optional): Human-readable comment or description. (default: None)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
@@ -531,9 +534,12 @@ class EksCallStep(Task):
         """
         Example resource arn: arn:aws:states:::eks:call
         """
+        supported_integ_patterns = [IntegrationPattern.CallAndContinue]
 
+        is_integration_pattern_valid(integration_pattern, supported_integ_patterns)
         kwargs[Field.Resource.value] = get_service_integration_arn(EKS_SERVICES_NAME,
-                                                                   EksApi.Call)
+                                                                   EksApi.Call,
+                                                                   integration_pattern)
 
         super(EksCallStep, self).__init__(state_id, **kwargs)
 
@@ -905,7 +911,7 @@ class StepFunctionsStartExecutionStep(Task):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
-            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. (default: WaitForCompletion)
+            integration_pattern (IntegrationPattern, optional): Service integration pattern used to call the integrated service. (default: WaitForCompletion)
                 Supported integration patterns:
                     WaitForCompletion: Wait for the state machine execution to complete before going to the next state. (See `Run A Job <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-sync`_ for more details.)
                     WaitForTaskToken: Wait for the state machine execution to return a task token before progressing to the next state (See `Wait for a Callback with the Task Token <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-wait-token`_ for more details.)
