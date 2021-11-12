@@ -109,6 +109,16 @@ def test_ecs_run_task_step_creation():
         'End': True
     }
 
+    step = EcsRunTaskStep('Ecs Job',
+                          wait_for_callback=True,
+                          wait_for_completion=False)
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::ecs:runTask.waitForTaskToken',
+        'End': True
+    }
+
     step = EcsRunTaskStep('Ecs Job', parameters={
         'TaskDefinition': 'Task'
     })
@@ -121,3 +131,8 @@ def test_ecs_run_task_step_creation():
         },
         'End': True
     }
+
+    with pytest.raises(ValueError):
+        step = EcsRunTaskStep('Ecs Job',
+                              wait_for_completion=True,
+                              wait_for_callback=True)
