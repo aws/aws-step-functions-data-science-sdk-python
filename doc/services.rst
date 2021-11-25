@@ -70,11 +70,11 @@ Amazon EMR
 .. autoclass:: stepfunctions.steps.service.EmrModifyInstanceGroupByNameStep
 
 Amazon EventBridge
------------
+------------------
 .. autoclass:: stepfunctions.steps.service.EventBridgePutEventsStep
 
 AWS Glue DataBrew
---------------------
+-----------------
 .. autoclass:: stepfunctions.steps.service.GlueDataBrewStartJobRunStep
 
 Amazon SNS
