@@ -17,6 +17,7 @@ import boto3
 
 from unittest.mock import patch
 from stepfunctions.steps.compute import LambdaStep, GlueStartJobRunStep, BatchSubmitJobStep, EcsRunTaskStep
+from stepfunctions.steps.integration_resources import IntegrationPattern
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
@@ -102,7 +103,6 @@ def test_batch_submit_job_step_creation():
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
 def test_ecs_run_task_step_creation():
     step = EcsRunTaskStep('Ecs Job', wait_for_completion=False)
-
     assert step.to_dict() == {
         'Type': 'Task',
         'Resource': 'arn:aws:states:::ecs:runTask',
@@ -110,9 +110,8 @@ def test_ecs_run_task_step_creation():
     }
 
     step = EcsRunTaskStep('Ecs Job',
-                          wait_for_callback=True,
+                          integration_pattern=IntegrationPattern.WaitForTaskToken,
                           wait_for_completion=False)
-
     assert step.to_dict() == {
         'Type': 'Task',
         'Resource': 'arn:aws:states:::ecs:runTask.waitForTaskToken',
@@ -122,7 +121,6 @@ def test_ecs_run_task_step_creation():
     step = EcsRunTaskStep('Ecs Job', parameters={
         'TaskDefinition': 'Task'
     })
-
     assert step.to_dict() == {
         'Type': 'Task',
         'Resource': 'arn:aws:states:::ecs:runTask.sync',
@@ -135,4 +133,4 @@ def test_ecs_run_task_step_creation():
     with pytest.raises(ValueError):
         step = EcsRunTaskStep('Ecs Job',
                               wait_for_completion=True,
-                              wait_for_callback=True)
+                              integration_pattern=IntegrationPattern.WaitForTaskToken)
