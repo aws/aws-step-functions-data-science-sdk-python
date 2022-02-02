@@ -677,8 +677,8 @@ def test_emr_modify_instance_group_by_name_step_creation():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_databrew_start_job_run_step_creation_sync():
-    step = GlueDataBrewStartJobRunStep('Start Glue DataBrew Job Run - Sync', parameters={
+def test_databrew_start_job_run_step_creation_default():
+    step = GlueDataBrewStartJobRunStep('Start Glue DataBrew Job Run - default', parameters={
         "Name": "MyWorkflowJobRun"
     })
 
@@ -693,10 +693,30 @@ def test_databrew_start_job_run_step_creation_sync():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_databrew_start_job_run_step_creation():
-    step = GlueDataBrewStartJobRunStep('Start Glue DataBrew Job Run', wait_for_completion=False, parameters={
-        "Name": "MyWorkflowJobRun"
-    })
+def test_databrew_start_job_run_step_creation_wait_for_completion():
+    step = GlueDataBrewStartJobRunStep(
+        'Start Glue DataBrew Job Run - WaitForCompletion', integration_pattern=IntegrationPattern.WaitForCompletion,
+        parameters={
+            "Name": "MyWorkflowJobRun"
+        })
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::databrew:startJobRun.sync',
+        'Parameters': {
+            'Name': 'MyWorkflowJobRun'
+        },
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_databrew_start_job_run_step_creation_call_and_continue():
+    step = GlueDataBrewStartJobRunStep(
+        'Start Glue DataBrew Job Run - CallAndContinue',
+        integration_pattern=IntegrationPattern.CallAndContinue, parameters={
+            "Name": "MyWorkflowJobRun"
+        })
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -706,6 +726,16 @@ def test_databrew_start_job_run_step_creation():
         },
         'End': True
     }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_databrew_start_job_run_step_creation_wait_for_task_token_raises_error():
+    error_message = re.escape(f"Integration Pattern ({IntegrationPattern.WaitForTaskToken.name}) is not supported for this step - "
+                              f"Please use one of the following: "
+                              f"{[IntegrationPattern.WaitForCompletion.name, IntegrationPattern.CallAndContinue.name]}")
+    with pytest.raises(ValueError, match=error_message):
+        GlueDataBrewStartJobRunStep('Start Glue DataBrew Job Run - WaitForTaskToken',
+                                    integration_pattern=IntegrationPattern.WaitForTaskToken)
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
