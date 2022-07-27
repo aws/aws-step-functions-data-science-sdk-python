@@ -17,6 +17,7 @@ import boto3
 
 from unittest.mock import patch
 from stepfunctions.steps.compute import LambdaStep, GlueStartJobRunStep, BatchSubmitJobStep, EcsRunTaskStep
+from stepfunctions.steps.integration_resources import IntegrationPattern
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
@@ -100,8 +101,61 @@ def test_batch_submit_job_step_creation():
 
 
 @patch.object(boto3.session.Session, 'region_name', 'us-east-1')
-def test_ecs_run_task_step_creation():
-    step = EcsRunTaskStep('Ecs Job', wait_for_completion=False)
+@pytest.mark.parametrize(
+    ("task_kwargs",),
+    [
+        ({},),
+        ({
+            "integration_pattern": IntegrationPattern.WaitForCompletion,
+            "wait_for_completion": False,
+        },),
+    ]
+)
+def test_ecs_run_task_with_wait_for_completion(task_kwargs):
+    step = EcsRunTaskStep('ECS Job', **task_kwargs)
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::ecs:runTask.sync',
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+@pytest.mark.parametrize(
+    ("task_kwargs",),
+    [
+        ({
+            "integration_pattern": IntegrationPattern.WaitForTaskToken,
+            "wait_for_completion": False,
+        },),
+    ]
+)
+def test_ecs_run_task_with_wait_for_task_token(task_kwargs):
+    step = EcsRunTaskStep('ECS Job', **task_kwargs)
+
+    assert step.to_dict() == {
+        'Type': 'Task',
+        'Resource': 'arn:aws:states:::ecs:runTask.waitForTaskToken',
+        'End': True
+    }
+
+
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+@pytest.mark.parametrize(
+    ("task_kwargs",),
+    [
+        ({
+            "wait_for_completion": False,
+        },),
+        ({
+            "integration_pattern": IntegrationPattern.CallAndContinue,
+            "wait_for_completion": False,
+        },)
+    ]
+)
+def test_ecs_run_task_with_call_and_continue(task_kwargs):
+    step = EcsRunTaskStep('ECS Job', **task_kwargs)
 
     assert step.to_dict() == {
         'Type': 'Task',
@@ -109,15 +163,10 @@ def test_ecs_run_task_step_creation():
         'End': True
     }
 
-    step = EcsRunTaskStep('Ecs Job', parameters={
-        'TaskDefinition': 'Task'
-    })
 
-    assert step.to_dict() == {
-        'Type': 'Task',
-        'Resource': 'arn:aws:states:::ecs:runTask.sync',
-        'Parameters': {
-            'TaskDefinition': 'Task'
-        },
-        'End': True
-    }
+@patch.object(boto3.session.Session, 'region_name', 'us-east-1')
+def test_ecs_run_task_with_conflicting_arguments():
+    with pytest.raises(ValueError):
+        step = EcsRunTaskStep('Ecs Job',
+                              wait_for_completion=True,
+                              integration_pattern=IntegrationPattern.WaitForTaskToken)
