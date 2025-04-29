@@ -32,6 +32,7 @@ Please check all boxes (including N/A items)
 
 - [ ] __docs__: All relevant [docs](https://github.com/aws/aws-step-functions-data-science-sdk-python/tree/main/doc) updated
 - [ ] __docstrings__: All public APIs documented
+- [ ] __Generate docs locally__: Updated docs are rendered properly (see [Contributing guide](https://github.com/aws/aws-step-functions-data-science-sdk-python/blob/main/CONTRIBUTING.md)) 
 
 ### Title and description
 
