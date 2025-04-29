@@ -15,7 +15,8 @@ from __future__ import absolute_import
 from enum import Enum
 from stepfunctions.steps.states import Task
 from stepfunctions.steps.fields import Field
-from stepfunctions.steps.integration_resources import IntegrationPattern, get_service_integration_arn
+from stepfunctions.steps.integration_resources import IntegrationPattern, get_service_integration_arn, \
+    is_integration_pattern_valid
 
 LAMBDA_SERVICE_NAME = "lambda"
 GLUE_SERVICE_NAME = "glue"
@@ -161,16 +162,25 @@ class BatchSubmitJobStep(Task):
 
 
 class EcsRunTaskStep(Task):
-
     """
     Creates a Task State to run Amazon ECS or Fargate Tasks. See `Manage Amazon ECS or Fargate Tasks with Step Functions <https://docs.aws.amazon.com/step-functions/latest/dg/connect-ecs.html>`_ for more details.
     """
 
-    def __init__(self, state_id, wait_for_completion=True, **kwargs):
+    supported_integration_patterns = [
+        IntegrationPattern.WaitForCompletion,
+        IntegrationPattern.WaitForTaskToken,
+        IntegrationPattern.CallAndContinue
+    ]
+
+    def __init__(self, state_id, wait_for_completion=True, integration_pattern=None, **kwargs):
         """
         Args:
             state_id (str): State name whose length **must be** less than or equal to 128 unicode characters. State names **must be** unique within the scope of the whole state machine.
             wait_for_completion(bool, optional): Boolean value set to `True` if the Task state should wait for the ecs job to complete before proceeding to the next step in the workflow. Set to `False` if the Task state should submit the ecs job and proceed to the next step. (default: True)
+            integration_pattern (stepfunctions.steps.integration_resources.IntegrationPattern, optional): Service integration pattern used to call the integrated service. This is mutually exclusive from wait_for_completion Supported integration patterns (default: None):
+                * WaitForCompletion: Wait for the state machine execution to complete before going to the next state. (See `Run A Job <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-sync>`_ for more details.)
+                * WaitForTaskToken: Wait for the state machine execution to return a task token before progressing to the next state (See `Wait for a Callback with the Task Token <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-wait-token>`_ for more details.)
+                * CallAndContinue: Call StartExecution and progress to the next state (See `Request Response <https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html#connect-default>`_ for more details.)
             timeout_seconds (int, optional): Positive integer specifying timeout for the state in seconds. If the state runs longer than the specified timeout, then the interpreter fails the state with a `States.Timeout` Error Name. (default: 60)
             timeout_seconds_path (str, optional): Path specifying the state's timeout value in seconds from the state input. When resolved, the path must select a field whose value is a positive integer.
             heartbeat_seconds (int, optional): Positive integer specifying heartbeat timeout for the state in seconds. This value should be lower than the one specified for `timeout_seconds`. If more time than the specified heartbeat elapses between heartbeats from the task, then the interpreter fails the state with a `States.Timeout` Error Name.
@@ -181,20 +191,23 @@ class EcsRunTaskStep(Task):
             result_path (str, optional): Path specifying the raw input’s combination with or replacement by the state’s result. (default: '$')
             output_path (str, optional): Path applied to the state’s output after the application of `result_path`, producing the effective output which serves as the raw input for the next state. (default: '$')
         """
+        if wait_for_completion and integration_pattern:
+            raise ValueError(
+                "Only one of wait_for_completion and integration_pattern set. "
+                "Set wait_for_completion to False if you wish to use integration_pattern."
+            )
+
+        # The old implementation type still has to be supported until a new
+        # major is realeased.
         if wait_for_completion:
-            """
-            Example resource arn: arn:aws:states:::ecs:runTask.sync
-            """
+            integration_pattern = IntegrationPattern.WaitForCompletion
+        if not wait_for_completion and not integration_pattern:
+            integration_pattern = IntegrationPattern.CallAndContinue
 
-            kwargs[Field.Resource.value] = get_service_integration_arn(ECS_SERVICE_NAME,
-                                                                       EcsApi.RunTask,
-                                                                       IntegrationPattern.WaitForCompletion)
-        else:
-            """
-            Example resource arn: arn:aws:states:::ecs:runTask
-            """
-
-            kwargs[Field.Resource.value] = get_service_integration_arn(ECS_SERVICE_NAME,
-                                                                       EcsApi.RunTask)
+        is_integration_pattern_valid(integration_pattern,
+                                     self.supported_integration_patterns)
+        kwargs[Field.Resource.value] = get_service_integration_arn(ECS_SERVICE_NAME,
+                                                                   EcsApi.RunTask,
+                                                                   integration_pattern)
 
         super(EcsRunTaskStep, self).__init__(state_id, **kwargs)
