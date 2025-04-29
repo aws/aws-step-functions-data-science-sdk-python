@@ -22,7 +22,7 @@ from sagemaker.sklearn.estimator import SKLearn
 
 from stepfunctions.template.pipeline import InferencePipeline
 
-from tests.integ import DATA_DIR, DEFAULT_TIMEOUT_MINUTES
+from tests.integ import DATA_DIR, DEFAULT_TIMEOUT_MINUTES, SAGEMAKER_RETRY_STRATEGY
 from tests.integ.timeout import timeout
 from tests.integ.utils import (
     state_machine_delete_wait,
@@ -35,6 +35,7 @@ from tests.integ.utils import (
 # Constants
 BASE_NAME = 'inference-pipeline-integtest'
 COMPRESSED_NPY_DATA = 'mnist.npy.gz'
+
 
 # Fixtures
 @pytest.fixture(scope="module")
@@ -100,7 +101,8 @@ def test_inference_pipeline_framework(
             role=sfn_role_arn,
             compression_type='Gzip',
             content_type='application/x-npy',
-            pipeline_name=unique_name
+            pipeline_name=unique_name,
+            retry=SAGEMAKER_RETRY_STRATEGY
         )
 
         _ = pipeline.create()

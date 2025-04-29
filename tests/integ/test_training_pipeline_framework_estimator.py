@@ -16,7 +16,7 @@ import pytest
 import sagemaker
 import os
 
-from tests.integ import DATA_DIR, DEFAULT_TIMEOUT_MINUTES
+from tests.integ import DATA_DIR, DEFAULT_TIMEOUT_MINUTES, SAGEMAKER_RETRY_STRATEGY
 from tests.integ.timeout import timeout
 from stepfunctions.template import TrainingPipeline
 from sagemaker.pytorch import PyTorch
@@ -28,6 +28,7 @@ from tests.integ.utils import (
     delete_sagemaker_endpoint,
     get_resource_name_from_arn
 )
+
 
 @pytest.fixture(scope="module")
 def torch_estimator(sagemaker_role_arn):
@@ -44,6 +45,7 @@ def torch_estimator(sagemaker_role_arn):
             'backend': 'gloo'
         }
     )
+
 
 @pytest.fixture(scope="module")
 def sklearn_estimator(sagemaker_role_arn):
@@ -103,7 +105,8 @@ def test_torch_training_pipeline(sfn_client, sagemaker_client, torch_estimator, 
             sfn_role_arn, 
             inputs, 
             sagemaker_session.default_bucket(), 
-            sfn_client
+            sfn_client,
+            retry=SAGEMAKER_RETRY_STRATEGY
         )
         pipeline.create()
         # execute pipeline
@@ -138,7 +141,8 @@ def test_sklearn_training_pipeline(sfn_client, sagemaker_client, sklearn_estimat
             sfn_role_arn, 
             inputs, 
             sagemaker_session.default_bucket(), 
-            sfn_client
+            sfn_client,
+            retry=SAGEMAKER_RETRY_STRATEGY
         )
         pipeline.create()
         # run pipeline

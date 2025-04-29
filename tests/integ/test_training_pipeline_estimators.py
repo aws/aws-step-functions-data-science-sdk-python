@@ -30,7 +30,7 @@ from sagemaker.image_uris import retrieve
 # import StepFunctions
 from stepfunctions.template.pipeline import TrainingPipeline
 
-from tests.integ import DATA_DIR, DEFAULT_TIMEOUT_MINUTES
+from tests.integ import DATA_DIR, DEFAULT_TIMEOUT_MINUTES, SAGEMAKER_RETRY_STRATEGY
 from tests.integ.timeout import timeout
 from tests.integ.utils import (
     state_machine_delete_wait,
@@ -60,7 +60,8 @@ def pca_estimator(sagemaker_role_arn):
     pca_estimator.mini_batch_size=128
     
     return pca_estimator
-    
+
+
 @pytest.fixture(scope="module")
 def inputs(pca_estimator):
     data_path = os.path.join(DATA_DIR, "one_p_mnist", "mnist.pkl.gz")
@@ -85,7 +86,8 @@ def test_pca_estimator(sfn_client, sagemaker_session, sagemaker_role_arn, sfn_ro
             role=sfn_role_arn,
             inputs=inputs,
             s3_bucket=bucket_name,
-            pipeline_name = unique_name
+            pipeline_name=unique_name,
+            retry=SAGEMAKER_RETRY_STRATEGY
         )
         tp.create()
 
